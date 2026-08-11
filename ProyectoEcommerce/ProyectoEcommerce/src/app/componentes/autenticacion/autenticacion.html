@@ -1,0 +1,161 @@
+<main class="auth-shell">
+  <section class="auth-card" aria-labelledby="auth-title">
+    <div class="auth-brand">
+      <img src="favicon.ico" alt="" width="54" height="54">
+      <div>
+        <span class="auth-eyebrow">LessPrice</span>
+        <h1 id="auth-title">{{ modoRegistro ? 'Crear cuenta' : 'Iniciar sesión' }}</h1>
+      </div>
+    </div>
+
+    <p class="auth-intro">
+      {{ modoRegistro
+        ? 'Completa tus datos para comenzar.'
+        : 'Ingresa con tu correo electrónico para acceder al dashboard.' }}
+    </p>
+
+    @if (mensajeExito) {
+      <div class="alert alert-success" role="status">{{ mensajeExito }}</div>
+    }
+
+    @if (mensajeError) {
+      <div class="alert alert-danger" role="alert">{{ mensajeError }}</div>
+    }
+
+    <!-- Formulario de inicio de sesión -->
+    @if (!modoRegistro) {
+      <form [formGroup]="loginForm" (ngSubmit)="iniciarSesion()" novalidate>
+        <div class="auth-field">
+          <label for="login-correo">Correo electrónico</label>
+          <input
+            id="login-correo"
+            class="form-control"
+            type="email"
+            formControlName="correo"
+            autocomplete="email"
+            placeholder="nombre@correo.com">
+          @if (tieneError('login', 'correo', 'required')) {
+            <span class="field-error">El correo electrónico es obligatorio.</span>
+          } @else if (tieneError('login', 'correo', 'email')) {
+            <span class="field-error">Ingresa un correo electrónico válido.</span>
+          }
+        </div>
+
+        <div class="auth-field">
+          <label for="login-contrasena">Contraseña</label>
+          <input
+            id="login-contrasena"
+            class="form-control"
+            type="password"
+            formControlName="contrasena"
+            autocomplete="current-password"
+            placeholder="Tu contraseña">
+          @if (tieneError('login', 'contrasena', 'required')) {
+            <span class="field-error">La contraseña es obligatoria.</span>
+          }
+        </div>
+
+        <button
+          class="btn btn-primary auth-submit"
+          type="submit"
+          [disabled]="loginForm.invalid || procesando">
+          {{ procesando ? 'Ingresando…' : 'Iniciar sesión' }}
+        </button>
+
+        <p class="auth-switch">
+          ¿No tienes una cuenta?
+          <button type="button" (click)="cambiarModo(true)">Crear cuenta</button>
+        </p>
+      </form>
+    } @else {
+      <!-- Formulario de registro de Cliente -->
+      <form [formGroup]="registroForm" (ngSubmit)="crearCuenta()" novalidate>
+        <div class="auth-grid">
+          <div class="auth-field">
+            <label for="registro-nombre">Nombre</label>
+            <input id="registro-nombre" class="form-control" formControlName="nombre" autocomplete="given-name">
+            @if (tieneError('registro', 'nombre', 'required')) {
+              <span class="field-error">El nombre es obligatorio.</span>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label for="registro-apellidos">Apellidos</label>
+            <input id="registro-apellidos" class="form-control" formControlName="apellidos" autocomplete="family-name">
+            @if (tieneError('registro', 'apellidos', 'required')) {
+              <span class="field-error">Los apellidos son obligatorios.</span>
+            }
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="registro-correo">Correo electrónico</label>
+          <input
+            id="registro-correo"
+            class="form-control"
+            type="email"
+            formControlName="correo"
+            autocomplete="email"
+            placeholder="nombre@correo.com">
+          @if (tieneError('registro', 'correo', 'required')) {
+            <span class="field-error">El correo electrónico es obligatorio.</span>
+          } @else if (tieneError('registro', 'correo', 'email')) {
+            <span class="field-error">Ingresa un correo electrónico válido.</span>
+          }
+        </div>
+
+        <div class="auth-field">
+          <label for="registro-telefono">Teléfono</label>
+          <input id="registro-telefono" class="form-control" type="tel" formControlName="telefono" autocomplete="tel">
+          @if (tieneError('registro', 'telefono', 'required')) {
+            <span class="field-error">El teléfono es obligatorio.</span>
+          }
+        </div>
+
+        <div class="auth-grid">
+          <div class="auth-field">
+            <label for="registro-contrasena">Contraseña</label>
+            <input
+              id="registro-contrasena"
+              class="form-control"
+              type="password"
+              formControlName="contrasena"
+              autocomplete="new-password">
+            @if (tieneError('registro', 'contrasena', 'required')) {
+              <span class="field-error">La contraseña es obligatoria.</span>
+            } @else if (tieneError('registro', 'contrasena', 'minlength')) {
+              <span class="field-error">Debe tener al menos 8 caracteres.</span>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label for="registro-confirmacion">Confirmar contraseña</label>
+            <input
+              id="registro-confirmacion"
+              class="form-control"
+              type="password"
+              formControlName="confirmarContrasena"
+              autocomplete="new-password">
+            @if (tieneError('registro', 'confirmarContrasena', 'required')) {
+              <span class="field-error">Confirma la contraseña.</span>
+            } @else if (registroForm.hasError('contrasenasDiferentes') && registroForm.controls.confirmarContrasena.touched) {
+              <span class="field-error">Las contraseñas no coinciden.</span>
+            }
+          </div>
+        </div>
+
+        <button
+          class="btn btn-primary auth-submit"
+          type="submit"
+          [disabled]="registroForm.invalid || procesando">
+          {{ procesando ? 'Creando cuenta…' : 'Crear cuenta' }}
+        </button>
+
+        <p class="auth-switch">
+          ¿Ya tienes una cuenta?
+          <button type="button" (click)="cambiarModo(false)">Iniciar sesión</button>
+        </p>
+      </form>
+    }
+  </section>
+</main>

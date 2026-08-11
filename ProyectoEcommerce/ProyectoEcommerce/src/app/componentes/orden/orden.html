@@ -1,0 +1,49 @@
+<section class="orders-page">
+  <header class="page-heading">
+    <div><span class="eyebrow">{{ esAdmin ? 'LessPrice · Administración' : 'LessPrice · Compras' }}</span><h1>{{ esAdmin ? 'Órdenes de clientes' : 'Mis órdenes' }}</h1><p>{{ esAdmin ? 'Consulta las ventas registradas para todos los clientes.' : 'Consulta el historial y las facturas de tus compras.' }}</p></div>
+  </header>
+
+  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+
+  <form class="filters" [formGroup]="filtros" (ngSubmit)="buscar()">
+    <div><label for="orden-numero">Número de orden</label><input id="orden-numero" class="form-control" formControlName="numero" placeholder="Ej. 000012"></div>
+    @if (esAdmin) { <div><label for="orden-cliente">Cliente</label><input id="orden-cliente" class="form-control" formControlName="cliente" placeholder="Nombre o correo"></div> }
+    <div><label for="orden-estado">Estado</label><select id="orden-estado" class="form-select" formControlName="estado"><option value="">Todos</option>@for (estado of estados; track estado) { <option [value]="estado">{{ estado }}</option> }</select></div>
+    <div><label for="orden-desde">Desde</label><input id="orden-desde" class="form-control" type="date" formControlName="fechaDesde"></div>
+    <div><label for="orden-hasta">Hasta</label><input id="orden-hasta" class="form-control" type="date" formControlName="fechaHasta"></div>
+    <div class="filter-actions"><button class="btn btn-outline-secondary" type="button" (click)="limpiar()">Limpiar</button><button class="btn btn-primary" type="submit">Aplicar filtros</button></div>
+  </form>
+
+  @if (cargando) {
+    <div class="state-card" role="status">Cargando órdenes…</div>
+  } @else if (!ordenes.length) {
+    <div class="state-card"><h2>No hay órdenes que coincidan.</h2>@if (!esAdmin) { <a class="btn btn-primary" routerLink="/productos">Explorar productos</a> }</div>
+  } @else {
+    <div class="orders-grid">
+      @for (orden of ordenes; track orden.ordenId) {
+        <article class="order-card">
+          <header><div><span class="eyebrow">Orden</span><h2>#{{ orden.numeroOrden }}</h2></div><span class="status" [attr.data-status]="orden.estado">{{ orden.estado }}</span></header>
+          <dl>
+            <div><dt>Fecha</dt><dd>{{ orden.fechaOrden | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+            @if (esAdmin) { <div><dt>Cliente</dt><dd>{{ orden.cliente }}<small>{{ orden.correo }}</small></dd></div> }
+            <div><dt>Productos</dt><dd>{{ orden.cantidadProductos }} {{ orden.cantidadProductos === 1 ? 'unidad' : 'unidades' }}</dd></div>
+            <div><dt>Método</dt><dd>{{ etiquetaMetodo(orden.metodoPago) }}</dd></div>
+            <div class="total"><dt>Total</dt><dd>{{ orden.total | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+          </dl>
+          <footer>
+            <a class="btn btn-primary" [routerLink]="['/ordenes', orden.ordenId]">Ver detalle</a>
+            @if (orden.facturaDisponible) { <button class="btn btn-outline-primary" type="button" [disabled]="procesando.has(orden.ordenId)" (click)="descargarFactura(orden)">Descargar factura</button> }
+            @if (!esAdmin && orden.estado === 'PENDIENTE') { <button class="btn btn-outline-danger" type="button" [disabled]="procesando.has(orden.ordenId)" (click)="cancelar(orden)">Cancelar</button> }
+          </footer>
+        </article>
+      }
+    </div>
+  }
+
+  <footer class="pagination-bar">
+    <label for="orden-tamano">Mostrar <select id="orden-tamano" class="form-select form-select-sm" [value]="tamanoPagina" (change)="cambiarTamano($any($event.target).value)">@for (tamano of tamanos; track tamano) { <option [value]="tamano">{{ tamano }}</option> }</select></label>
+    <span>{{ total }} órdenes · Página {{ pagina }} de {{ totalPaginas }}</span>
+    <div><button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="pagina === 1 || cargando" (click)="irPagina(-1)">Anterior</button><button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="pagina === totalPaginas || cargando" (click)="irPagina(1)">Siguiente</button></div>
+  </footer>
+</section>

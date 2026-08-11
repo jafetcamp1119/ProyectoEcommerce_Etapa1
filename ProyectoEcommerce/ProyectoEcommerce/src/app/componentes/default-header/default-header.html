@@ -1,0 +1,64 @@
+<ng-container>
+  <c-container [fluid]="true" class="border-bottom px-4">
+    <button [cSidebarToggle]="sidebarId()"
+            cHeaderToggler
+            class="btn"
+            toggle="visible"
+            style="margin-inline-start: -14px;"
+            aria-label="Toggle sidebar navigation">
+      <svg cIcon name="cilMenu" size="lg"></svg>
+    </button>
+
+
+    <c-header-nav class="ms-auto ms-md-0">
+      @if (autenticacion.usuarioActual(); as usuario) {
+        <span class="d-none d-md-flex align-items-center me-2 text-body-secondary">
+          {{ usuario.nombre }} {{ usuario.apellidos }}
+        </span>
+      }
+      @if (autenticacion.esCliente()) {
+        <a class="cart-link btn btn-outline-primary d-flex align-items-center gap-2 me-2" routerLink="/carrito" [attr.aria-label]="'Carrito, ' + carrito.cantidadTotal() + ' unidades'">
+          <svg cIcon name="cilBasket" size="lg"></svg>
+          <span class="d-none d-sm-inline">Carrito</span>
+          <span class="cart-count">{{ carrito.cantidadTotal() }}</span>
+        </a>
+      }
+      <button
+        type="button"
+        class="btn btn-outline-secondary d-flex align-items-center gap-2 me-2"
+        (click)="cerrarSesion()">
+        <svg cIcon name="cilAccountLogout" size="lg"></svg>
+        <span class="d-none d-sm-inline">Cerrar sesión</span>
+      </button>
+      <div class="nav-item py-1">
+        <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+      </div>
+      <ng-container *ngTemplateOutlet="themeDropdown" />
+      <div class="nav-item py-1">
+        <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+      </div>
+    </c-header-nav>
+
+  </c-container>
+</ng-container>
+<ng-template #themeDropdown>
+  <c-dropdown alignment="end" variant="nav-item">
+    <button [caret]="false" cDropdownToggle aria-label="Open theme picker">
+      <svg cIcon [name]="icons()" size="lg"></svg>
+    </button>
+    <div cDropdownMenu>
+      @for (mode of colorModes; track mode.name) {
+      <button (click)="colorMode.set(mode.name)"
+              [active]="colorMode()===mode.name"
+              cDropdownItem
+              class="d-flex align-items-center">
+        <svg cIcon class="me-2" [name]="mode.icon" size="lg"></svg>
+        {{ mode.text }}
+      </button>
+      }
+    </div>
+  </c-dropdown>
+</ng-template>
+
+
+

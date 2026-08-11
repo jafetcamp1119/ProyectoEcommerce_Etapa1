@@ -1,0 +1,39 @@
+<c-sidebar #sidebar1="cSidebar"
+           class="d-print-none sidebar sidebar-fixed border-end"
+           colorScheme="dark"
+           id="sidebar1"
+           visible>
+  <c-sidebar-header class="border-bottom">
+    <c-sidebar-brand [routerLink]="[]">
+      <c-avatar size="md"
+                src="favicon.ico"
+                status="success"
+                textColor="primary"
+                alt="LessPrice" />
+      <span class="ms-2 fw-semibold">LessPrice</span>
+    </c-sidebar-brand>
+  </c-sidebar-header>
+
+  <ng-scrollbar pointerEventsMethod="scrollbar" visibility="hover">
+    <c-sidebar-nav [navItems]="navItems" dropdownMode="close" compact />
+  </ng-scrollbar>
+
+  @if (!sidebar1.narrow) {
+    <c-sidebar-footer cSidebarToggle="sidebar1" class="border-top d-none d-lg-flex" toggle="unfoldable" style="cursor: pointer;">
+      <button cSidebarToggler aria-label="Contraer menú lateral"></button>
+    </c-sidebar-footer>
+  }
+</c-sidebar>
+
+<div class="wrapper d-flex flex-column min-vh-100">
+  <app-default-header [cShadowOnScroll]="'sm'"
+                      class="mb-4 d-print-none header header-sticky p-0 shadow-sm"
+                      position="sticky"
+                      sidebarId="sidebar1" />
+  <div class="body flex-grow-1">
+    <c-container breakpoint="lg" class="h-auto px-4">
+      <router-outlet />
+    </c-container>
+  </div>
+  <app-default-footer />
+</div>

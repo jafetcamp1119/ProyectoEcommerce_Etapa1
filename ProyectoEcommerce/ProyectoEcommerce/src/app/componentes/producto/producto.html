@@ -1,0 +1,107 @@
+@if (mostrarFamiliasCliente) {
+  <app-familias-cliente />
+} @else {
+<section class="products-page">
+  @if (esCliente) {
+    <nav class="catalog-breadcrumb" aria-label="Ruta del catálogo">
+      <a routerLink="/productos">Productos</a>
+      @if (familiaRutaId) {
+        <span aria-hidden="true">›</span>
+        <a [routerLink]="['/productos/familia', familiaRutaId]">{{ familiaSeleccionadaNombre }}</a>
+      }
+      <span aria-hidden="true">›</span>
+      <span>{{ categoriaRutaId ? categoriaSeleccionadaNombre : 'Resultados' }}</span>
+    </nav>
+  }
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">{{ esAdmin ? 'LessPrice · Administración' : 'LessPrice · Catálogo' }}</span>
+      <h1>{{ esCliente ? tituloCliente : 'Productos' }}</h1>
+      <p>{{ esAdmin ? 'Gestiona el catálogo, inventario y estado de cada producto.' : descripcionCliente }}</p>
+    </div>
+    @if (esAdmin) { <button class="btn btn-primary" type="button" (click)="nuevo()">Nuevo producto</button> }
+    @if (esCliente) { <a class="btn btn-outline-primary" [routerLink]="rutaRegresoCliente">{{ textoRegresoCliente }}</a> }
+  </header>
+
+  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+
+  <!-- Búsqueda y filtros; familia y categoría son de solo lectura para el Cliente -->
+  <form class="filters" [formGroup]="filtros" (ngSubmit)="buscar()">
+    <div class="field field-search"><label for="producto-texto">Nombre o código</label><input id="producto-texto" class="form-control" formControlName="texto" placeholder="Buscar productos"></div>
+    @if (esAdmin) {
+      <div class="field"><label for="producto-familia">Familia</label><select id="producto-familia" class="form-select" formControlName="familiaId" (change)="cambiarFamilia()"><option value="">Todas</option>@for (familia of familias; track familia.familiaId) { <option [value]="familia.familiaId">{{ familia.nombre }}</option> }</select></div>
+      <div class="field"><label for="producto-categoria">Categoría</label><select id="producto-categoria" class="form-select" formControlName="categoriaId"><option value="">Todas</option>@for (categoria of categoriasFiltradas; track categoria.categoriaId) { <option [value]="categoria.categoriaId">{{ categoria.nombre }}</option> }</select></div>
+    } @else {
+      <div class="field"><label for="producto-familia-info">Familia</label><input id="producto-familia-info" class="form-control" [value]="familiaSeleccionadaNombre || 'Todas las familias'" readonly aria-readonly="true"></div>
+      <div class="field"><label for="producto-categoria-info">Categoría</label><input id="producto-categoria-info" class="form-control" [value]="categoriaSeleccionadaNombre || 'Todas las categorías'" readonly aria-readonly="true"></div>
+    }
+    <div class="field field-price"><label for="producto-precio-min">Precio mínimo</label><input id="producto-precio-min" class="form-control" type="number" min="0" step="0.01" formControlName="precioMinimo"></div>
+    <div class="field field-price"><label for="producto-precio-max">Precio máximo</label><input id="producto-precio-max" class="form-control" type="number" min="0" step="0.01" formControlName="precioMaximo"></div>
+    <div class="field"><label for="producto-disponibilidad">Disponibilidad</label><select id="producto-disponibilidad" class="form-select" formControlName="disponibilidad"><option value="">Todas</option><option value="disponible">Disponible</option><option value="bajo">Stock bajo</option><option value="agotado">Agotado</option></select></div>
+    @if (esAdmin) { <div class="field"><label for="producto-estado">Estado</label><select id="producto-estado" class="form-select" formControlName="estado"><option value="">Todos</option><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></div> }
+    <div class="field"><label for="producto-orden">Ordenar</label><select id="producto-orden" class="form-select" formControlName="orden"><option value="nombre_asc">Nombre A–Z</option><option value="nombre_desc">Nombre Z–A</option><option value="precio_asc">Menor precio</option><option value="precio_desc">Mayor precio</option>@if (esAdmin) { <option value="fecha_desc">Más recientes</option><option value="fecha_asc">Más antiguos</option> }</select></div>
+    <div class="filter-actions"><button class="btn btn-outline-secondary" type="button" (click)="limpiarFiltros()">Limpiar</button><button class="btn btn-primary" type="submit" [disabled]="filtros.invalid">Aplicar filtros</button></div>
+  </form>
+
+  <!-- Formulario disponible únicamente en la vista administrativa -->
+  @if (esAdmin && mostrarFormulario) {
+    <form id="formulario-producto" class="product-form" [formGroup]="formulario" (ngSubmit)="guardar()">
+      <header><div><span class="eyebrow">{{ editandoId ? 'Edición' : 'Registro' }}</span><h2>{{ editandoId ? 'Editar producto' : 'Crear producto' }}</h2></div><button class="close-form" type="button" aria-label="Cerrar formulario" (click)="cancelarFormulario()">×</button></header>
+      <div class="form-grid">
+        <div class="field"><label for="producto-codigo">Código *</label><input id="producto-codigo" class="form-control" formControlName="codigo" maxlength="50">@if (formulario.controls.codigo.touched && formulario.controls.codigo.invalid) { <small>El código es obligatorio (máximo 50 caracteres).</small> }</div>
+        <div class="field field-wide"><label for="producto-nombre">Nombre *</label><input id="producto-nombre" class="form-control" formControlName="nombre" maxlength="120">@if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) { <small>El nombre es obligatorio (máximo 120 caracteres).</small> }</div>
+        <div class="field field-full"><label for="producto-descripcion">Descripción</label><textarea id="producto-descripcion" class="form-control" rows="3" formControlName="descripcion" maxlength="500"></textarea></div>
+        <div class="field field-wide"><label for="producto-categoria-form">Categoría *</label><select id="producto-categoria-form" class="form-select" formControlName="categoriaId"><option [ngValue]="0">Selecciona una categoría</option>@for (categoria of categorias; track categoria.categoriaId) { <option [ngValue]="categoria.categoriaId">{{ nombreFamilia(categoria.familiaId) }} · {{ categoria.nombre }}</option> }</select></div>
+        <div class="field"><label for="producto-impuesto">Impuesto *</label><select id="producto-impuesto" class="form-select" formControlName="impuestoId"><option [ngValue]="0">Selecciona</option>@for (impuesto of impuestos; track impuesto.impuestoId) { <option [ngValue]="impuesto.impuestoId">{{ impuesto.nombre }} ({{ impuesto.porcentaje }}%)</option> }</select></div>
+        <div class="field"><label for="producto-precio">Precio final (impuesto incluido) *</label><input id="producto-precio" class="form-control" type="number" min="0" step="0.01" formControlName="precioVenta"></div>
+        <div class="field"><label for="producto-costo">Costo *</label><input id="producto-costo" class="form-control" type="number" min="0" step="0.01" formControlName="costo"></div>
+        <div class="field"><label for="producto-stock">Stock *</label><input id="producto-stock" class="form-control" type="number" min="0" step="1" formControlName="stock"></div>
+        <div class="field"><label for="producto-stock-minimo">Stock mínimo *</label><input id="producto-stock-minimo" class="form-control" type="number" min="0" step="1" formControlName="stockMinimo"></div>
+        <label class="active-check"><input type="checkbox" formControlName="activo"> Producto activo</label>
+      </div>
+      @if (formulario.touched && formulario.invalid) { <p class="form-error" role="alert">Completa correctamente todos los campos obligatorios.</p> }
+      <footer><button class="btn btn-outline-secondary" type="button" (click)="cancelarFormulario()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">{{ guardando ? 'Guardando…' : 'Guardar producto' }}</button></footer>
+    </form>
+  }
+
+  <!-- Estados y tarjetas del catálogo de productos -->
+  @if (cargando) {
+    <div class="state-panel" role="status"><span class="spinner-border" aria-hidden="true"></span><strong>Cargando productos…</strong></div>
+  } @else if (!productos.length) {
+    <div class="state-panel"><span class="state-icon" aria-hidden="true">◇</span><strong>No hay productos que coincidan</strong><p>Prueba con otros filtros o limpia la búsqueda.</p></div>
+  } @else {
+    <div class="products-grid">
+      @for (producto of productos; track producto.productoId) {
+        <article class="product-card catalog-tile" [class.inactive]="esAdmin && producto.activo === false">
+          <a class="product-image catalog-tile-visual" [routerLink]="['/productos', producto.productoId]" [attr.aria-label]="'Ver ' + producto.nombre">
+            @if (producto.imagenPrincipal?.urlImagen && !imagenesFallidas.has(producto.productoId)) { <img [src]="producto.imagenPrincipal!.urlImagen" [alt]="producto.imagenPrincipal!.textoAlternativo || producto.nombre" (error)="marcarImagenError(producto.productoId)"> }
+            @else { <span class="image-placeholder" aria-hidden="true">{{ iniciales(producto.nombre) }}</span> }
+            @if (esAdmin && producto.activo === false) { <span class="inactive-label">Inactivo</span> }
+          </a>
+          <div class="product-content catalog-tile-content">
+            <div class="taxonomy"><span>{{ producto.familiaNombre }}</span><span>{{ producto.categoriaNombre }}</span></div>
+            <h2><a [routerLink]="['/productos', producto.productoId]">{{ producto.nombre }}</a></h2>
+            <p class="description">{{ producto.descripcion || 'Sin descripción disponible.' }}</p>
+            <div class="price-row"><strong>{{ producto.precioVenta | currency:'CRC':'symbol':'1.2-2' }}</strong><span class="stock" [class]="claseStock(producto.estadoStock)">{{ producto.estadoStock }}</span></div>
+            @if (esAdmin) {
+              <dl class="admin-data"><div><dt>Código</dt><dd>{{ producto.codigo }}</dd></div><div><dt>Stock</dt><dd>{{ producto.stock }} / mín. {{ producto.stockMinimo }}</dd></div><div><dt>Costo</dt><dd>{{ producto.costo | currency:'CRC':'symbol':'1.2-2' }}</dd></div><div><dt>Creación</dt><dd>{{ producto.fechaCreacion | date:'dd/MM/yyyy' }}</dd></div></dl>
+            }
+            <div class="card-actions">
+              <a class="btn btn-primary" [routerLink]="['/productos', producto.productoId]">Ver detalle</a>
+              @if (esCliente) { <button class="btn btn-outline-primary" type="button" [disabled]="!producto.disponible || procesandoCarrito.has(producto.productoId)" (click)="agregarAlCarrito(producto)">{{ !producto.disponible ? 'Agotado' : procesandoCarrito.has(producto.productoId) ? 'Agregando…' : 'Agregar al carrito' }}</button> }
+            </div>
+            @if (esAdmin) { <div class="admin-actions"><button class="btn btn-outline-primary" type="button" (click)="editar(producto)">Editar</button><button class="btn btn-outline-secondary" type="button" [disabled]="guardando" (click)="cambiarEstado(producto)">{{ producto.activo ? 'Desactivar' : 'Activar' }}</button></div> }
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  <footer class="pagination-bar">
+    <label for="producto-tamano">Mostrar <select id="producto-tamano" class="form-select form-select-sm" [value]="tamanoPagina" (change)="cambiarTamano($any($event.target).value)">@for (tamano of tamanos; track tamano) { <option [value]="tamano">{{ tamano }}</option> }</select></label>
+    <span>{{ total }} productos · Página {{ pagina }} de {{ totalPaginas }}</span>
+    <div><button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="pagina === 1 || cargando" (click)="irPagina(-1)">Anterior</button><button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="pagina === totalPaginas || cargando" (click)="irPagina(1)">Siguiente</button></div>
+  </footer>
+</section>
+}

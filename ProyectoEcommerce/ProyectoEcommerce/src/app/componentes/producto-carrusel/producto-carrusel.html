@@ -1,0 +1,28 @@
+<section class="carousel-shell" aria-label="Galería de imágenes del producto">
+  <div class="main-image">
+    @if (seleccionada && !rotas.has(seleccionada.imagenId)) {
+      <img [src]="seleccionada.urlImagen" [alt]="seleccionada.textoAlternativo || textoAlternativo" (error)="marcarRota(seleccionada.imagenId)">
+    } @else {
+      <div class="placeholder" role="img" [attr.aria-label]="textoAlternativo">
+        <span class="placeholder-initials" aria-hidden="true">{{ iniciales() }}</span>
+        <strong>{{ textoAlternativo }}</strong>
+      </div>
+    }
+  </div>
+
+  @if (ordenadas.length) {
+    <div class="thumb-row">
+      @if (mostrarControles) { <button class="arrow" type="button" aria-label="Imágenes anteriores" [disabled]="!puedeAnterior" (click)="anterior()">‹</button> }
+      <div class="thumbs">
+        @for (imagen of visibles; track imagen.imagenId) {
+          <button class="thumb" type="button" [class.selected]="seleccionada?.imagenId === imagen.imagenId" [attr.aria-pressed]="seleccionada?.imagenId === imagen.imagenId" [attr.aria-label]="'Mostrar ' + (imagen.textoAlternativo || textoAlternativo)" (click)="seleccionar(imagen)">
+            @if (!rotas.has(imagen.imagenId)) { <img [src]="imagen.urlImagen" [alt]="imagen.textoAlternativo || textoAlternativo" (error)="marcarRota(imagen.imagenId)"> }
+            @else { <span aria-hidden="true">◇</span> }
+          </button>
+        }
+      </div>
+      @if (mostrarControles) { <button class="arrow" type="button" aria-label="Imágenes siguientes" [disabled]="!puedeSiguiente" (click)="siguiente()">›</button> }
+    </div>
+    <p class="counter">{{ inicio + 1 }}–{{ inicio + visibles.length }} de {{ ordenadas.length }}</p>
+  }
+</section>

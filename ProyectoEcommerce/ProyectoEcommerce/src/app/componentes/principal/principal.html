@@ -1,0 +1,25 @@
+<section class="home-page">
+  <div class="welcome-card">
+    <div><span class="eyebrow">LessPrice · Panel de control</span><h1>Hola, {{ autenticacion.usuarioActual()?.nombre || 'bienvenido' }}</h1><p>Este resumen se obtiene directamente de los catálogos del sistema.</p></div>
+    @if (autenticacion.usuarioActual()?.rolNombre) { <span class="role-pill">{{ autenticacion.usuarioActual()?.rolNombre }}</span> }
+  </div>
+  @if (esAdmin) {
+  <div class="stats-grid">
+    <a class="stat-card blue" routerLink="/familias-producto"><span class="stat-label">Familias activas</span><strong>{{ cargando ? '…' : resumen.familias }}</strong><small>Organización principal del catálogo</small></a>
+    <a class="stat-card teal" routerLink="/categorias"><span class="stat-label">Categorías activas</span><strong>{{ cargando ? '…' : resumen.categorias }}</strong><small>Clasificación disponible</small></a>
+    <a class="stat-card amber" routerLink="/impuestos"><span class="stat-label">Impuestos activos</span><strong>{{ cargando ? '…' : resumen.impuestos }}</strong><small>Tasas actualmente configuradas</small></a>
+    <a class="stat-card violet" routerLink="/productos"><span class="stat-label">Productos activos</span><strong>{{ cargando ? '…' : resumen.productos }}</strong><small>Artículos del catálogo</small></a>
+  </div>
+  }
+  <div class="quick-card card"><div class="card-body"><div><span class="eyebrow">Accesos rápidos</span><h2>{{ esAdmin ? 'Continúa administrando' : 'Continúa explorando' }}</h2></div><nav>
+    @if (esAdmin) {
+      <a class="quick-link" routerLink="/familias-producto"><strong>Familias</strong><span>Crear, editar y consultar categorías →</span></a>
+      <a class="quick-link" routerLink="/categorias"><strong>Categorías</strong><span>Administrar clasificaciones →</span></a>
+      <a class="quick-link" routerLink="/impuestos"><strong>Impuestos</strong><span>Configurar tasas y vigencias →</span></a>
+      <a class="quick-link" routerLink="/roles"><strong>Roles</strong><span>Administrar usuarios y permisos →</span></a>
+    } @else {
+      <a class="quick-link" routerLink="/productos"><strong>Productos</strong><span>Consultar el catálogo disponible →</span></a>
+      <a class="quick-link" routerLink="/ordenes"><strong>Mis órdenes</strong><span>Consultar las órdenes disponibles →</span></a>
+    }
+  </nav></div></div>
+</section>

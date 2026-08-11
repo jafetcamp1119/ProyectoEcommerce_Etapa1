@@ -1,0 +1,3 @@
+:host { display: block; }
+.cart-link { position: relative; text-decoration: none; }
+.cart-count { display: grid; place-items: center; min-width: 1.45rem; height: 1.45rem; padding: 0 .3rem; color: #fff; background: var(--cui-primary); border-radius: 999px; font-size: .72rem; font-weight: 800; }

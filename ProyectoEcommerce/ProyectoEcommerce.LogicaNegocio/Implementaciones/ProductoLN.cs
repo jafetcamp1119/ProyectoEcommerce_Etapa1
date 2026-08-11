@@ -1,0 +1,364 @@
+using System.Linq.Expressions;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using ProyectoEcommerce.Dominio.Entidades;
+using ProyectoEcommerce.Dominio.EntidadesTipadas;
+using ProyectoEcommerce.Dominio.InterfacesAD;
+using ProyectoEcommerce.Dominio.InterfazLN;
+using ProyectoEcommerce.Recursos;
+using ProyectoEcommerce.Utilidades;
+
+namespace ProyectoEcommerce.LogicaNegocio.Implementaciones;
+
+/// <summary>
+/// Aplica filtros de catálogo y reglas administrativas para los productos de LessPrice.
+/// </summary>
+public class ProductoLN : IProductoLN
+{
+    private static readonly List<string> Relaciones = ["Categoria.Familia", "Impuesto", "Imagenes"];
+    private readonly IUnidadTrabajoEF _unidadDeTrabajo;
+    private readonly ILogger<ProductoLN> _logger;
+    private readonly IMapper _mapper;
+
+    public ProductoLN(IUnidadTrabajoEF unidadTrabajo, ILogger<ProductoLN> logger, IMapper mapper)
+    {
+        _unidadDeTrabajo = unidadTrabajo;
+        _logger = logger;
+        _mapper = mapper;
+    }
+
+    /// <summary>Lista productos activos dentro del alcance validado de búsqueda del Cliente.</summary>
+    public async Task<Respuesta<TPagina<TProductoCatalogo>>> ListarCatalogoAsync(TFiltroProductos filtro)
+    {
+        var validacion = NormalizarFiltro(filtro);
+        if (validacion != null) return Error<TPagina<TProductoCatalogo>>(validacion);
+
+        try
+        {
+            var validacionAlcance = await ValidarAlcanceCatalogoAsync(filtro);
+            if (validacionAlcance != null)
+                return Error<TPagina<TProductoCatalogo>>(validacionAlcance);
+
+            var predicado = ConstruirFiltro(filtro, false);
+            var total = await _unidadDeTrabajo.TProducto.ContarAsync(predicado);
+            if (!string.IsNullOrEmpty(total.Error)) return Error<TPagina<TProductoCatalogo>>(Mensajes.ErrorProductos);
+
+            var pagina = await _unidadDeTrabajo.TProducto.BuscarPaginadoAsync(
+                predicado,
+                CrearOrden(filtro.Orden),
+                (filtro.Pagina - 1) * filtro.TamanoPagina,
+                filtro.TamanoPagina,
+                Relaciones);
+            if (!string.IsNullOrEmpty(pagina.Error)) return Error<TPagina<TProductoCatalogo>>(Mensajes.ErrorProductos);
+
+            return new Respuesta<TPagina<TProductoCatalogo>>
+            {
+                Data = new TPagina<TProductoCatalogo>
+                {
+                    Items = _mapper.Map<IEnumerable<TProductoCatalogo>>(pagina.Data ?? []),
+                    Pagina = filtro.Pagina,
+                    TamanoPagina = filtro.TamanoPagina,
+                    Total = total.Data ?? 0
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al consultar el catálogo de productos.");
+            return Error<TPagina<TProductoCatalogo>>(Mensajes.ErrorProductos);
+        }
+    }
+
+    /// <summary>Lista productos para administración, incluyendo el filtro de estado.</summary>
+    public async Task<Respuesta<TPagina<TProducto>>> ListarAdministracionAsync(TFiltroProductos filtro)
+    {
+        var validacion = NormalizarFiltro(filtro);
+        if (validacion != null) return Error<TPagina<TProducto>>(validacion);
+
+        try
+        {
+            var predicado = ConstruirFiltro(filtro, true);
+            var total = await _unidadDeTrabajo.TProducto.ContarAsync(predicado);
+            if (!string.IsNullOrEmpty(total.Error)) return Error<TPagina<TProducto>>(Mensajes.ErrorProductos);
+
+            var pagina = await _unidadDeTrabajo.TProducto.BuscarPaginadoAsync(
+                predicado,
+                CrearOrden(filtro.Orden),
+                (filtro.Pagina - 1) * filtro.TamanoPagina,
+                filtro.TamanoPagina,
+                Relaciones);
+            if (!string.IsNullOrEmpty(pagina.Error)) return Error<TPagina<TProducto>>(Mensajes.ErrorProductos);
+
+            return new Respuesta<TPagina<TProducto>>
+            {
+                Data = new TPagina<TProducto>
+                {
+                    Items = _mapper.Map<IEnumerable<TProducto>>(pagina.Data ?? []),
+                    Pagina = filtro.Pagina,
+                    TamanoPagina = filtro.TamanoPagina,
+                    Total = total.Data ?? 0
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al consultar productos para administración.");
+            return Error<TPagina<TProducto>>(Mensajes.ErrorProductos);
+        }
+    }
+
+    public async Task<Respuesta<TProductoCatalogo>> ObtenerCatalogoAsync(int productoId)
+    {
+        try
+        {
+            var respuesta = await _unidadDeTrabajo.TProducto.ObtenerEntidadAsync(
+                x => x.ProductoId == productoId && x.Activo && x.Categoria.Activo && x.Categoria.Familia.Activo,
+                Relaciones);
+            if (!string.IsNullOrEmpty(respuesta.Error)) return Error<TProductoCatalogo>(Mensajes.ErrorProductos);
+            return respuesta.Data == null
+                ? Error<TProductoCatalogo>(Mensajes.ProductoNoEncontrado)
+                : new Respuesta<TProductoCatalogo> { Data = _mapper.Map<TProductoCatalogo>(respuesta.Data) };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener el producto público {ProductoId}.", productoId);
+            return Error<TProductoCatalogo>(Mensajes.ErrorProductos);
+        }
+    }
+
+    public async Task<Respuesta<TProducto>> ObtenerAdministracionAsync(int productoId)
+    {
+        try
+        {
+            var respuesta = await _unidadDeTrabajo.TProducto.ObtenerEntidadAsync(
+                x => x.ProductoId == productoId,
+                Relaciones);
+            if (!string.IsNullOrEmpty(respuesta.Error)) return Error<TProducto>(Mensajes.ErrorProductos);
+            return respuesta.Data == null
+                ? Error<TProducto>(Mensajes.ProductoNoEncontrado)
+                : new Respuesta<TProducto> { Data = _mapper.Map<TProducto>(respuesta.Data) };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener el producto administrativo {ProductoId}.", productoId);
+            return Error<TProducto>(Mensajes.ErrorProductos);
+        }
+    }
+
+    /// <summary>Reúne familias, categorías e impuestos activos usados por las pantallas.</summary>
+    public async Task<Respuesta<TCatalogosProducto>> ListarCatalogosAsync()
+    {
+        try
+        {
+            var familias = await _unidadDeTrabajo.TFamiliaProducto.BuscarAsync(x => x.Activo);
+            var categorias = await _unidadDeTrabajo.TCategoria.BuscarAsync(x => x.Activo && x.Familia.Activo, ["Familia"]);
+            var impuestos = await _unidadDeTrabajo.TImpuesto.BuscarAsync(x => x.Activo);
+            if (!string.IsNullOrEmpty(familias.Error) || !string.IsNullOrEmpty(categorias.Error) || !string.IsNullOrEmpty(impuestos.Error))
+                return Error<TCatalogosProducto>(Mensajes.ErrorOperacion);
+
+            return new Respuesta<TCatalogosProducto>
+            {
+                Data = new TCatalogosProducto
+                {
+                    Familias = _mapper.Map<IEnumerable<TFamiliaProducto>>(familias.Data ?? []).OrderBy(x => x.Nombre),
+                    Categorias = _mapper.Map<IEnumerable<TCategoria>>(categorias.Data ?? []).OrderBy(x => x.Nombre),
+                    Impuestos = _mapper.Map<IEnumerable<TImpuesto>>(impuestos.Data ?? []).OrderBy(x => x.Nombre)
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al cargar catálogos para productos.");
+            return Error<TCatalogosProducto>(Mensajes.ErrorOperacion);
+        }
+    }
+
+    /// <summary>Crea un producto válido y deja trazabilidad en la bitácora.</summary>
+    public async Task<Respuesta<TProducto>> InsertarAsync(TProducto datos, int administradorId)
+    {
+        try
+        {
+            Limpiar(datos);
+            var validacion = await ValidarAsync(datos, 0);
+            if (validacion != null) return Error<TProducto>(validacion);
+
+            var entidad = _mapper.Map<Producto>(datos);
+            entidad.FechaCreacion = DateTime.UtcNow;
+            var insercion = await _unidadDeTrabajo.TProducto.InsertarAsync(entidad);
+            if (insercion.Data == null || !string.IsNullOrEmpty(insercion.Error))
+                return Error<TProducto>(Mensajes.ErrorOperacion);
+
+            await RegistrarBitacora(administradorId, "CREAR_PRODUCTO", entidad.ProductoId, $"Código: {entidad.Codigo}");
+            return await ObtenerAdministracionAsync(entidad.ProductoId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al insertar el producto {Codigo}.", datos.Codigo);
+            return Error<TProducto>(Mensajes.ErrorOperacion);
+        }
+    }
+
+    public async Task<Respuesta<TProducto>> ModificarAsync(TProducto datos, int administradorId)
+    {
+        try
+        {
+            Limpiar(datos);
+            var actual = await _unidadDeTrabajo.TProducto.ObtenerEntidadAsync(x => x.ProductoId == datos.ProductoId);
+            if (actual.Data == null) return Error<TProducto>(Mensajes.ProductoNoEncontrado);
+
+            var validacion = await ValidarAsync(datos, datos.ProductoId);
+            if (validacion != null) return Error<TProducto>(validacion);
+
+            _mapper.Map(datos, actual.Data);
+            var actualizacion = await _unidadDeTrabajo.TProducto.ModificarAsync(actual.Data);
+            if (actualizacion.Data == null || !string.IsNullOrEmpty(actualizacion.Error))
+                return Error<TProducto>(Mensajes.ErrorOperacion);
+
+            await RegistrarBitacora(administradorId, "MODIFICAR_PRODUCTO", datos.ProductoId, $"Código: {datos.Codigo}");
+            return await ObtenerAdministracionAsync(datos.ProductoId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al modificar ProductoId {ProductoId}.", datos.ProductoId);
+            return Error<TProducto>(Mensajes.ErrorOperacion);
+        }
+    }
+
+    public async Task<Respuesta<TProducto>> CambiarEstadoAsync(int productoId, bool activo, int administradorId)
+    {
+        try
+        {
+            var actual = await _unidadDeTrabajo.TProducto.ObtenerEntidadAsync(x => x.ProductoId == productoId);
+            if (actual.Data == null) return Error<TProducto>(Mensajes.ProductoNoEncontrado);
+
+            actual.Data.Activo = activo;
+            var actualizacion = await _unidadDeTrabajo.TProducto.ModificarAsync(actual.Data);
+            if (actualizacion.Data == null || !string.IsNullOrEmpty(actualizacion.Error))
+                return Error<TProducto>(Mensajes.ErrorOperacion);
+
+            await RegistrarBitacora(administradorId, activo ? "ACTIVAR_PRODUCTO" : "DESACTIVAR_PRODUCTO", productoId, null);
+            return await ObtenerAdministracionAsync(productoId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al cambiar el estado de ProductoId {ProductoId}.", productoId);
+            return Error<TProducto>(Mensajes.ErrorOperacion);
+        }
+    }
+
+    /// <summary>Valida datos, relaciones activas y unicidad del código del producto.</summary>
+    private async Task<string?> ValidarAsync(TProducto datos, int productoId)
+    {
+        if (string.IsNullOrWhiteSpace(datos.Codigo)) return Mensajes.CodigoProductoObligatorio;
+        if (string.IsNullOrWhiteSpace(datos.Nombre)) return Mensajes.NombreObligatorio;
+        if (datos.Codigo.Length > 50 || datos.Nombre.Length > 120 || datos.Descripcion?.Length > 500)
+            return Mensajes.ErrorOperacion;
+        if (datos.PrecioVenta < 0 || datos.Costo < 0 || datos.Stock < 0 || datos.StockMinimo < 0)
+            return Mensajes.ValoresProductoInvalidos;
+
+        var categoria = await _unidadDeTrabajo.TCategoria.ObtenerEntidadAsync(x => x.CategoriaId == datos.CategoriaId && x.Activo);
+        if (categoria.Data == null) return Mensajes.CategoriaProductoNoEncontrada;
+        var impuesto = await _unidadDeTrabajo.TImpuesto.ObtenerEntidadAsync(x => x.ImpuestoId == datos.ImpuestoId && x.Activo);
+        if (impuesto.Data == null) return Mensajes.ImpuestoProductoNoEncontrado;
+        var duplicado = await _unidadDeTrabajo.TProducto.ObtenerEntidadAsync(
+            x => x.Codigo == datos.Codigo && x.ProductoId != productoId);
+        return duplicado.Data != null ? Mensajes.CodigoProductoDuplicado : null;
+    }
+
+    /// <summary>
+    /// Confirma en el servidor que familia y categoría existen, están activas y mantienen su relación real.
+    /// </summary>
+    private async Task<string?> ValidarAlcanceCatalogoAsync(TFiltroProductos filtro)
+    {
+        if (filtro.CategoriaId.HasValue)
+        {
+            var categoria = await _unidadDeTrabajo.TCategoria.ObtenerEntidadAsync(
+                x => x.CategoriaId == filtro.CategoriaId.Value && x.Activo && x.Familia.Activo);
+            if (!string.IsNullOrEmpty(categoria.Error)) return Mensajes.ErrorProductos;
+            if (categoria.Data == null) return Mensajes.CategoriaProductoNoEncontrada;
+            if (filtro.FamiliaId.HasValue && categoria.Data.FamiliaId != filtro.FamiliaId.Value)
+                return Mensajes.CategoriaProductoNoEncontrada;
+            return null;
+        }
+
+        if (filtro.FamiliaId.HasValue)
+        {
+            var familia = await _unidadDeTrabajo.TFamiliaProducto.ObtenerEntidadAsync(
+                x => x.FamiliaId == filtro.FamiliaId.Value && x.Activo);
+            if (!string.IsNullOrEmpty(familia.Error)) return Mensajes.ErrorProductos;
+            if (familia.Data == null) return Mensajes.FamiliaNoEncontrada;
+        }
+
+        return null;
+    }
+
+    // La consulta de Cliente obliga a que producto, categoría y familia estén activos;
+    // la administrativa permite filtrar explícitamente por estado.
+    private static Expression<Func<Producto, bool>> ConstruirFiltro(TFiltroProductos filtro, bool administracion)
+    {
+        var texto = filtro.Texto ?? string.Empty;
+        var disponibilidad = filtro.Disponibilidad ?? string.Empty;
+        return x =>
+            (administracion
+                ? (!filtro.Activo.HasValue || x.Activo == filtro.Activo.Value)
+                : x.Activo && x.Categoria.Activo && x.Categoria.Familia.Activo) &&
+            (texto == string.Empty || x.Nombre.Contains(texto) || x.Codigo.Contains(texto)) &&
+            (!filtro.FamiliaId.HasValue || x.Categoria.FamiliaId == filtro.FamiliaId.Value) &&
+            (!filtro.CategoriaId.HasValue || x.CategoriaId == filtro.CategoriaId.Value) &&
+            (!filtro.PrecioMinimo.HasValue || x.PrecioVenta >= filtro.PrecioMinimo.Value) &&
+            (!filtro.PrecioMaximo.HasValue || x.PrecioVenta <= filtro.PrecioMaximo.Value) &&
+            (disponibilidad == string.Empty ||
+             (disponibilidad == "disponible" && x.Stock > x.StockMinimo) ||
+             (disponibilidad == "bajo" && x.Stock > 0 && x.Stock <= x.StockMinimo) ||
+             (disponibilidad == "agotado" && x.Stock == 0));
+    }
+
+    private static Func<IQueryable<Producto>, IOrderedQueryable<Producto>> CrearOrden(string? orden) => orden switch
+    {
+        "nombre_desc" => x => x.OrderByDescending(p => p.Nombre).ThenBy(p => p.ProductoId),
+        "precio_asc" => x => x.OrderBy(p => p.PrecioVenta).ThenBy(p => p.ProductoId),
+        "precio_desc" => x => x.OrderByDescending(p => p.PrecioVenta).ThenBy(p => p.ProductoId),
+        "fecha_asc" => x => x.OrderBy(p => p.FechaCreacion).ThenBy(p => p.ProductoId),
+        "fecha_desc" => x => x.OrderByDescending(p => p.FechaCreacion).ThenBy(p => p.ProductoId),
+        _ => x => x.OrderBy(p => p.Nombre).ThenBy(p => p.ProductoId)
+    };
+
+    private static string? NormalizarFiltro(TFiltroProductos filtro)
+    {
+        filtro.Texto = filtro.Texto?.Trim();
+        filtro.Disponibilidad = filtro.Disponibilidad?.Trim().ToLowerInvariant();
+        filtro.Orden = filtro.Orden?.Trim().ToLowerInvariant();
+        filtro.Pagina = Math.Max(1, filtro.Pagina);
+        if (!new[] { 25, 50, 75, 100 }.Contains(filtro.TamanoPagina)) filtro.TamanoPagina = 25;
+        if (filtro.PrecioMinimo < 0 || filtro.PrecioMaximo < 0) return Mensajes.ValoresProductoInvalidos;
+        if (filtro.PrecioMinimo.HasValue && filtro.PrecioMaximo.HasValue && filtro.PrecioMaximo < filtro.PrecioMinimo)
+            return Mensajes.RangoPreciosInvalido;
+        if (!string.IsNullOrEmpty(filtro.Disponibilidad) && !new[] { "disponible", "bajo", "agotado" }.Contains(filtro.Disponibilidad))
+            return Mensajes.ErrorOperacion;
+        return null;
+    }
+
+    private async Task RegistrarBitacora(int usuarioId, string accion, int productoId, string? detalle)
+    {
+        var respuesta = await _unidadDeTrabajo.TBitacoraSistema.InsertarAsync(new BitacoraSistema
+        {
+            UsuarioId = usuarioId,
+            Fecha = DateTime.UtcNow,
+            Accion = accion,
+            Entidad = "Producto",
+            EntidadId = productoId.ToString(),
+            Detalle = detalle
+        });
+        if (!string.IsNullOrEmpty(respuesta.Error))
+            _logger.LogWarning("No fue posible registrar la bitácora del producto: {Error}", respuesta.Error);
+    }
+
+    private static void Limpiar(TProducto datos)
+    {
+        datos.Codigo = (datos.Codigo ?? string.Empty).Trim();
+        datos.Nombre = (datos.Nombre ?? string.Empty).Trim();
+        datos.Descripcion = string.IsNullOrWhiteSpace(datos.Descripcion) ? null : datos.Descripcion.Trim();
+    }
+
+    private static Respuesta<T> Error<T>(string mensaje) => new() { Success = false, Error = mensaje };
+}

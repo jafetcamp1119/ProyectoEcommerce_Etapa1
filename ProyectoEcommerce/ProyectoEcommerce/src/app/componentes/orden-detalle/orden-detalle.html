@@ -1,0 +1,47 @@
+<section class="order-detail-page">
+  <a class="back-link" routerLink="/ordenes">← Volver a órdenes</a>
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+  @if (cargando) {
+    <div class="state-card" role="status">Cargando orden…</div>
+  } @else if (!orden) {
+    <div class="state-card"><h2>Orden no disponible.</h2><a class="btn btn-primary" routerLink="/ordenes">Ver órdenes</a></div>
+  } @else {
+    <header class="detail-heading">
+      <div><span class="eyebrow">LessPrice · Orden</span><h1>#{{ orden.numeroOrden }}</h1><p>{{ orden.fechaOrden | date:'dd/MM/yyyy HH:mm' }}</p></div>
+      <div class="heading-actions"><span class="status" [attr.data-status]="orden.estado">{{ orden.estado }}</span>@if (orden.facturaDisponible) { <button class="btn btn-primary" type="button" [disabled]="descargando" (click)="descargarFactura()">{{ descargando ? 'Descargando…' : 'Descargar factura' }}</button> }</div>
+    </header>
+
+    <!-- Datos históricos y documento relacionado con la orden -->
+    <section class="information-card">
+      <h2>Datos de la compra</h2>
+      <dl>
+        <div><dt>Cliente</dt><dd>{{ orden.cliente }}</dd></div>
+        <div><dt>Correo utilizado</dt><dd>{{ orden.correo }}</dd></div>
+        <div class="full"><dt>Dirección de entrega</dt><dd>{{ orden.direccionEnvio }}</dd></div>
+        <div><dt>Método de pago</dt><dd>{{ etiquetaMetodo(orden.metodoPago) }}</dd></div>
+        <div><dt>Factura</dt><dd>{{ orden.numeroFactura || 'No disponible' }}@if (orden.numeroFactura) { <small>{{ orden.correoEnviado ? 'Enviada por correo' : 'Envío de correo pendiente' }}</small> }</dd></div>
+      </dl>
+    </section>
+
+    <!-- Productos e importes conservados al momento de la compra -->
+    <section class="products-card">
+      <h2>Productos</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Impuesto</th><th>Descuento</th><th>Total</th></tr></thead>
+          <tbody>
+            @for (producto of orden.productos; track producto.productoId) {
+              <tr><td><a [routerLink]="['/productos', producto.productoId]">{{ producto.nombre }}</a></td><td>{{ producto.cantidad }}</td><td>{{ producto.precioUnitario | currency:'CRC':'symbol':'1.2-2' }}</td><td>{{ producto.porcentajeImpuesto }}%<small>{{ producto.impuestos | currency:'CRC':'symbol':'1.2-2' }}</small></td><td>{{ producto.porcentajeDescuento }}%<small>{{ producto.descuentos | currency:'CRC':'symbol':'1.2-2' }}</small></td><td><strong>{{ producto.totalLinea | currency:'CRC':'symbol':'1.2-2' }}</strong></td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <dl class="totals">
+        <div><dt>Subtotal antes de impuestos</dt><dd>{{ orden.subtotal | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+        <div><dt>Impuesto incluido</dt><dd>{{ orden.impuestos | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+        <div><dt>Descuentos</dt><dd>{{ orden.descuentos | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+        <div class="grand-total"><dt>Total</dt><dd>{{ orden.total | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+      </dl>
+    </section>
+  }
+</section>

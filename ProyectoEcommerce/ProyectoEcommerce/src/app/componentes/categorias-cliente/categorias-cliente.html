@@ -1,0 +1,42 @@
+<section class="catalog-page">
+  <nav class="catalog-breadcrumb" aria-label="Ruta del catálogo">
+    <a routerLink="/productos">Productos</a>
+    <span aria-hidden="true">›</span>
+    <span>{{ familia?.nombre || 'Familia' }}</span>
+  </nav>
+
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">LessPrice · Catálogo</span>
+      <h1>{{ familia?.nombre || 'Categorías' }}</h1>
+      <p>Selecciona una categoría o busca un producto dentro de esta familia.</p>
+    </div>
+    <a class="btn btn-outline-primary" routerLink="/productos">Volver a familias</a>
+  </header>
+
+  <!-- Búsqueda limitada a la familia seleccionada -->
+  <form class="catalog-search" [formGroup]="busqueda" (ngSubmit)="buscarProductos()">
+    <label for="buscar-producto-familia">Buscar por nombre o código en {{ familia?.nombre || 'esta familia' }}</label>
+    <input id="buscar-producto-familia" class="form-control" formControlName="texto" placeholder="Ej. Baguette" maxlength="120">
+    <button class="btn btn-primary" type="submit" [disabled]="busqueda.invalid">Buscar</button>
+  </form>
+
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+
+  @if (cargando) {
+    <div class="state-card" role="status">Cargando categorías…</div>
+  } @else if (!error && !categorias.length) {
+    <div class="state-card">No hay categorías disponibles en esta familia.</div>
+  } @else if (familia) {
+    <!-- Categorías activas que pertenecen a la familia -->
+    <div class="navigation-grid">
+      @for (categoria of categorias; track categoria.categoriaId) {
+        <app-catalog-navigation-card
+          [titulo]="categoria.nombre"
+          [descripcion]="categoria.descripcion"
+          textoBoton="Ver productos"
+          [ruta]="rutaProductos(categoria.categoriaId)" />
+      }
+    </div>
+  }
+</section>

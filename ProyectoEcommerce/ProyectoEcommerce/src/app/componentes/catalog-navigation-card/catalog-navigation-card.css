@@ -1,0 +1,8 @@
+:host { display: block; height: 100%; }
+.navigation-card { display: flex; flex-direction: column; height: 100%; }
+.navigation-visual { min-height: 165px; }
+.navigation-content { display: flex; flex: 1; flex-direction: column; }
+.navigation-content h2 { margin: 0; font-size: 1.12rem; }
+.navigation-content p { min-height: 3rem; margin: .7rem 0 1rem; color: var(--cui-secondary-color); }
+.card-actions { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: auto; }
+.card-actions .btn { min-width: 132px; }

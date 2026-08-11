@@ -1,0 +1,52 @@
+/* You can add global styles to this file, and also import other style files */
+
+// Import styles with default layout.
+@use "@coreui/coreui/scss/coreui" as * with (
+  $enable-deprecation-messages: false
+);
+
+// Import Chart.js custom tooltips styles
+@use "@coreui/chartjs/scss/coreui-chartjs";
+
+// Custom styles for this theme
+@use "theme";
+
+// Some temp fixes
+//@use "fixes";
+
+// If you want to add custom CSS you can put it here.
+@use "custom";
+
+// Examples
+// We use those styles to show code examples, you should remove them in your application.
+@use "examples";
+
+// Superficie compartida por los catálogos de familias y productos.
+.catalog-tile {
+  overflow: hidden;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+  box-shadow: 0 .35rem 1.2rem rgba(32, 56, 85, .08);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.catalog-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 .7rem 1.6rem rgba(32, 56, 85, .13);
+}
+
+.catalog-tile.inactive { opacity: .7; }
+
+.catalog-tile-visual {
+  display: grid;
+  place-items: center;
+  min-height: 118px;
+  color: #fff;
+  background: linear-gradient(135deg, #2f6fed, #31a8a0);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.catalog-tile-content { padding: 1.1rem; }

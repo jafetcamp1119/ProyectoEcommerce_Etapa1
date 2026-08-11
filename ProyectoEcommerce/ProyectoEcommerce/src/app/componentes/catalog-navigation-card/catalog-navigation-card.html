@@ -1,0 +1,10 @@
+<article class="navigation-card catalog-tile">
+  <div class="navigation-visual catalog-tile-visual" aria-hidden="true">{{ iniciales() }}</div>
+  <div class="navigation-content catalog-tile-content">
+    <h2>{{ titulo() }}</h2>
+    <p>{{ descripcion() || 'Sin descripción.' }}</p>
+    <div class="card-actions">
+      <a class="btn btn-primary btn-sm" [routerLink]="ruta()">{{ textoBoton() }}</a>
+    </div>
+  </div>
+</article>

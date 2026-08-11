@@ -1,0 +1,56 @@
+<section class="cart-page">
+  <header class="page-heading">
+    <div><span class="eyebrow">Compra</span><h1>Mi carrito</h1><p>Revisa los productos agregados antes de realizar tu pedido.</p></div>
+    <a class="btn btn-outline-primary" routerLink="/productos">Seguir explorando</a>
+  </header>
+
+  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+
+  <!-- Estado y listado de productos del carrito -->
+  @if (cargando) {
+    <div class="state-card" role="status">Cargando carrito…</div>
+  } @else if (!carrito?.items?.length) {
+    <div class="state-card">
+      <span class="empty-initials" aria-hidden="true">C</span>
+      <h2>Tu carrito está vacío.</h2>
+      <p>Agrega productos disponibles desde el catálogo.</p>
+      <a class="btn btn-primary" routerLink="/productos">Explorar productos</a>
+    </div>
+  } @else if (carrito) {
+    <div class="cart-layout">
+      <div class="cart-items">
+        @for (item of carrito.items; track item.carritoDetalleId) {
+          <article class="cart-item" [class.unavailable]="!item.productoActivo || !item.stockSuficiente">
+            <div class="item-visual" aria-hidden="true">{{ iniciales(item.nombre) }}</div>
+            <div class="item-info">
+              <h2><a [routerLink]="['/productos', item.productoId]">{{ item.nombre }}</a></h2>
+              <p>{{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }} por unidad</p>
+              @if (!item.productoActivo || !item.stockSuficiente) { <span class="status-warning">Requiere revisión de disponibilidad</span> }
+            </div>
+            <div class="quantity-actions">
+              <div class="quantity-control" [attr.aria-label]="'Cantidad de ' + item.nombre">
+                <button type="button" aria-label="Disminuir cantidad" [disabled]="item.cantidad <= 1 || procesando.has(item.carritoDetalleId)" (click)="cambiarCantidad(item, item.cantidad - 1)">−</button>
+                <input #cantidadInput type="number" inputmode="numeric" min="1" [max]="item.stockDisponible" step="1" [value]="item.cantidad" [disabled]="procesando.has(item.carritoDetalleId)" (change)="escribirCantidad(item, cantidadInput)" (keydown.enter)="cantidadInput.blur()">
+                <button type="button" aria-label="Aumentar cantidad" [disabled]="item.cantidad >= item.stockDisponible || procesando.has(item.carritoDetalleId)" (click)="cambiarCantidad(item, item.cantidad + 1)">+</button>
+              </div>
+              <button class="remove-button" type="button" [disabled]="procesando.has(item.carritoDetalleId)" (click)="eliminar(item)">Eliminar</button>
+            </div>
+            <div class="line-total"><small>Total</small><strong>{{ item.totalLinea | currency:'CRC':'symbol':'1.2-2' }}</strong></div>
+          </article>
+        }
+      </div>
+      <!-- Resumen calculado por la API con impuesto incluido -->
+      <aside class="summary">
+        <span class="eyebrow">Resumen</span>
+        <div><span>Unidades</span><strong>{{ carrito.cantidadTotal }}</strong></div>
+        <div><span>Subtotal antes de impuestos</span><strong>{{ carrito.subtotal | currency:'CRC':'symbol':'1.2-2' }}</strong></div>
+        <div><span>Impuesto incluido</span><strong>{{ carrito.impuestos | currency:'CRC':'symbol':'1.2-2' }}</strong></div>
+        <div><span>Descuentos</span><strong>{{ carrito.descuentos | currency:'CRC':'symbol':'1.2-2' }}</strong></div>
+        <div class="total"><span>Total</span><strong>{{ carrito.total | currency:'CRC':'symbol':'1.2-2' }}</strong></div>
+        <p>El stock se validará y descontará únicamente al confirmar la compra.</p>
+        <button class="btn btn-primary checkout-button" type="button" routerLink="/checkout" [disabled]="!puedeContinuar">Continuar compra</button>
+      </aside>
+    </div>
+  }
+</section>

@@ -1,0 +1,35 @@
+<section class="catalog-page">
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">LessPrice · Catálogo</span>
+      <h1>Familias de producto</h1>
+      <p>Selecciona la sección de LessPrice que quieres explorar.</p>
+    </div>
+  </header>
+
+  <!-- Búsqueda global sin obligar al Cliente a recorrer la taxonomía -->
+  <form class="catalog-search" [formGroup]="busqueda" (ngSubmit)="buscarProductos()">
+    <label for="buscar-producto-global">Buscar por nombre o código en todo el catálogo</label>
+    <input id="buscar-producto-global" class="form-control" formControlName="texto" placeholder="Ej. Baguette" maxlength="120">
+    <button class="btn btn-primary" type="submit" [disabled]="busqueda.invalid">Buscar</button>
+  </form>
+
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+
+  @if (cargando) {
+    <div class="state-card" role="status">Cargando familias…</div>
+  } @else if (!familias.length) {
+    <div class="state-card">No hay familias disponibles en este momento.</div>
+  } @else {
+    <!-- Primer nivel de navegación del catálogo -->
+    <div class="navigation-grid">
+      @for (familia of familias; track familia.familiaId) {
+        <app-catalog-navigation-card
+          [titulo]="familia.nombre"
+          [descripcion]="familia.descripcion"
+          textoBoton="Ver categorías"
+          [ruta]="['/productos/familia', familia.familiaId]" />
+      }
+    </div>
+  }
+</section>

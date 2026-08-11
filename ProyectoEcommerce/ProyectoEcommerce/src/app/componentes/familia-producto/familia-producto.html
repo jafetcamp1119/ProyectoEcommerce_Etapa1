@@ -1,0 +1,73 @@
+<section class="catalog-page">
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Catálogo</span>
+      <h1>Familias de producto</h1>
+      <p>Organiza el catálogo y entra a las categorías de cada familia.</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="nuevo()">Nueva familia</button>
+  </header>
+
+  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+
+  @if (mostrarFormulario) {
+    <form class="editor card" [formGroup]="formulario" (ngSubmit)="guardar()">
+      <div class="card-body">
+        <div class="editor-title">
+          <h2>{{ editandoId ? 'Editar familia' : 'Nueva familia' }}</h2>
+          <button class="btn-close" type="button" aria-label="Cerrar" (click)="cancelar()"></button>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label class="form-label" for="familia-nombre">Nombre</label>
+            <input id="familia-nombre" class="form-control" formControlName="nombre" maxlength="80">
+            @if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) {
+              <small class="text-danger">El nombre es obligatorio.</small>
+            }
+          </div>
+          <div>
+            <label class="form-label" for="familia-descripcion">Descripción</label>
+            <input id="familia-descripcion" class="form-control" formControlName="descripcion" maxlength="250">
+          </div>
+        </div>
+        <div class="editor-actions">
+          <button class="btn btn-outline-secondary" type="button" (click)="cancelar()">Cancelar</button>
+          <button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">
+            {{ guardando ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  }
+
+  @if (cargando) {
+    <div class="state-card">Cargando familias…</div>
+  } @else if (!familias.length) {
+    <div class="state-card">Todavía no hay familias registradas.</div>
+  } @else {
+    <div class="family-grid">
+      @for (familia of familias; track familia.familiaId) {
+        <article class="family-card catalog-tile" [class.inactive]="!familia.activo">
+          <div class="family-visual catalog-tile-visual" aria-hidden="true">{{ iniciales(familia.nombre) }}</div>
+          <div class="family-content catalog-tile-content">
+            <div class="title-row">
+              <h2>{{ familia.nombre }}</h2>
+              <span class="badge" [class.text-bg-success]="familia.activo" [class.text-bg-secondary]="!familia.activo">
+                {{ familia.activo ? 'Activa' : 'Inactiva' }}
+              </span>
+            </div>
+            <p>{{ familia.descripcion || 'Sin descripción.' }}</p>
+            <div class="card-actions">
+              <a class="btn btn-primary btn-sm" [routerLink]="['/categorias', familia.familiaId]">Ver categorías</a>
+              <button class="btn btn-outline-secondary btn-sm" type="button" (click)="editar(familia)">Editar</button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" (click)="cambiarEstado(familia)">
+                {{ familia.activo ? 'Desactivar' : 'Activar' }}
+              </button>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

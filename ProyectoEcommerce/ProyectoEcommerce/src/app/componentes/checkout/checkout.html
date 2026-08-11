@@ -1,0 +1,97 @@
+<section class="checkout-page">
+  <!-- Confirmación posterior a una compra procesada por la API -->
+  @if (completada) {
+    <div class="completed-card">
+      <span class="completed-icon" aria-hidden="true">✓</span>
+      <span class="eyebrow">LessPrice · Pedido confirmado</span>
+      <h1>Compra realizada correctamente</h1>
+      <dl>
+        <div><dt>Número de orden</dt><dd>{{ completada.numeroOrden }}</dd></div>
+        <div><dt>Total</dt><dd>{{ completada.total | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+        <div><dt>Correo de factura</dt><dd>{{ completada.correoDestino }}</dd></div>
+        <div><dt>Estado del correo</dt><dd>{{ completada.correoEnviado ? 'Factura enviada' : 'Envío pendiente' }}</dd></div>
+      </dl>
+      <p [class.warning]="!completada.correoEnviado">{{ completada.mensaje }}</p>
+      <div class="completed-actions">
+        <a class="btn btn-primary" [routerLink]="['/ordenes', completada.ordenId]">Ver mi orden</a>
+        <a class="btn btn-outline-primary" routerLink="/productos">Seguir comprando</a>
+      </div>
+    </div>
+  } @else {
+    <header class="page-heading">
+      <div><span class="eyebrow">LessPrice · Checkout</span><h1>Finalizar compra</h1><p>Confirma los datos de entrega, el método y el resumen de tu pedido.</p></div>
+      <a class="btn btn-outline-primary" routerLink="/carrito">Volver al carrito</a>
+    </header>
+
+    <ol class="steps" aria-label="Etapas de la compra">
+      <li [class.active]="paso === 1" [class.done]="paso > 1"><span>1</span> Datos de entrega</li>
+      <li [class.active]="paso === 2" [class.done]="paso > 2"><span>2</span> Método de pago</li>
+      <li [class.active]="paso === 3"><span>3</span> Confirmación</li>
+    </ol>
+
+    @if (error) { <div class="alert alert-danger" role="alert">{{ error }} @if (paso === 3) { <a routerLink="/carrito">Revisar carrito</a> }</div> }
+    @if (cargando) {
+      <div class="state-card" role="status">Preparando tu compra…</div>
+    } @else if (!preparacion?.carrito?.items?.length) {
+      <div class="state-card"><h2>No hay productos para comprar.</h2><a class="btn btn-primary" routerLink="/productos">Explorar productos</a></div>
+    } @else if (preparacion) {
+      <!-- Paso 1: datos de entrega y confirmación del correo -->
+      @if (paso === 1) {
+        <form class="checkout-card" [formGroup]="entrega" (ngSubmit)="continuarEntrega()">
+          <header><span class="eyebrow">Paso 1</span><h2>Datos de entrega</h2></header>
+          <div class="form-grid">
+            <div><label for="checkout-nombre">Nombre completo</label><input id="checkout-nombre" class="form-control" formControlName="nombreCompleto" readonly></div>
+            <div><label for="checkout-telefono">Teléfono</label><input id="checkout-telefono" class="form-control" formControlName="telefono" readonly></div>
+            <div class="full"><label for="checkout-correo">Correo electrónico</label><input id="checkout-correo" class="form-control" type="email" formControlName="correo" maxlength="120">@if (entrega.controls.correo.touched && entrega.controls.correo.invalid) { <small>Ingresa un correo electrónico válido.</small> }</div>
+            <div class="full"><label for="checkout-direccion">Dirección de entrega</label><textarea id="checkout-direccion" class="form-control" rows="4" formControlName="direccion" maxlength="500"></textarea>@if (entrega.controls.direccion.touched && entrega.controls.direccion.invalid) { <small>La dirección es obligatoria y debe contener al menos 10 caracteres.</small> }</div>
+          </div>
+          <div class="email-confirmation">
+            <span>La factura será enviada a este correo electrónico:</span>
+            <strong>{{ entrega.controls.correo.value || 'Ingresa un correo válido' }}</strong>
+            <label><input type="checkbox" formControlName="confirmarCorreo"> Confirmo que este correo electrónico es correcto.</label>
+            @if (entrega.controls.confirmarCorreo.touched && entrega.controls.confirmarCorreo.invalid) { <small>Debes confirmar el correo para continuar.</small> }
+          </div>
+          <footer><a class="btn btn-outline-secondary" routerLink="/carrito">Volver</a><button class="btn btn-primary" type="submit">Continuar</button></footer>
+        </form>
+      }
+
+      <!-- Paso 2: selección del método de pago -->
+      @if (paso === 2) {
+        <form class="checkout-card" [formGroup]="pago" (ngSubmit)="continuarPago()">
+          <header><span class="eyebrow">Paso 2</span><h2>Método de pago</h2></header>
+          <div class="payment-grid">
+            <button type="button" class="payment-option" [class.selected]="pago.controls.metodoPago.value === 'TARJETA'" (click)="seleccionarPago('TARJETA')"><strong>Tarjeta</strong><span>Pago con tarjeta</span></button>
+            <button type="button" class="payment-option" [class.selected]="pago.controls.metodoPago.value === 'EFECTIVO'" (click)="seleccionarPago('EFECTIVO')"><strong>Efectivo</strong><span>Pago en efectivo</span></button>
+          </div>
+          @if (pago.controls.metodoPago.touched && pago.controls.metodoPago.invalid) { <small class="form-error">Selecciona un método de pago.</small> }
+          <footer><button class="btn btn-outline-secondary" type="button" (click)="volver()">Volver</button><button class="btn btn-primary" type="submit">Continuar</button></footer>
+        </form>
+      }
+
+      <!-- Paso 3: resumen final antes de confirmar la orden -->
+      @if (paso === 3) {
+        <section class="checkout-card confirmation-card">
+          <header><span class="eyebrow">Paso 3</span><h2>Confirmar compra</h2></header>
+          <dl class="delivery-summary">
+            <div><dt>Cliente</dt><dd>{{ entrega.controls.nombreCompleto.value }}</dd></div>
+            <div><dt>Correo</dt><dd>{{ entrega.controls.correo.value }}</dd></div>
+            <div><dt>Dirección</dt><dd>{{ entrega.controls.direccion.value }}</dd></div>
+            <div><dt>Método de pago</dt><dd>{{ etiquetaMetodo() }}</dd></div>
+          </dl>
+          <div class="order-items">
+            @for (item of preparacion.carrito.items; track item.carritoDetalleId) {
+              <article><div><strong>{{ item.nombre }}</strong><span>Cantidad: {{ item.cantidad }} · Precio unitario: {{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }}</span></div><strong>{{ item.totalLinea | currency:'CRC':'symbol':'1.2-2' }}</strong></article>
+            }
+          </div>
+          <dl class="totals">
+            <div><dt>Subtotal antes de impuestos</dt><dd>{{ preparacion.carrito.subtotal | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+            <div><dt>Impuesto incluido</dt><dd>{{ preparacion.carrito.impuestos | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+            <div><dt>Descuentos</dt><dd>{{ preparacion.carrito.descuentos | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+            <div class="grand-total"><dt>Total</dt><dd>{{ preparacion.carrito.total | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
+          </dl>
+          <footer><button class="btn btn-outline-secondary" type="button" [disabled]="procesando" (click)="volver()">Volver</button><button class="btn btn-primary" type="button" [disabled]="procesando" (click)="confirmarCompra()">{{ procesando ? 'Confirmando…' : 'Confirmar compra' }}</button></footer>
+        </section>
+      }
+    }
+  }
+</section>

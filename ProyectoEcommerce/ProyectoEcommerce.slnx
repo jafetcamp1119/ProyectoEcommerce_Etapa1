@@ -1,0 +1,13 @@
+﻿<Solution>
+  <Project Path="API/ProyectoEcommerce.API.csproj" Id="fe8f4328-adce-400c-ab6d-a837512d490e" />
+  <Project Path="ProyectoEcommerce.AccesoDatos/ProyectoEcommerce.AccesoDatos.csproj" />
+  <Project Path="ProyectoEcommerce.Dominio/ProyectoEcommerce.Dominio.csproj" />
+  <Project Path="ProyectoEcommerce.LogicaNegocio/ProyectoEcommerce.LogicaNegocio.csproj" />
+  <Project Path="ProyectoEcommerce.Recursos/ProyectoEcommerce.Recursos.csproj" />
+  <Project Path="ProyectoEcommerce.Utilidades/ProyectoEcommerce.Utilidades.csproj" />
+  <Project Path="ProyectoEcommerce/ProyectoEcommerce.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+</Solution>
+
