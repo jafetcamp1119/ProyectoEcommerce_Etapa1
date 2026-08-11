@@ -35,6 +35,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         private RepositorioAD<OrdenDetalle>? _TOrdenDetalle;
         private RepositorioAD<Carrito>? _TCarrito;
         private RepositorioAD<CarritoDetalle>? _TCarritoDetalle;
+        private RepositorioAD<Descuento>? _TDescuento;
 
         #endregion
 
@@ -91,6 +92,9 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
         public IRepositorioAD<CarritoDetalle> TCarritoDetalle =>
             _TCarritoDetalle ??= new RepositorioAD<CarritoDetalle>(_Contexto);
+
+        public IRepositorioAD<Descuento> TDescuento =>
+            _TDescuento ??= new RepositorioAD<Descuento>(_Contexto);
 
         public int Completar()
         {

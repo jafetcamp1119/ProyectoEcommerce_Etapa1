@@ -92,18 +92,22 @@ public class FacturaLN : IFacturaLN
         {
             tabla.ColumnsDefinition(columnas =>
             {
-                columnas.RelativeColumn(3.1f);
-                columnas.ConstantColumn(42);
-                columnas.RelativeColumn(1.25f);
-                columnas.RelativeColumn(1.05f);
-                columnas.RelativeColumn(1.3f);
+                columnas.RelativeColumn(2.3f);
+                columnas.ConstantColumn(34);
+                columnas.ConstantColumn(70);
+                columnas.ConstantColumn(48);
+                columnas.ConstantColumn(70);
+                columnas.ConstantColumn(48);
+                columnas.ConstantColumn(75);
             });
 
             tabla.Header(encabezado =>
             {
                 Encabezado(encabezado.Cell(), "Producto");
                 Encabezado(encabezado.Cell().AlignCenter(), "Cant.");
-                Encabezado(encabezado.Cell().AlignRight(), "Precio final");
+                Encabezado(encabezado.Cell().AlignRight(), "Precio original");
+                Encabezado(encabezado.Cell().AlignRight(), "Desc.");
+                Encabezado(encabezado.Cell().AlignRight(), "Precio aplicado");
                 Encabezado(encabezado.Cell().AlignRight(), "Imp.");
                 Encabezado(encabezado.Cell().AlignRight(), "Total");
             });
@@ -113,6 +117,8 @@ public class FacturaLN : IFacturaLN
                 Celda(tabla.Cell(), item.Nombre);
                 Celda(tabla.Cell().AlignCenter(), item.Cantidad.ToString(Cultura));
                 Celda(tabla.Cell().AlignRight(), Moneda(item.PrecioUnitario));
+                Celda(tabla.Cell().AlignRight(), $"{item.PorcentajeDescuento:N2}%");
+                Celda(tabla.Cell().AlignRight(), Moneda(PrecioAplicado(item)));
                 Celda(tabla.Cell().AlignRight(), $"{item.PorcentajeImpuesto:N2}%");
                 Celda(tabla.Cell().AlignRight(), Moneda(item.TotalLinea));
             }
@@ -150,5 +156,7 @@ public class FacturaLN : IFacturaLN
         celda.BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(7).PaddingHorizontal(5).Text(texto);
 
     private static string Moneda(decimal valor) => $"CRC {valor.ToString("N2", Cultura)}";
+    private static decimal PrecioAplicado(TFacturaItem item) =>
+        Math.Round(item.PrecioUnitario * (1m - item.PorcentajeDescuento / 100m), 2, MidpointRounding.AwayFromZero);
     private static string EtiquetaMetodo(string metodo) => metodo.Equals("TARJETA", StringComparison.OrdinalIgnoreCase) ? "Tarjeta" : "Efectivo";
 }

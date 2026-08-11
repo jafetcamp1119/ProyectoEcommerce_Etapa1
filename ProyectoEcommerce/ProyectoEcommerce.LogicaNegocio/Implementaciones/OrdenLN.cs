@@ -204,13 +204,14 @@ public class OrdenLN : IOrdenLN
             var fecha = DateTime.UtcNow;
 
             var insertarOrden = CrearComando(conexion, transaccion, """
-                INSERT INTO dbo.Ordenes (UsuarioId, FechaOrden, Estado, TipoOrden, DireccionEnvio, Moneda, Total)
+                INSERT INTO dbo.Ordenes (UsuarioId, FechaOrden, Estado, TipoOrden, DireccionEnvio, Moneda, Total, DescuentoTotal)
                 OUTPUT INSERTED.OrdenId, INSERTED.FechaOrden
-                VALUES (@UsuarioId, SYSDATETIME(), N'PENDIENTE', N'VENTA', @DireccionEnvio, 'CRC', @Total);
+                VALUES (@UsuarioId, SYSDATETIME(), N'PENDIENTE', N'VENTA', @DireccionEnvio, 'CRC', @Total, @DescuentoTotal);
                 """);
             insertarOrden.Parameters.AddWithValue("@UsuarioId", usuarioId);
             insertarOrden.Parameters.AddWithValue("@DireccionEnvio", datos.DireccionEnvio);
             insertarOrden.Parameters.Add(DecimalParametro("@Total", total));
+            insertarOrden.Parameters.Add(DecimalParametro("@DescuentoTotal", descuentos));
             int ordenId;
             await using (var lector = await insertarOrden.ExecuteReaderAsync(cancellationToken))
             {
@@ -339,34 +340,75 @@ public class OrdenLN : IOrdenLN
             """);
         comando.Parameters.AddWithValue("@CarritoId", carritoId);
         var items = new List<TFacturaItemCompra>();
-        await using var lector = await comando.ExecuteReaderAsync(cancellationToken);
-        while (await lector.ReadAsync(cancellationToken))
+        await using (var lector = await comando.ExecuteReaderAsync(cancellationToken))
         {
-            var cantidad = lector.GetInt32(2);
-            var precio = lector.GetDecimal(3);
-            var porcentajeImpuesto = lector.GetDecimal(6);
-            const decimal porcentajeDescuento = 0m;
-            // PrecioVenta es el precio final; el impuesto se extrae para el desglose sin sumarlo otra vez.
-            var desglose = CalculoPrecioIncluido.Calcular(
-                precio,
-                cantidad,
-                porcentajeImpuesto,
-                porcentajeDescuento);
-            items.Add(new TFacturaItemCompra
+            while (await lector.ReadAsync(cancellationToken))
             {
-                ProductoId = lector.GetInt32(0),
-                Nombre = lector.GetString(1),
-                Cantidad = cantidad,
-                PrecioUnitario = precio,
-                StockDisponible = lector.GetInt32(4),
-                ProductoActivo = lector.GetBoolean(5),
-                PorcentajeImpuesto = porcentajeImpuesto,
-                PorcentajeDescuento = porcentajeDescuento,
-                Subtotal = desglose.Subtotal,
-                Impuestos = desglose.Impuestos,
-                Descuento = desglose.Descuento,
-                TotalLinea = desglose.Total
-            });
+                var cantidad = lector.GetInt32(2);
+                var precio = lector.GetDecimal(3);
+                var porcentajeImpuesto = lector.GetDecimal(6);
+                items.Add(new TFacturaItemCompra
+                {
+                    ProductoId = lector.GetInt32(0),
+                    Nombre = lector.GetString(1),
+                    Cantidad = cantidad,
+                    PrecioUnitario = precio,
+                    StockDisponible = lector.GetInt32(4),
+                    ProductoActivo = lector.GetBoolean(5),
+                    PorcentajeImpuesto = porcentajeImpuesto,
+                    PorcentajeDescuento = 0m
+                });
+            }
+        }
+
+        var candidatosPorProducto = items.ToDictionary(x => x.ProductoId, _ => new List<TDescuentoCandidato>());
+        var descuentosComando = CrearComando(conexion, transaccion, """
+            SELECT cd.ProductoId, d.DescuentoId, d.TipoDescuento, d.Nombre, d.Porcentaje
+            FROM dbo.CarritoDetalle cd
+            INNER JOIN dbo.Productos p ON p.ProductoId = cd.ProductoId
+            INNER JOIN dbo.Categorias c ON c.CategoriaId = p.CategoriaId
+            INNER JOIN dbo.Descuentos d ON
+                (d.TipoDescuento IN (N'PRODUCTO', N'PROMOCIONAL') AND d.ProductoId = p.ProductoId) OR
+                (d.TipoDescuento = N'CATEGORIA' AND d.CategoriaId = p.CategoriaId) OR
+                (d.TipoDescuento = N'FAMILIA' AND d.FamiliaId = c.FamiliaId)
+            WHERE cd.CarritoId = @CarritoId
+              AND d.Activo = 1
+              AND d.FechaInicio <= SYSDATETIME()
+              AND d.FechaFin >= SYSDATETIME();
+            """);
+        descuentosComando.Parameters.AddWithValue("@CarritoId", carritoId);
+        await using (var lectorDescuentos = await descuentosComando.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await lectorDescuentos.ReadAsync(cancellationToken))
+            {
+                var productoId = lectorDescuentos.GetInt32(0);
+                if (!candidatosPorProducto.TryGetValue(productoId, out var candidatos)) continue;
+                candidatos.Add(new TDescuentoCandidato
+                {
+                    DescuentoId = lectorDescuentos.GetInt32(1),
+                    TipoDescuento = lectorDescuentos.GetString(2),
+                    Nombre = lectorDescuentos.GetString(3),
+                    Porcentaje = lectorDescuentos.GetDecimal(4)
+                });
+            }
+        }
+
+        foreach (var item in items)
+        {
+            var descuento = ResolucionDescuentos.Calcular(
+                item.ProductoId,
+                item.PrecioUnitario,
+                candidatosPorProducto[item.ProductoId]);
+            var desglose = CalculoPrecioIncluido.Calcular(
+                item.PrecioUnitario,
+                item.Cantidad,
+                item.PorcentajeImpuesto,
+                descuento.Porcentaje);
+            item.PorcentajeDescuento = descuento.Porcentaje;
+            item.Subtotal = desglose.Subtotal;
+            item.Impuestos = desglose.Impuestos;
+            item.Descuento = desglose.Descuento;
+            item.TotalLinea = desglose.Total;
         }
         return items;
     }

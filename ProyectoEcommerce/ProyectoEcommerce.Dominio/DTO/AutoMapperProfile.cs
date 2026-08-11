@@ -55,6 +55,12 @@ namespace ProyectoEcommerce.Dominio.DTO
             CreateMap<TOrden, Orden>().ReverseMap();
             CreateMap<TOrdenDetalle, OrdenDetalle>().ReverseMap();
             CreateMap<TProductoImagen, ProductoImagen>().ReverseMap();
+            CreateMap<TDescuento, Descuento>()
+                .ForMember(x => x.DescuentoId, o => o.Ignore())
+                .ForMember(x => x.MontoFijo, o => o.Ignore())
+                .ForMember(x => x.Producto, o => o.Ignore())
+                .ForMember(x => x.Categoria, o => o.Ignore())
+                .ForMember(x => x.Familia, o => o.Ignore());
         }
     }
 }

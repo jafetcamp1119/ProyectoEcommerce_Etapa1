@@ -17,11 +17,13 @@ public class CarritoLN : ICarritoLN
     private const string EstadoActivo = "ACTIVO";
     private readonly IUnidadTrabajoEF _unidadDeTrabajo;
     private readonly ILogger<CarritoLN> _logger;
+    private readonly IDescuentoLN _descuentoLN;
 
-    public CarritoLN(IUnidadTrabajoEF unidadDeTrabajo, ILogger<CarritoLN> logger)
+    public CarritoLN(IUnidadTrabajoEF unidadDeTrabajo, ILogger<CarritoLN> logger, IDescuentoLN descuentoLN)
     {
         _unidadDeTrabajo = unidadDeTrabajo;
         _logger = logger;
+        _descuentoLN = descuentoLN;
     }
 
     /// <summary>Agrega un producto o acumula su cantidad después de validar usuario, producto y stock.</summary>
@@ -137,18 +139,26 @@ public class CarritoLN : ICarritoLN
 
             var carrito = respuesta.Data;
             var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
+            var descuentosRespuesta = await _descuentoLN.ObtenerMejoresDescuentosAsync(
+                carrito.Detalles.Select(x => x.ProductoId));
+            if (!string.IsNullOrEmpty(descuentosRespuesta.Error) || descuentosRespuesta.Data == null)
+                return Error<TCarritoActual>(Mensajes.ErrorCarrito);
+            var descuentos = descuentosRespuesta.Data;
             var items = carrito.Detalles
                 .OrderBy(x => x.Producto.Nombre)
                 .Select(x =>
                 {
                     var precio = x.Producto.PrecioVenta;
+                    var descuento = descuentos.TryGetValue(x.ProductoId, out var resuelto)
+                        ? resuelto
+                        : ResolucionDescuentos.Calcular(x.ProductoId, precio, []);
                     var impuesto = x.Producto.Impuesto;
                     var porcentaje = impuesto.Activo && impuesto.FechaInicio <= hoy &&
                         (!impuesto.FechaFin.HasValue || impuesto.FechaFin.Value >= hoy)
                         ? impuesto.Porcentaje
                         : 0m;
                     // El precio ya contiene el impuesto; la base se calcula solo para mostrar el desglose.
-                    var desglose = CalculoPrecioIncluido.Calcular(precio, x.Cantidad, porcentaje);
+                    var desglose = CalculoPrecioIncluido.Calcular(precio, x.Cantidad, porcentaje, descuento.Porcentaje);
                     return new TCarritoItem
                     {
                         CarritoDetalleId = x.CarritoDetalleId,
@@ -156,8 +166,12 @@ public class CarritoLN : ICarritoLN
                         Nombre = x.Producto.Nombre,
                         Cantidad = x.Cantidad,
                         StockDisponible = x.Producto.Stock,
-                        PrecioUnitario = precio,
+                        PrecioOriginal = precio,
+                        PrecioUnitario = descuento.PrecioFinal,
                         PorcentajeImpuesto = porcentaje,
+                        PorcentajeDescuento = descuento.Porcentaje,
+                        TipoDescuento = descuento.TipoDescuento,
+                        NombreDescuento = descuento.Nombre,
                         Subtotal = desglose.Subtotal,
                         Impuestos = desglose.Impuestos,
                         Descuentos = desglose.Descuento,

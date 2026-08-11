@@ -295,8 +295,9 @@ BEGIN
         ProductoId INT NULL,
         CategoriaId INT NULL,
         FamiliaId INT NULL,
-        EsPromocional BIT NOT NULL CONSTRAINT DF_Descuentos_EsPromocional DEFAULT (0),
+        TipoDescuento NVARCHAR(20) NOT NULL,
         Porcentaje DECIMAL(5,2) NOT NULL,
+        MontoFijo DECIMAL(18,2) NULL,
         FechaInicio DATETIME2(3) NOT NULL,
         FechaFin DATETIME2(3) NOT NULL,
         Activo BIT NOT NULL CONSTRAINT DF_Descuentos_Activo DEFAULT (1),
@@ -305,12 +306,12 @@ BEGIN
         CONSTRAINT FK_Descuentos_Familias FOREIGN KEY (FamiliaId) REFERENCES dbo.FamiliasProducto (FamiliaId),
         CONSTRAINT CK_Descuentos_Porcentaje CHECK (Porcentaje > 0 AND Porcentaje <= 100),
         CONSTRAINT CK_Descuentos_Fechas CHECK (FechaFin >= FechaInicio),
-        CONSTRAINT CK_Descuentos_Ambito CHECK
+        CONSTRAINT CK_Descuentos_Tipo CHECK (TipoDescuento IN (N'PRODUCTO', N'CATEGORIA', N'FAMILIA', N'PROMOCIONAL')),
+        CONSTRAINT CK_Descuentos_Destino CHECK
         (
-            (CASE WHEN ProductoId IS NULL THEN 0 ELSE 1 END) +
-            (CASE WHEN CategoriaId IS NULL THEN 0 ELSE 1 END) +
-            (CASE WHEN FamiliaId IS NULL THEN 0 ELSE 1 END) +
-            (CASE WHEN EsPromocional = 1 THEN 1 ELSE 0 END) = 1
+            (TipoDescuento = N'FAMILIA' AND FamiliaId IS NOT NULL AND CategoriaId IS NULL AND ProductoId IS NULL) OR
+            (TipoDescuento = N'CATEGORIA' AND FamiliaId IS NULL AND CategoriaId IS NOT NULL AND ProductoId IS NULL) OR
+            (TipoDescuento IN (N'PRODUCTO', N'PROMOCIONAL') AND FamiliaId IS NULL AND CategoriaId IS NULL AND ProductoId IS NOT NULL)
         )
     );
     CREATE INDEX IX_Descuentos_ProductoId ON dbo.Descuentos (ProductoId) WHERE ProductoId IS NOT NULL;

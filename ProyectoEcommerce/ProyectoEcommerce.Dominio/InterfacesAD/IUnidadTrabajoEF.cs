@@ -23,6 +23,7 @@ namespace ProyectoEcommerce.Dominio.InterfacesAD
         IRepositorioAD<OrdenDetalle> TOrdenDetalle { get; }
         IRepositorioAD<Carrito> TCarrito { get; }
         IRepositorioAD<CarritoDetalle> TCarritoDetalle { get; }
+        IRepositorioAD<Descuento> TDescuento { get; }
         /// <summary>Guarda los cambios pendientes sin cerrar la unidad de trabajo.</summary>
         int Completar();
         /// <summary>Guarda y confirma la transacción iniciada.</summary>

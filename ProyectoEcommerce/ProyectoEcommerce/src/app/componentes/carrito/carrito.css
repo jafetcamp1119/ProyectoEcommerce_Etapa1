@@ -11,6 +11,9 @@
 .item-visual, .empty-initials { display: grid; place-items: center; color: white; background: linear-gradient(135deg, #2f6fed, #31a8a0); font-weight: 800; letter-spacing: .08em; }
 .item-visual { width: 82px; aspect-ratio: 1; border-radius: .75rem; font-size: 1.25rem; }
 .item-info { min-width: 0; }.item-info h2 { margin: 0; font-size: 1.05rem; }.item-info h2 a { color: var(--cui-body-color); text-decoration: none; }.item-info p { margin: .3rem 0 0; color: var(--cui-secondary-color); }
+.item-info .cart-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: .3rem .55rem; }
+.cart-price strong { color: var(--cui-body-color); }
+.cart-price span { padding: .2rem .42rem; border-radius: 999px; background: #d1fadf; color: #067647; font-size: .68rem; font-weight: 800; }
 .status-warning { display: inline-block; margin-top: .35rem; color: var(--cui-warning); font-size: .75rem; font-weight: 700; }
 .quantity-actions { display: flex; align-items: center; flex-direction: column; gap: .4rem; }
 .quantity-control { display: grid; grid-template-columns: 2.15rem 4rem 2.15rem; overflow: hidden; border: 1px solid var(--cui-border-color); border-radius: .65rem; }

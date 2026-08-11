@@ -33,6 +33,7 @@ public partial class ProyectoEcommerceContext : DbContext
     public virtual DbSet<OrdenDetalle> OrdenDetalles { get; set; }
     public virtual DbSet<Carrito> Carritos { get; set; }
     public virtual DbSet<CarritoDetalle> CarritoDetalles { get; set; }
+    public virtual DbSet<Descuento> Descuentos { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -219,6 +220,7 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.Property(e => e.DireccionEnvio).HasMaxLength(500);
             entity.Property(e => e.Moneda).HasMaxLength(3).IsUnicode(false).IsFixedLength().HasDefaultValue("CRC", "DF_Ordenes_Moneda");
             entity.Property(e => e.Total).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.DescuentoTotal).HasColumnType("decimal(18, 2)").HasDefaultValue(0m, "DF_Ordenes_DescuentoTotal");
             entity.HasOne(d => d.Usuario).WithMany(p => p.Ordenes)
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -275,6 +277,28 @@ public partial class ProyectoEcommerceContext : DbContext
                 .HasForeignKey(e => e.ProductoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CarritoDetalle_Productos");
+        });
+
+        modelBuilder.Entity<Descuento>(entity =>
+        {
+            entity.HasKey(e => e.DescuentoId).HasName("PK_Descuentos");
+            entity.ToTable("Descuentos");
+            entity.HasIndex(e => e.ProductoId, "IX_Descuentos_ProductoId").HasFilter("[ProductoId] IS NOT NULL");
+            entity.HasIndex(e => e.CategoriaId, "IX_Descuentos_CategoriaId").HasFilter("[CategoriaId] IS NOT NULL");
+            entity.HasIndex(e => e.FamiliaId, "IX_Descuentos_FamiliaId").HasFilter("[FamiliaId] IS NOT NULL");
+            entity.Property(e => e.Nombre).HasMaxLength(150);
+            entity.Property(e => e.TipoDescuento).HasMaxLength(20);
+            entity.Property(e => e.Porcentaje).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.MontoFijo).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.FechaInicio).HasPrecision(3);
+            entity.Property(e => e.FechaFin).HasPrecision(3);
+            entity.Property(e => e.Activo).HasDefaultValue(true, "DF_Descuentos_Activo");
+            entity.HasOne(e => e.Producto).WithMany(e => e.Descuentos)
+                .HasForeignKey(e => e.ProductoId).HasConstraintName("FK_Descuentos_Productos");
+            entity.HasOne(e => e.Categoria).WithMany(e => e.Descuentos)
+                .HasForeignKey(e => e.CategoriaId).HasConstraintName("FK_Descuentos_Categorias");
+            entity.HasOne(e => e.Familia).WithMany(e => e.Descuentos)
+                .HasForeignKey(e => e.FamiliaId).HasConstraintName("FK_Descuentos_Familias");
         });
 
         OnModelCreatingPartial(modelBuilder);

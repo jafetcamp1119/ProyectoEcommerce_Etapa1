@@ -25,8 +25,12 @@ export interface ICarritoItem {
   nombre: string;
   cantidad: number;
   stockDisponible: number;
+  precioOriginal: number;
   precioUnitario: number;
   porcentajeImpuesto: number;
+  porcentajeDescuento: number;
+  tipoDescuento: string | null;
+  nombreDescuento: string | null;
   subtotal: number;
   impuestos: number;
   descuentos: number;

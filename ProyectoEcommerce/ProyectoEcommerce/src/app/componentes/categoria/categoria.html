@@ -53,7 +53,7 @@
               @if (!familiaId) { <td>{{ nombreFamilia(categoria.familiaId) }}</td> }
               <td>{{ categoria.descripcion || '—' }}</td>
               <td><span class="badge" [class.text-bg-success]="categoria.activo" [class.text-bg-secondary]="!categoria.activo">{{ categoria.activo ? 'Activa' : 'Inactiva' }}</span></td>
-              <td class="text-end actions"><button class="btn btn-sm btn-outline-secondary" type="button" (click)="editar(categoria)">Editar</button><button class="btn btn-sm btn-outline-secondary" type="button" (click)="cambiarEstado(categoria)">{{ categoria.activo ? 'Desactivar' : 'Activar' }}</button></td>
+              <td class="text-end actions"><a class="btn btn-sm btn-outline-primary" routerLink="/descuentos" [queryParams]="{ tipo: 'CATEGORIA', categoriaId: categoria.categoriaId }">Descuento</a><button class="btn btn-sm btn-outline-secondary" type="button" (click)="editar(categoria)">Editar</button><button class="btn btn-sm btn-outline-secondary" type="button" (click)="cambiarEstado(categoria)">{{ categoria.activo ? 'Desactivar' : 'Activar' }}</button></td>
             </tr>
           }
         </tbody>

@@ -11,6 +11,7 @@ public partial class Orden
     public string? DireccionEnvio { get; set; }
     public string Moneda { get; set; } = null!;
     public decimal? Total { get; set; }
+    public decimal DescuentoTotal { get; set; }
     public virtual Usuario Usuario { get; set; } = null!;
     public virtual ICollection<OrdenDetalle> OrdenDetalles { get; set; } = new List<OrdenDetalle>();
 }

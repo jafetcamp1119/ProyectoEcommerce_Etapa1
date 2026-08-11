@@ -11,4 +11,5 @@ public class TOrden
     public string? DireccionEnvio { get; set; }
     public string Moneda { get; set; } = null!;
     public decimal? Total { get; set; }
+    public decimal DescuentoTotal { get; set; }
 }

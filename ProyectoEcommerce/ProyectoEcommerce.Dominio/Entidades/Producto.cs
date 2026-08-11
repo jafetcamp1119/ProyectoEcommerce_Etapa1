@@ -20,4 +20,5 @@ public partial class Producto
     public virtual ICollection<ProductoImagen> Imagenes { get; set; } = new List<ProductoImagen>();
     public virtual ICollection<OrdenDetalle> OrdenDetalles { get; set; } = new List<OrdenDetalle>();
     public virtual ICollection<CarritoDetalle> CarritoDetalles { get; set; } = new List<CarritoDetalle>();
+    public virtual ICollection<Descuento> Descuentos { get; set; } = new List<Descuento>();
 }

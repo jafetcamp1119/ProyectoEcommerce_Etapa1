@@ -1,0 +1,34 @@
+:host { display: block; }
+.discount-page { display: grid; gap: 1.5rem; }
+.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.page-heading h1, .discount-form h2 { margin: .2rem 0; font-weight: 800; }
+.page-heading p { margin: 0; color: var(--cui-secondary-color); }
+.eyebrow { color: var(--cui-primary); font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.discount-form, .discount-table-wrap, .state-card { background: var(--cui-body-bg); border: 1px solid var(--cui-border-color); border-radius: 1rem; box-shadow: 0 12px 32px rgba(15, 23, 42, .06); }
+.discount-form { padding: 1.4rem; }
+.discount-form > header, .discount-form > footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.discount-form > footer { justify-content: flex-end; margin-top: 1.25rem; }
+.close-form { border: 0; background: transparent; color: var(--cui-secondary-color); font-size: 1.8rem; }
+.form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.2rem; }
+.field { display: grid; align-content: start; gap: .35rem; }
+.field-wide { grid-column: span 2; }
+.field label { font-weight: 700; }
+.field small { color: var(--cui-danger); }
+.percent-input { display: flex; align-items: center; gap: .55rem; }
+.percent-input span { font-weight: 800; }
+.active-check { display: flex; align-items: center; gap: .55rem; font-weight: 700; }
+.discount-table-wrap { overflow: hidden; }
+.table { margin: 0; }
+.table th { background: color-mix(in srgb, var(--cui-primary) 9%, var(--cui-body-bg)); padding: 1rem; white-space: nowrap; }
+.table td { padding: 1rem; }
+.table td small { display: block; color: var(--cui-secondary-color); }
+.discount-value { color: var(--cui-success); font-weight: 800; }
+.status-badge { display: inline-flex; padding: .35rem .65rem; border-radius: 999px; font-size: .78rem; font-weight: 800; }
+.status-vigente { color: #067647; background: #d1fadf; }
+.status-programado { color: #175cd3; background: #dbeafe; }
+.status-finalizado { color: #475467; background: #eaecf0; }
+.status-inactivo { color: #b42318; background: #fee4e2; }
+.actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.state-card { padding: 2rem; text-align: center; color: var(--cui-secondary-color); }
+@media (max-width: 900px) { .form-grid { grid-template-columns: 1fr 1fr; } .field-wide { grid-column: span 2; } }
+@media (max-width: 600px) { .page-heading { align-items: stretch; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } .field-wide { grid-column: auto; } }

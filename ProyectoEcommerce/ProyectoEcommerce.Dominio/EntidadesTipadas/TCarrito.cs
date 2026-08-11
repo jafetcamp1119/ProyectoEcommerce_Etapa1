@@ -53,8 +53,12 @@ public class TCarritoItem
     public string Nombre { get; set; } = string.Empty;
     public int Cantidad { get; set; }
     public int StockDisponible { get; set; }
+    public decimal PrecioOriginal { get; set; }
     public decimal PrecioUnitario { get; set; }
     public decimal PorcentajeImpuesto { get; set; }
+    public decimal PorcentajeDescuento { get; set; }
+    public string? TipoDescuento { get; set; }
+    public string? NombreDescuento { get; set; }
     public decimal Subtotal { get; set; }
     public decimal Impuestos { get; set; }
     public decimal Descuentos { get; set; }

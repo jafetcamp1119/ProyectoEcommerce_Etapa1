@@ -25,7 +25,11 @@
             <div class="item-visual" aria-hidden="true">{{ iniciales(item.nombre) }}</div>
             <div class="item-info">
               <h2><a [routerLink]="['/productos', item.productoId]">{{ item.nombre }}</a></h2>
-              <p>{{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }} por unidad</p>
+              @if (item.porcentajeDescuento > 0) {
+                <p class="cart-price"><del>{{ item.precioOriginal | currency:'CRC':'symbol':'1.2-2' }}</del><strong>{{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }} por unidad</strong><span>{{ item.tipoDescuento === 'PROMOCIONAL' ? 'PROMO ' : '' }}-{{ item.porcentajeDescuento }}%</span></p>
+              } @else {
+                <p>{{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }} por unidad</p>
+              }
               @if (!item.productoActivo || !item.stockSuficiente) { <span class="status-warning">Requiere revisión de disponibilidad</span> }
             </div>
             <div class="quantity-actions">

@@ -63,6 +63,7 @@ builder.Services.AddScoped<IOrdenLN, OrdenLN>();
 builder.Services.AddScoped<ICarritoLN, CarritoLN>();
 builder.Services.AddScoped<IFacturaLN, FacturaLN>();
 builder.Services.AddScoped<ICorreoFacturaLN, CorreoFacturaLN>();
+builder.Services.AddScoped<IDescuentoLN, DescuentoLN>();
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 // La clave de firma se obtiene de los proveedores de configuración. Nunca se genera una clave nueva

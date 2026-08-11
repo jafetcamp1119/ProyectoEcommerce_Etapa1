@@ -8,4 +8,5 @@ public partial class FamiliaProducto
     public string? Descripcion { get; set; }
     public bool Activo { get; set; }
     public virtual ICollection<Categoria> Categorias { get; set; } = new List<Categoria>();
+    public virtual ICollection<Descuento> Descuentos { get; set; } = new List<Descuento>();
 }

@@ -35,6 +35,7 @@ public class TProductoCatalogo
     public bool Disponible { get; set; }
     public string EstadoStock { get; set; } = string.Empty;
     public TProductoImagen? ImagenPrincipal { get; set; }
+    public TDescuentoAplicado Descuento { get; set; } = new();
 }
 
 /// <summary>Listas auxiliares de familias, categorías e impuestos.</summary>

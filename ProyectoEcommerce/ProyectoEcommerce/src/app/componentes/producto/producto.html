@@ -83,7 +83,18 @@
             <div class="taxonomy"><span>{{ producto.familiaNombre }}</span><span>{{ producto.categoriaNombre }}</span></div>
             <h2><a [routerLink]="['/productos', producto.productoId]">{{ producto.nombre }}</a></h2>
             <p class="description">{{ producto.descripcion || 'Sin descripción disponible.' }}</p>
-            <div class="price-row"><strong>{{ producto.precioVenta | currency:'CRC':'symbol':'1.2-2' }}</strong><span class="stock" [class]="claseStock(producto.estadoStock)">{{ producto.estadoStock }}</span></div>
+            <div class="price-row">
+              <div class="price-block">
+                @if (producto.descuento.tieneDescuento) {
+                  <del>{{ producto.descuento.precioOriginal | currency:'CRC':'symbol':'1.2-2' }}</del>
+                  <strong>{{ producto.descuento.precioFinal | currency:'CRC':'symbol':'1.2-2' }}</strong>
+                  <span class="discount-badge">{{ producto.descuento.tipoDescuento === 'PROMOCIONAL' ? 'PROMO ' : '' }}-{{ producto.descuento.porcentaje }}%</span>
+                } @else {
+                  <strong>{{ producto.precioVenta | currency:'CRC':'symbol':'1.2-2' }}</strong>
+                }
+              </div>
+              <span class="stock" [class]="claseStock(producto.estadoStock)">{{ producto.estadoStock }}</span>
+            </div>
             @if (esAdmin) {
               <dl class="admin-data"><div><dt>Código</dt><dd>{{ producto.codigo }}</dd></div><div><dt>Stock</dt><dd>{{ producto.stock }} / mín. {{ producto.stockMinimo }}</dd></div><div><dt>Costo</dt><dd>{{ producto.costo | currency:'CRC':'symbol':'1.2-2' }}</dd></div><div><dt>Creación</dt><dd>{{ producto.fechaCreacion | date:'dd/MM/yyyy' }}</dd></div></dl>
             }
@@ -91,7 +102,7 @@
               <a class="btn btn-primary" [routerLink]="['/productos', producto.productoId]">Ver detalle</a>
               @if (esCliente) { <button class="btn btn-outline-primary" type="button" [disabled]="!producto.disponible || procesandoCarrito.has(producto.productoId)" (click)="agregarAlCarrito(producto)">{{ !producto.disponible ? 'Agotado' : procesandoCarrito.has(producto.productoId) ? 'Agregando…' : 'Agregar al carrito' }}</button> }
             </div>
-            @if (esAdmin) { <div class="admin-actions"><button class="btn btn-outline-primary" type="button" (click)="editar(producto)">Editar</button><button class="btn btn-outline-secondary" type="button" [disabled]="guardando" (click)="cambiarEstado(producto)">{{ producto.activo ? 'Desactivar' : 'Activar' }}</button></div> }
+            @if (esAdmin) { <div class="admin-actions"><a class="btn btn-outline-primary" routerLink="/descuentos" [queryParams]="{ tipo: 'PRODUCTO', productoId: producto.productoId }">Descuento</a><button class="btn btn-outline-primary" type="button" (click)="editar(producto)">Editar</button><button class="btn btn-outline-secondary" type="button" [disabled]="guardando" (click)="cambiarEstado(producto)">{{ producto.activo ? 'Desactivar' : 'Activar' }}</button></div> }
           </div>
         </article>
       }

@@ -15,7 +15,15 @@
         <div class="badges"><span>{{ producto.familiaNombre }}</span><span>{{ producto.categoriaNombre }}</span>@if (esAdmin) { <span [class.inactive]="producto.activo === false">{{ producto.activo ? 'Activo' : 'Inactivo' }}</span> }</div>
         <h1>{{ producto.nombre }}</h1>
         <p class="description">{{ producto.descripcion || 'Este producto no tiene una descripción registrada.' }}</p>
-        <strong class="price">{{ producto.precioVenta | currency:'CRC':'symbol':'1.2-2' }}</strong>
+        @if (producto.descuento.tieneDescuento) {
+          <div class="detail-price">
+            <span>Antes <del>{{ producto.descuento.precioOriginal | currency:'CRC':'symbol':'1.2-2' }}</del></span>
+            <strong>Ahora {{ producto.descuento.precioFinal | currency:'CRC':'symbol':'1.2-2' }}</strong>
+            <em>{{ producto.descuento.tipoDescuento === 'PROMOCIONAL' ? 'PROMO ' : '' }}-{{ producto.descuento.porcentaje }}%</em>
+          </div>
+        } @else {
+          <strong class="price">{{ producto.precioVenta | currency:'CRC':'symbol':'1.2-2' }}</strong>
+        }
         <div class="availability" [class.available]="producto.estadoStock === 'Disponible'" [class.low]="producto.estadoStock === 'Stock bajo'" [class.out]="producto.estadoStock === 'Agotado'"><span aria-hidden="true"></span>{{ producto.estadoStock }}</div>
         @if (esCliente) {
           <div class="purchase-actions"><button class="btn btn-primary" type="button" [disabled]="!producto.disponible || procesandoCarrito" (click)="agregarAlCarrito()">{{ !producto.disponible ? 'Agotado' : procesandoCarrito ? 'Agregando…' : 'Agregar al carrito' }}</button><a class="btn btn-outline-light" routerLink="/carrito">Ver carrito</a></div>

@@ -2,6 +2,7 @@ import { ICategoria } from './ICategoria';
 import { IFamiliaProducto } from './IFamiliaProducto';
 import { IImpuesto } from './IImpuesto';
 import { IProductoImagen } from './IProductoImagen';
+import { IDescuentoAplicado } from './IDescuento';
 
 /** Información de producto visible en catálogo y detalle. */
 export interface IProductoCatalogo {
@@ -20,6 +21,7 @@ export interface IProductoCatalogo {
   disponible: boolean;
   estadoStock: string;
   imagenPrincipal: IProductoImagen | null;
+  descuento: IDescuentoAplicado;
 }
 
 export interface IProducto extends IProductoCatalogo {

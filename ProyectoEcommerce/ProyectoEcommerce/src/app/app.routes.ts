@@ -17,6 +17,7 @@ import { clienteGuard } from './guards/cliente.guard';
 import { Checkout } from './componentes/checkout/checkout';
 import { OrdenDetalle } from './componentes/orden-detalle/orden-detalle';
 import { CategoriasCliente } from './componentes/categorias-cliente/categorias-cliente';
+import { Descuento } from './componentes/descuento/descuento';
 
 /**
  * Define la navegación protegida y separa las pantallas de Cliente de las administrativas.
@@ -34,6 +35,7 @@ export const routes: Routes = [
       { path: 'categorias/:familiaId', component: Categoria, canActivate: [adminGuard] },
       { path: 'categorias', component: Categoria, canActivate: [adminGuard] },
       { path: 'impuestos', component: Impuesto, canActivate: [adminGuard] },
+      { path: 'descuentos', component: Descuento, canActivate: [adminGuard] },
       // El Cliente recorre familias → categorías → productos; las búsquedas conservan su alcance.
       { path: 'productos', component: Producto },
       { path: 'productos/buscar', component: Producto, canActivate: [clienteGuard], data: { alcanceCliente: 'global' } },

@@ -36,4 +36,5 @@ public class TProducto
     public bool Disponible { get; set; }
     public string EstadoStock { get; set; } = string.Empty;
     public TProductoImagen? ImagenPrincipal { get; set; }
+    public TDescuentoAplicado Descuento { get; set; } = new();
 }

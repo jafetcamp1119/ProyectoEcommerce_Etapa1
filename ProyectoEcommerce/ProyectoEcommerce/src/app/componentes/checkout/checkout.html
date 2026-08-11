@@ -80,7 +80,7 @@
           </dl>
           <div class="order-items">
             @for (item of preparacion.carrito.items; track item.carritoDetalleId) {
-              <article><div><strong>{{ item.nombre }}</strong><span>Cantidad: {{ item.cantidad }} · Precio unitario: {{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }}</span></div><strong>{{ item.totalLinea | currency:'CRC':'symbol':'1.2-2' }}</strong></article>
+              <article><div><strong>{{ item.nombre }}</strong><span>Cantidad: {{ item.cantidad }} · Precio unitario: {{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }} @if (item.porcentajeDescuento > 0) { · Descuento: {{ item.porcentajeDescuento }}% }</span></div><strong>{{ item.totalLinea | currency:'CRC':'symbol':'1.2-2' }}</strong></article>
             }
           </div>
           <dl class="totals">

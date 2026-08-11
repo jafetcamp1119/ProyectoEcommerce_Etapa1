@@ -60,6 +60,7 @@
             <p>{{ familia.descripcion || 'Sin descripción.' }}</p>
             <div class="card-actions">
               <a class="btn btn-primary btn-sm" [routerLink]="['/categorias', familia.familiaId]">Ver categorías</a>
+              <a class="btn btn-outline-primary btn-sm" routerLink="/descuentos" [queryParams]="{ tipo: 'FAMILIA', familiaId: familia.familiaId }">Descuento</a>
               <button class="btn btn-outline-secondary btn-sm" type="button" (click)="editar(familia)">Editar</button>
               <button class="btn btn-outline-secondary btn-sm" type="button" (click)="cambiarEstado(familia)">
                 {{ familia.activo ? 'Desactivar' : 'Activar' }}

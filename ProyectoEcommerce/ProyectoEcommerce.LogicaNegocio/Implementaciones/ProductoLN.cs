@@ -19,12 +19,14 @@ public class ProductoLN : IProductoLN
     private readonly IUnidadTrabajoEF _unidadDeTrabajo;
     private readonly ILogger<ProductoLN> _logger;
     private readonly IMapper _mapper;
+    private readonly IDescuentoLN _descuentoLN;
 
-    public ProductoLN(IUnidadTrabajoEF unidadTrabajo, ILogger<ProductoLN> logger, IMapper mapper)
+    public ProductoLN(IUnidadTrabajoEF unidadTrabajo, ILogger<ProductoLN> logger, IMapper mapper, IDescuentoLN descuentoLN)
     {
         _unidadDeTrabajo = unidadTrabajo;
         _logger = logger;
         _mapper = mapper;
+        _descuentoLN = descuentoLN;
     }
 
     /// <summary>Lista productos activos dentro del alcance validado de búsqueda del Cliente.</summary>
@@ -51,11 +53,18 @@ public class ProductoLN : IProductoLN
                 Relaciones);
             if (!string.IsNullOrEmpty(pagina.Error)) return Error<TPagina<TProductoCatalogo>>(Mensajes.ErrorProductos);
 
+            var items = _mapper.Map<IEnumerable<TProductoCatalogo>>(pagina.Data ?? []).ToList();
+            var descuentos = await _descuentoLN.ObtenerMejoresDescuentosAsync(items.Select(x => x.ProductoId));
+            if (!string.IsNullOrEmpty(descuentos.Error) || descuentos.Data == null)
+                return Error<TPagina<TProductoCatalogo>>(Mensajes.ErrorProductos);
+            foreach (var item in items)
+                if (descuentos.Data.TryGetValue(item.ProductoId, out var descuento)) item.Descuento = descuento;
+
             return new Respuesta<TPagina<TProductoCatalogo>>
             {
                 Data = new TPagina<TProductoCatalogo>
                 {
-                    Items = _mapper.Map<IEnumerable<TProductoCatalogo>>(pagina.Data ?? []),
+                    Items = items,
                     Pagina = filtro.Pagina,
                     TamanoPagina = filtro.TamanoPagina,
                     Total = total.Data ?? 0
@@ -89,11 +98,18 @@ public class ProductoLN : IProductoLN
                 Relaciones);
             if (!string.IsNullOrEmpty(pagina.Error)) return Error<TPagina<TProducto>>(Mensajes.ErrorProductos);
 
+            var items = _mapper.Map<IEnumerable<TProducto>>(pagina.Data ?? []).ToList();
+            var descuentos = await _descuentoLN.ObtenerMejoresDescuentosAsync(items.Select(x => x.ProductoId));
+            if (!string.IsNullOrEmpty(descuentos.Error) || descuentos.Data == null)
+                return Error<TPagina<TProducto>>(Mensajes.ErrorProductos);
+            foreach (var item in items)
+                if (descuentos.Data.TryGetValue(item.ProductoId, out var descuento)) item.Descuento = descuento;
+
             return new Respuesta<TPagina<TProducto>>
             {
                 Data = new TPagina<TProducto>
                 {
-                    Items = _mapper.Map<IEnumerable<TProducto>>(pagina.Data ?? []),
+                    Items = items,
                     Pagina = filtro.Pagina,
                     TamanoPagina = filtro.TamanoPagina,
                     Total = total.Data ?? 0
@@ -115,9 +131,12 @@ public class ProductoLN : IProductoLN
                 x => x.ProductoId == productoId && x.Activo && x.Categoria.Activo && x.Categoria.Familia.Activo,
                 Relaciones);
             if (!string.IsNullOrEmpty(respuesta.Error)) return Error<TProductoCatalogo>(Mensajes.ErrorProductos);
-            return respuesta.Data == null
-                ? Error<TProductoCatalogo>(Mensajes.ProductoNoEncontrado)
-                : new Respuesta<TProductoCatalogo> { Data = _mapper.Map<TProductoCatalogo>(respuesta.Data) };
+            if (respuesta.Data == null) return Error<TProductoCatalogo>(Mensajes.ProductoNoEncontrado);
+            var producto = _mapper.Map<TProductoCatalogo>(respuesta.Data);
+            var descuento = await _descuentoLN.ObtenerMejorDescuentoAsync(productoId);
+            if (!string.IsNullOrEmpty(descuento.Error) || descuento.Data == null) return Error<TProductoCatalogo>(Mensajes.ErrorProductos);
+            producto.Descuento = descuento.Data;
+            return new Respuesta<TProductoCatalogo> { Data = producto };
         }
         catch (Exception ex)
         {
@@ -134,9 +153,12 @@ public class ProductoLN : IProductoLN
                 x => x.ProductoId == productoId,
                 Relaciones);
             if (!string.IsNullOrEmpty(respuesta.Error)) return Error<TProducto>(Mensajes.ErrorProductos);
-            return respuesta.Data == null
-                ? Error<TProducto>(Mensajes.ProductoNoEncontrado)
-                : new Respuesta<TProducto> { Data = _mapper.Map<TProducto>(respuesta.Data) };
+            if (respuesta.Data == null) return Error<TProducto>(Mensajes.ProductoNoEncontrado);
+            var producto = _mapper.Map<TProducto>(respuesta.Data);
+            var descuento = await _descuentoLN.ObtenerMejorDescuentoAsync(productoId);
+            if (!string.IsNullOrEmpty(descuento.Error) || descuento.Data == null) return Error<TProducto>(Mensajes.ErrorProductos);
+            producto.Descuento = descuento.Data;
+            return new Respuesta<TProducto> { Data = producto };
         }
         catch (Exception ex)
         {

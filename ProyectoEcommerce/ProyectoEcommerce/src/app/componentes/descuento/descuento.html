@@ -1,0 +1,61 @@
+<section class="discount-page">
+  <header class="page-heading">
+    <div><span class="eyebrow">LessPrice · Administración</span><h1>Descuentos</h1><p>Programa beneficios porcentuales sin acumularlos. La API aplica únicamente el mejor.</p></div>
+    <button class="btn btn-primary" type="button" (click)="nuevo()">Nuevo descuento</button>
+  </header>
+
+  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+
+  @if (mostrarFormulario) {
+    <form class="discount-form" [formGroup]="formulario" (ngSubmit)="guardar()">
+      <header><div><span class="eyebrow">{{ editandoId ? 'Edición' : 'Registro' }}</span><h2>{{ editandoId ? 'Editar descuento' : 'Crear descuento' }}</h2></div><button class="close-form" type="button" aria-label="Cerrar" (click)="cancelar()">×</button></header>
+      <div class="form-grid">
+        <div class="field field-wide"><label for="descuento-nombre">Nombre *</label><input id="descuento-nombre" class="form-control" formControlName="nombre" maxlength="150">@if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) { <small>El nombre es obligatorio.</small> }</div>
+        <div class="field"><label for="descuento-tipo">Tipo *</label><select id="descuento-tipo" class="form-select" formControlName="tipoDescuento" (change)="cambiarTipo()">@for (item of tipos; track item.valor) { <option [value]="item.valor">{{ item.etiqueta }}</option> }</select></div>
+        <div class="field"><label for="descuento-porcentaje">Porcentaje *</label><div class="percent-input"><input id="descuento-porcentaje" class="form-control" type="number" min="0.01" max="100" step="0.01" formControlName="porcentaje"><span>%</span></div>@if (formulario.controls.porcentaje.touched && formulario.controls.porcentaje.invalid) { <small>Debe ser mayor que 0 y menor o igual que 100.</small> }</div>
+        <div class="field"><label for="descuento-inicio">Fecha de inicio *</label><input id="descuento-inicio" class="form-control" type="datetime-local" formControlName="fechaInicio"></div>
+        <div class="field"><label for="descuento-fin">Fecha de fin *</label><input id="descuento-fin" class="form-control" type="datetime-local" formControlName="fechaFin">@if (errorFechas) { <small>{{ errorFechas }}</small> }</div>
+
+        @if (tipo === 'FAMILIA') {
+          <div class="field field-wide"><label for="descuento-familia">Familia *</label><select id="descuento-familia" class="form-select" formControlName="familiaId"><option [ngValue]="0">Selecciona una familia</option>@for (familia of catalogos.familias; track familia.familiaId) { <option [ngValue]="familia.familiaId">{{ familia.nombre }}</option> }</select></div>
+        } @else {
+          <div class="field"><label for="descuento-filtro-familia">Familia (filtro)</label><select id="descuento-filtro-familia" class="form-select" formControlName="filtroFamiliaId" (change)="cambiarFiltroFamilia()"><option [ngValue]="0">Todas</option>@for (familia of catalogos.familias; track familia.familiaId) { <option [ngValue]="familia.familiaId">{{ familia.nombre }}</option> }</select></div>
+          @if (tipo === 'CATEGORIA') {
+            <div class="field field-wide"><label for="descuento-categoria">Categoría *</label><select id="descuento-categoria" class="form-select" formControlName="categoriaId"><option [ngValue]="0">Selecciona una categoría</option>@for (categoria of categoriasFiltradas; track categoria.categoriaId) { <option [ngValue]="categoria.categoriaId">{{ categoria.nombre }}</option> }</select></div>
+          } @else {
+            <div class="field"><label for="descuento-filtro-categoria">Categoría (filtro)</label><select id="descuento-filtro-categoria" class="form-select" formControlName="filtroCategoriaId" (change)="cambiarFiltroCategoria()"><option [ngValue]="0">Todas</option>@for (categoria of categoriasFiltradas; track categoria.categoriaId) { <option [ngValue]="categoria.categoriaId">{{ categoria.nombre }}</option> }</select></div>
+            <div class="field field-wide"><label for="descuento-producto">Producto *</label><select id="descuento-producto" class="form-select" formControlName="productoId"><option [ngValue]="0">Selecciona un producto</option>@for (producto of productosFiltrados; track producto.productoId) { <option [ngValue]="producto.productoId">{{ producto.nombre }} · {{ producto.categoriaNombre }}</option> }</select></div>
+          }
+        }
+        <label class="active-check"><input type="checkbox" formControlName="activo"> Descuento activo</label>
+      </div>
+      <footer><button class="btn btn-outline-secondary" type="button" (click)="cancelar()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">{{ guardando ? 'Guardando…' : 'Guardar descuento' }}</button></footer>
+    </form>
+  }
+
+  @if (cargando) {
+    <div class="state-card" role="status">Cargando descuentos…</div>
+  } @else if (!descuentos.length) {
+    <div class="state-card">No hay descuentos registrados.</div>
+  } @else {
+    <div class="table-responsive discount-table-wrap">
+      <table class="table align-middle">
+        <thead><tr><th>Nombre</th><th>Tipo</th><th>Destino</th><th>Porcentaje</th><th>Vigencia</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+        <tbody>
+          @for (descuento of descuentos; track descuento.descuentoId) {
+            <tr>
+              <td><strong>{{ descuento.nombre }}</strong></td>
+              <td>{{ etiquetaTipo(descuento.tipoDescuento) }}</td>
+              <td>{{ descuento.destino }}</td>
+              <td><span class="discount-value">-{{ descuento.porcentaje }}%</span></td>
+              <td><span>{{ descuento.fechaInicio | date:'dd/MM/yyyy HH:mm' }}</span><small>{{ descuento.fechaFin | date:'dd/MM/yyyy HH:mm' }}</small></td>
+              <td><span class="status-badge" [class]="claseVigencia(descuento.vigenciaActual)">{{ descuento.vigenciaActual }}</span></td>
+              <td><div class="actions"><button class="btn btn-sm btn-outline-primary" type="button" (click)="editar(descuento)">Editar</button><button class="btn btn-sm btn-outline-secondary" type="button" (click)="cambiarEstado(descuento)">{{ descuento.activo ? 'Desactivar' : 'Activar' }}</button></div></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
