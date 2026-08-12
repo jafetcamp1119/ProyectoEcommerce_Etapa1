@@ -20,6 +20,10 @@ public static class Mensajes
     public const string AccesoBloqueado = "Se alcanzó el límite de intentos permitidos. Intenta nuevamente más tarde.";
     public const string RolNoEncontrado = "El rol seleccionado no existe o no está disponible.";
     public const string UltimoAdministrador = "La operación no está permitida porque debe existir al menos otro Administrador activo.";
+    public const string ConfiguracionInicialNoDisponible = "La configuración inicial de LessPrice ya fue completada.";
+    public const string CorreoAdministradorInicialNoAutorizado = "El correo indicado no está autorizado para la configuración inicial.";
+    public const string ErrorConfiguracionInicial = "No fue posible completar la configuración inicial de LessPrice.";
+    public const string CorreoReservadoConfiguracionInicial = "El correo está reservado para la configuración inicial de LessPrice.";
     public const string ProductoNoEncontrado = "El producto solicitado no existe.";
     public const string CodigoProductoDuplicado = "Ya existe un producto con el código indicado.";
     public const string CodigoProductoObligatorio = "El código del producto es obligatorio.";

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import {
   IAutenticacionRespuesta,
+  IEstadoConfiguracionInicial,
   ILoginUsuario,
   IRegistroUsuario,
   IRespuesta,
@@ -35,6 +36,19 @@ export class AutenticacionService {
   registrar(datos: IRegistroUsuario): Observable<IRespuesta<IUsuarioSesion>> {
     return this.http.post<IRespuesta<IUsuarioSesion>>(
       `${environment.baseUrl}/Usuario/Registrar`,
+      datos
+    );
+  }
+
+  obtenerEstadoConfiguracionInicial(): Observable<IEstadoConfiguracionInicial> {
+    return this.http.get<IEstadoConfiguracionInicial>(
+      `${environment.baseUrl.replace(/\/api$/, '')}/api/auth/setup-status`
+    );
+  }
+
+  crearAdministradorInicial(datos: IRegistroUsuario): Observable<IRespuesta<IUsuarioSesion>> {
+    return this.http.post<IRespuesta<IUsuarioSesion>>(
+      `${environment.baseUrl.replace(/\/api$/, '')}/api/auth/setup-admin`,
       datos
     );
   }

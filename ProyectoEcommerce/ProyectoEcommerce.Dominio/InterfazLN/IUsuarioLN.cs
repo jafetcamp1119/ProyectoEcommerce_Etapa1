@@ -14,6 +14,10 @@ namespace ProyectoEcommerce.Dominio.InterfazLN
         Task<Respuesta<IEnumerable<TUsuario>>> ListarAsync();
         /// <summary>Registra una cuenta de Cliente almacenando la contraseña mediante hash.</summary>
         Task<Respuesta<TUsuario>> RegistrarAsync(TRegistroUsuario datos);
+        /// <summary>Indica si todavía no existe un Administrador activo.</summary>
+        Task<Respuesta<bool>> RequiereConfiguracionInicialAsync();
+        /// <summary>Crea de forma atómica el primer Administrador autorizado.</summary>
+        Task<Respuesta<TUsuario>> CrearAdministradorInicialAsync(TRegistroUsuario datos);
         /// <summary>Valida credenciales, bloqueos y estado antes de permitir crear un JWT.</summary>
         Task<Respuesta<TEstadoAutenticacion>> AutenticarAsync(TLoginUsuario datos);
         /// <summary>Lista usuarios con filtros y paginación administrativa.</summary>

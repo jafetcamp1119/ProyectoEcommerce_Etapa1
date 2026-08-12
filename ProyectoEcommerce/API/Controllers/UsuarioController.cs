@@ -41,6 +41,40 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        /// <summary>Indica si LessPrice aún necesita crear su primer Administrador.</summary>
+        [AllowAnonymous]
+        [HttpGet("/api/auth/setup-status")]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public async Task<IActionResult> EstadoConfiguracionInicial()
+        {
+            var resultado = await _usuarioLN.RequiereConfiguracionInicialAsync();
+            if (!string.IsNullOrEmpty(resultado.Error))
+                return StatusCode(StatusCodes.Status500InternalServerError, resultado);
+
+            return Ok(new TEstadoConfiguracionInicial
+            {
+                RequiereConfiguracionInicial = resultado.Data,
+                CorreoAdministradorInicial =
+                    (_configuration["InitialAdmin:Email"] ?? string.Empty).Trim().ToLowerInvariant()
+            });
+        }
+
+        /// <summary>Crea una sola vez el Administrador inicial autorizado.</summary>
+        [AllowAnonymous]
+        [HttpPost("/api/auth/setup-admin")]
+        public async Task<IActionResult> CrearAdministradorInicial([FromBody] TRegistroUsuario registro)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            var resultado = await _usuarioLN.CrearAdministradorInicialAsync(registro);
+            if (resultado.Error == Mensajes.ConfiguracionInicialNoDisponible)
+                return Conflict(resultado);
+            if (!string.IsNullOrEmpty(resultado.Error))
+                return BadRequest(resultado);
+
+            return Ok(resultado);
+        }
+
         /// <summary>Valida las credenciales y, si son correctas, entrega una sesión JWT firmada.</summary>
         [AllowAnonymous]
         [HttpPost("IniciarSesion")]

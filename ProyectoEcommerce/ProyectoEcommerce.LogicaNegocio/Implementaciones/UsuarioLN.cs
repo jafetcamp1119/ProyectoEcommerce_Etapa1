@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Data;
 using ProyectoEcommerce.Dominio.Entidades;
 using ProyectoEcommerce.Dominio.EntidadesTipadas;
 using ProyectoEcommerce.Dominio.InterfacesAD;
@@ -22,6 +23,7 @@ public class UsuarioLN : IUsuarioLN
     private readonly IPasswordHasher<Usuario> _passwordHasher;
     private readonly int _maxIntentos;
     private readonly int _minutosBloqueo;
+    private readonly string _correoAdministradorInicial;
 
     public UsuarioLN(IUnidadTrabajoEF unidadTrabajo, ILogger<UsuarioLN> logger, IMapper mapper,
         IPasswordHasher<Usuario> passwordHasher, IConfiguration configuration)
@@ -32,6 +34,7 @@ public class UsuarioLN : IUsuarioLN
         _passwordHasher = passwordHasher;
         _maxIntentos = Math.Max(1, configuration.GetValue<int?>("Seguridad:MaxIntentosFallidos") ?? 3);
         _minutosBloqueo = Math.Max(1, configuration.GetValue<int?>("Seguridad:BloqueoMinutos") ?? 15);
+        _correoAdministradorInicial = NormalizarCorreo(configuration["InitialAdmin:Email"]);
     }
 
     /// <summary>Registra un Cliente con correo único y contraseña almacenada como hash.</summary>
@@ -41,6 +44,10 @@ public class UsuarioLN : IUsuarioLN
         {
             LimpiarRegistro(datos);
             var correo = NormalizarCorreo(datos.Correo);
+            // El correo principal no puede ser ocupado como Cliente antes de completar el setup.
+            if (string.Equals(correo, _correoAdministradorInicial, StringComparison.Ordinal))
+                return Error<TUsuario>(Mensajes.CorreoReservadoConfiguracionInicial);
+
             var existente = await _unidadDeTrabajo.TUsuario.ObtenerEntidadAsync(x => x.Correo == correo);
             if (!string.IsNullOrEmpty(existente.Error)) return Error<TUsuario>(Mensajes.ErrorRegistro);
             if (existente.Data != null) return Error<TUsuario>(Mensajes.CorreoDuplicado);
@@ -75,6 +82,118 @@ public class UsuarioLN : IUsuarioLN
         {
             _logger.LogError(ex, "Error al registrar la cuenta para {Correo}", NormalizarCorreo(datos.Correo));
             return Error<TUsuario>(Mensajes.ErrorRegistro);
+        }
+    }
+
+    /// <summary>Consulta en la base si existe al menos un Administrador activo.</summary>
+    public async Task<Respuesta<bool>> RequiereConfiguracionInicialAsync()
+    {
+        try
+        {
+            var rolAdministrador = await _unidadDeTrabajo.TRol.ObtenerEntidadAsync(
+                x => x.Nombre == "Administrador" && x.Activo);
+            if (!string.IsNullOrEmpty(rolAdministrador.Error) || rolAdministrador.Data == null)
+                return Error<bool>(Mensajes.ErrorConfiguracionInicial);
+
+            var administradores = await _unidadDeTrabajo.TUsuario.ContarAsync(
+                x => x.Activo && x.RolId == rolAdministrador.Data.RolId);
+            if (!string.IsNullOrEmpty(administradores.Error) || administradores.Data == null)
+                return Error<bool>(Mensajes.ErrorConfiguracionInicial);
+
+            return new Respuesta<bool> { Data = administradores.Data.Value == 0 };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al consultar el estado de configuración inicial.");
+            return Error<bool>(Mensajes.ErrorConfiguracionInicial);
+        }
+    }
+
+    /// <summary>
+    /// Crea el primer Administrador con el mismo hasher del registro público.
+    /// Serializable mantiene bloqueado el rango consultado hasta confirmar la inserción.
+    /// </summary>
+    public async Task<Respuesta<TUsuario>> CrearAdministradorInicialAsync(TRegistroUsuario datos)
+    {
+        LimpiarRegistro(datos);
+        var correo = NormalizarCorreo(datos.Correo);
+
+        if (string.IsNullOrWhiteSpace(_correoAdministradorInicial) ||
+            !string.Equals(correo, _correoAdministradorInicial, StringComparison.Ordinal))
+            return Error<TUsuario>(Mensajes.CorreoAdministradorInicialNoAutorizado);
+
+        try
+        {
+            _unidadDeTrabajo.EmpezarTransaccion(IsolationLevel.Serializable);
+
+            var rolAdministrador = await _unidadDeTrabajo.TRol.ObtenerEntidadAsync(
+                x => x.Nombre == "Administrador" && x.Activo);
+            if (!string.IsNullOrEmpty(rolAdministrador.Error) || rolAdministrador.Data == null)
+            {
+                _unidadDeTrabajo.Rollback();
+                return Error<TUsuario>(Mensajes.ErrorConfiguracionInicial);
+            }
+
+            var administradores = await _unidadDeTrabajo.TUsuario.ContarAsync(
+                x => x.Activo && x.RolId == rolAdministrador.Data.RolId);
+            if (!string.IsNullOrEmpty(administradores.Error) || administradores.Data == null)
+            {
+                _unidadDeTrabajo.Rollback();
+                return Error<TUsuario>(Mensajes.ErrorConfiguracionInicial);
+            }
+            if (administradores.Data.Value > 0)
+            {
+                _unidadDeTrabajo.Rollback();
+                return Error<TUsuario>(Mensajes.ConfiguracionInicialNoDisponible);
+            }
+
+            var existente = await _unidadDeTrabajo.TUsuario.ObtenerEntidadAsync(x => x.Correo == correo);
+            if (!string.IsNullOrEmpty(existente.Error))
+            {
+                _unidadDeTrabajo.Rollback();
+                return Error<TUsuario>(Mensajes.ErrorConfiguracionInicial);
+            }
+            if (existente.Data != null)
+            {
+                _unidadDeTrabajo.Rollback();
+                return Error<TUsuario>(Mensajes.CorreoDuplicado);
+            }
+
+            var entidad = new Usuario
+            {
+                RolId = rolAdministrador.Data.RolId,
+                Nombre = datos.Nombre,
+                Apellidos = datos.Apellidos,
+                Correo = correo,
+                Telefono = datos.Telefono,
+                Direccion = null,
+                Activo = true,
+                FechaRegistro = DateTime.UtcNow,
+                IntentosFallidos = 0
+            };
+            entidad.PasswordHash = _passwordHasher.HashPassword(entidad, datos.Contrasena);
+
+            var insercion = await _unidadDeTrabajo.TUsuario.InsertarAsync(entidad);
+            if (insercion.Data == null || !string.IsNullOrEmpty(insercion.Error))
+            {
+                _unidadDeTrabajo.Rollback();
+                return Error<TUsuario>(
+                    insercion.Error.Contains("UQ_Usuarios_Correo", StringComparison.OrdinalIgnoreCase)
+                        ? Mensajes.CorreoDuplicado
+                        : Mensajes.ErrorConfiguracionInicial);
+            }
+
+            _unidadDeTrabajo.CompletarTran();
+            return new Respuesta<TUsuario>
+            {
+                Data = MapearUsuario(insercion.Data, rolAdministrador.Data.Nombre)
+            };
+        }
+        catch (Exception ex)
+        {
+            _unidadDeTrabajo.Rollback();
+            _logger.LogError(ex, "Error al crear el Administrador inicial para {Correo}", correo);
+            return Error<TUsuario>(Mensajes.ErrorConfiguracionInicial);
         }
     }
 

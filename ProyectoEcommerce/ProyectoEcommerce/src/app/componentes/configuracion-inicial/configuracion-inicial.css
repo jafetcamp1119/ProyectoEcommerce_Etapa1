@@ -1,0 +1,4 @@
+.form-control[readonly] {
+  background-color: var(--cui-secondary-bg);
+  cursor: not-allowed;
+}

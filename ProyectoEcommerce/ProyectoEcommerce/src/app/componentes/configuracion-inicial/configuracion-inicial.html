@@ -1,0 +1,102 @@
+<main class="auth-shell">
+  <section class="auth-card" aria-labelledby="setup-title">
+    <div class="auth-brand">
+      <img src="favicon.ico" alt="" width="54" height="54">
+      <div>
+        <span class="auth-eyebrow">LessPrice</span>
+        <h1 id="setup-title">Configuración inicial</h1>
+      </div>
+    </div>
+
+    <p class="auth-intro">Crea la cuenta administradora principal de LessPrice.</p>
+
+    @if (mensajeError) {
+      <div class="alert alert-danger" role="alert">{{ mensajeError }}</div>
+    }
+
+    <form [formGroup]="configuracionForm" (ngSubmit)="crearAdministrador()" novalidate>
+      <div class="auth-grid">
+        <div class="auth-field">
+          <label for="setup-nombre">Nombre</label>
+          <input id="setup-nombre" class="form-control" formControlName="nombre" autocomplete="given-name">
+          @if (tieneError('nombre', 'required')) {
+            <span class="field-error">El nombre es obligatorio.</span>
+          }
+        </div>
+
+        <div class="auth-field">
+          <label for="setup-apellidos">Apellidos</label>
+          <input id="setup-apellidos" class="form-control" formControlName="apellidos" autocomplete="family-name">
+          @if (tieneError('apellidos', 'required')) {
+            <span class="field-error">Los apellidos son obligatorios.</span>
+          }
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label for="setup-correo">Correo electrónico</label>
+        <input
+          id="setup-correo"
+          class="form-control"
+          type="email"
+          formControlName="correo"
+          autocomplete="email"
+          readonly>
+        @if (tieneError('correo', 'required')) {
+          <span class="field-error">El correo electrónico es obligatorio.</span>
+        } @else if (tieneError('correo', 'email')) {
+          <span class="field-error">Ingresa un correo electrónico válido.</span>
+        } @else if (tieneError('correo', 'correoNoAutorizado')) {
+          <span class="field-error">Este correo no está autorizado para la configuración inicial.</span>
+        }
+      </div>
+
+      <div class="auth-field">
+        <label for="setup-telefono">Teléfono</label>
+        <input id="setup-telefono" class="form-control" type="tel" formControlName="telefono" autocomplete="tel">
+        @if (tieneError('telefono', 'required')) {
+          <span class="field-error">El teléfono es obligatorio.</span>
+        }
+      </div>
+
+      <div class="auth-grid">
+        <div class="auth-field">
+          <label for="setup-contrasena">Contraseña</label>
+          <input
+            id="setup-contrasena"
+            class="form-control"
+            type="password"
+            formControlName="contrasena"
+            autocomplete="new-password">
+          @if (tieneError('contrasena', 'required')) {
+            <span class="field-error">La contraseña es obligatoria.</span>
+          } @else if (tieneError('contrasena', 'minlength')) {
+            <span class="field-error">Debe tener al menos 8 caracteres.</span>
+          }
+        </div>
+
+        <div class="auth-field">
+          <label for="setup-confirmacion">Confirmar contraseña</label>
+          <input
+            id="setup-confirmacion"
+            class="form-control"
+            type="password"
+            formControlName="confirmarContrasena"
+            autocomplete="new-password">
+          @if (tieneError('confirmarContrasena', 'required')) {
+            <span class="field-error">Confirma la contraseña.</span>
+          } @else if (configuracionForm.hasError('contrasenasDiferentes') && configuracionForm.controls.confirmarContrasena.touched) {
+            <span class="field-error">Las contraseñas no coinciden.</span>
+          }
+        </div>
+      </div>
+
+      <button
+        class="btn btn-primary auth-submit"
+        type="submit"
+        [disabled]="configuracionForm.invalid || procesando">
+        {{ procesando ? 'Creando administrador…' : 'Crear administrador' }}
+      </button>
+    </form>
+  </section>
+</main>

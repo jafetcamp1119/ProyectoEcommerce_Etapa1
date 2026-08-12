@@ -18,17 +18,31 @@ import { Checkout } from './componentes/checkout/checkout';
 import { OrdenDetalle } from './componentes/orden-detalle/orden-detalle';
 import { CategoriasCliente } from './componentes/categorias-cliente/categorias-cliente';
 import { Descuento } from './componentes/descuento/descuento';
+import { ConfiguracionInicial } from './componentes/configuracion-inicial/configuracion-inicial';
+import {
+  configuracionCompletaGuard,
+  configuracionDisponibleGuard
+} from './guards/configuracion-inicial.guard';
 
 /**
  * Define la navegación protegida y separa las pantallas de Cliente de las administrativas.
  */
 export const routes: Routes = [
-  { path: 'auth', component: Autenticacion },
-  { path: 'acceso-bloqueado', component: AccesoBloqueado },
+  {
+    path: 'configuracion-inicial',
+    component: ConfiguracionInicial,
+    canActivate: [configuracionDisponibleGuard]
+  },
+  { path: 'auth', component: Autenticacion, canActivate: [configuracionCompletaGuard] },
+  {
+    path: 'acceso-bloqueado',
+    component: AccesoBloqueado,
+    canActivate: [configuracionCompletaGuard]
+  },
   {
     path: '',
     component: DashboardPrincipal,
-    canActivate: [authGuard],
+    canActivate: [configuracionCompletaGuard, authGuard],
     children: [
       { path: '', component: Principal },
       { path: 'familias-producto', component: FamiliaProducto, canActivate: [adminGuard] },
