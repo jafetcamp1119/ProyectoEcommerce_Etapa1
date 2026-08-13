@@ -23,13 +23,39 @@
             <label class="form-label" for="familia-nombre">Nombre</label>
             <input id="familia-nombre" class="form-control" formControlName="nombre" maxlength="80">
             @if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) {
-              <small class="text-danger">El nombre es obligatorio.</small>
+            <small class="text-danger">El nombre es obligatorio.</small>
             }
           </div>
           <div>
             <label class="form-label" for="familia-descripcion">Descripción</label>
             <input id="familia-descripcion" class="form-control" formControlName="descripcion" maxlength="250">
           </div>
+        </div>
+        <div class="familia-imagen">
+          <label class="form-label" for="familia-imagen">Imagen de la familia</label>
+
+          <input id="familia-imagen"
+                 class="form-control"
+                 type="file"
+                 accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                 (change)="seleccionarImagen($event)">
+
+          <small class="text-muted">
+            Puedes seleccionar una imagen de hasta 5 MB.
+          </small>
+
+          @if (previsualizacionImagen) {
+          <div class="familia-imagen-preview">
+            <img [src]="previsualizacionImagen"
+                 alt="Vista previa de la familia">
+
+            <button class="btn btn-outline-danger btn-sm"
+                    type="button"
+                    (click)="quitarImagenSeleccionada()">
+              Cambiar imagen
+            </button>
+          </div>
+          }
         </div>
         <div class="editor-actions">
           <button class="btn btn-outline-secondary" type="button" (click)="cancelar()">Cancelar</button>
@@ -49,7 +75,15 @@
     <div class="family-grid">
       @for (familia of familias; track familia.familiaId) {
         <article class="family-card catalog-tile" [class.inactive]="!familia.activo">
-          <div class="family-visual catalog-tile-visual" aria-hidden="true">{{ iniciales(familia.nombre) }}</div>
+          <div class="family-visual catalog-tile-visual">
+            @if (familia.urlImagen) {
+            <img [src]="familia.urlImagen"
+                 [alt]="familia.nombre"
+                 class="family-image">
+            } @else {
+            <span>{{ iniciales(familia.nombre) }}</span>
+            }
+          </div>
           <div class="family-content catalog-tile-content">
             <div class="title-row">
               <h2>{{ familia.nombre }}</h2>

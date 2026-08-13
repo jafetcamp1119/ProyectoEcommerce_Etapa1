@@ -17,3 +17,31 @@
 .card-actions { flex-wrap: wrap; gap: .45rem; }
 .state-card { padding: 2.5rem; text-align: center; color: var(--cui-secondary-color); background: var(--cui-card-bg); border: 1px dashed var(--cui-border-color); border-radius: 1rem; }
 @media (max-width: 720px) { .page-heading { align-items: stretch; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } }
+.familia-imagen {
+  margin-top: 1rem;
+}
+
+.familia-imagen-preview {
+  margin-top: 1rem;
+  max-width: 320px;
+}
+
+  .familia-imagen-preview img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: .7rem;
+    border: 1px solid var(--cui-border-color);
+  }
+
+  .familia-imagen-preview .btn {
+    width: 100%;
+    margin-top: .5rem;
+  }
+
+.family-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}

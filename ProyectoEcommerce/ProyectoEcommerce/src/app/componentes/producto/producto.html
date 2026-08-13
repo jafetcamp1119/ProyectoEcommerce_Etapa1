@@ -46,23 +46,90 @@
 
   <!-- Formulario disponible únicamente en la vista administrativa -->
   @if (esAdmin && mostrarFormulario) {
-    <form id="formulario-producto" class="product-form" [formGroup]="formulario" (ngSubmit)="guardar()">
-      <header><div><span class="eyebrow">{{ editandoId ? 'Edición' : 'Registro' }}</span><h2>{{ editandoId ? 'Editar producto' : 'Crear producto' }}</h2></div><button class="close-form" type="button" aria-label="Cerrar formulario" (click)="cancelarFormulario()">×</button></header>
-      <div class="form-grid">
-        <div class="field"><label for="producto-codigo">Código *</label><input id="producto-codigo" class="form-control" formControlName="codigo" maxlength="50">@if (formulario.controls.codigo.touched && formulario.controls.codigo.invalid) { <small>El código es obligatorio (máximo 50 caracteres).</small> }</div>
-        <div class="field field-wide"><label for="producto-nombre">Nombre *</label><input id="producto-nombre" class="form-control" formControlName="nombre" maxlength="120">@if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) { <small>El nombre es obligatorio (máximo 120 caracteres).</small> }</div>
-        <div class="field field-full"><label for="producto-descripcion">Descripción</label><textarea id="producto-descripcion" class="form-control" rows="3" formControlName="descripcion" maxlength="500"></textarea></div>
-        <div class="field field-wide"><label for="producto-categoria-form">Categoría *</label><select id="producto-categoria-form" class="form-select" formControlName="categoriaId"><option [ngValue]="0">Selecciona una categoría</option>@for (categoria of categorias; track categoria.categoriaId) { <option [ngValue]="categoria.categoriaId">{{ nombreFamilia(categoria.familiaId) }} · {{ categoria.nombre }}</option> }</select></div>
-        <div class="field"><label for="producto-impuesto">Impuesto *</label><select id="producto-impuesto" class="form-select" formControlName="impuestoId"><option [ngValue]="0">Selecciona</option>@for (impuesto of impuestos; track impuesto.impuestoId) { <option [ngValue]="impuesto.impuestoId">{{ impuesto.nombre }} ({{ impuesto.porcentaje }}%)</option> }</select></div>
-        <div class="field"><label for="producto-precio">Precio final (impuesto incluido) *</label><input id="producto-precio" class="form-control" type="number" min="0" step="0.01" formControlName="precioVenta"></div>
-        <div class="field"><label for="producto-costo">Costo *</label><input id="producto-costo" class="form-control" type="number" min="0" step="0.01" formControlName="costo"></div>
-        <div class="field"><label for="producto-stock">Stock *</label><input id="producto-stock" class="form-control" type="number" min="0" step="1" formControlName="stock"></div>
-        <div class="field"><label for="producto-stock-minimo">Stock mínimo *</label><input id="producto-stock-minimo" class="form-control" type="number" min="0" step="1" formControlName="stockMinimo"></div>
-        <label class="active-check"><input type="checkbox" formControlName="activo"> Producto activo</label>
+  <form id="formulario-producto" class="product-form" [formGroup]="formulario" (ngSubmit)="guardar()">
+    <header><div><span class="eyebrow">{{ editandoId ? 'Edición' : 'Registro' }}</span><h2>{{ editandoId ? 'Editar producto' : 'Crear producto' }}</h2></div><button class="close-form" type="button" aria-label="Cerrar formulario" (click)="cancelarFormulario()">×</button></header>
+    <div class="form-grid">
+      <div class="field"><label for="producto-codigo">Código *</label><input id="producto-codigo" class="form-control" formControlName="codigo" maxlength="50">@if (formulario.controls.codigo.touched && formulario.controls.codigo.invalid) { <small>El código es obligatorio (máximo 50 caracteres).</small> }</div>
+      <div class="field field-wide"><label for="producto-nombre">Nombre *</label><input id="producto-nombre" class="form-control" formControlName="nombre" maxlength="120">@if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) { <small>El nombre es obligatorio (máximo 120 caracteres).</small> }</div>
+      <div class="field field-full"><label for="producto-descripcion">Descripción</label><textarea id="producto-descripcion" class="form-control" rows="3" formControlName="descripcion" maxlength="500"></textarea></div>
+      <div class="field field-wide"><label for="producto-categoria-form">Categoría *</label><select id="producto-categoria-form" class="form-select" formControlName="categoriaId"><option [ngValue]="0">Selecciona una categoría</option>@for (categoria of categorias; track categoria.categoriaId) { <option [ngValue]="categoria.categoriaId">{{ nombreFamilia(categoria.familiaId) }} · {{ categoria.nombre }}</option> }</select></div>
+      <div class="field"><label for="producto-impuesto">Impuesto *</label><select id="producto-impuesto" class="form-select" formControlName="impuestoId"><option [ngValue]="0">Selecciona</option>@for (impuesto of impuestos; track impuesto.impuestoId) { <option [ngValue]="impuesto.impuestoId">{{ impuesto.nombre }} ({{ impuesto.porcentaje }}%)</option> }</select></div>
+      <div class="field"><label for="producto-precio">Precio final (impuesto incluido) *</label><input id="producto-precio" class="form-control" type="number" min="0" step="0.01" formControlName="precioVenta"></div>
+      <div class="field"><label for="producto-costo">Costo *</label><input id="producto-costo" class="form-control" type="number" min="0" step="0.01" formControlName="costo"></div>
+      <div class="field"><label for="producto-stock">Stock *</label><input id="producto-stock" class="form-control" type="number" min="0" step="1" formControlName="stock"></div>
+      <div class="field"><label for="producto-stock-minimo">Stock mínimo *</label><input id="producto-stock-minimo" class="form-control" type="number" min="0" step="1" formControlName="stockMinimo"></div>
+      <label class="active-check"><input type="checkbox" formControlName="activo"> Producto activo</label>
+    </div>
+    @if (formulario.touched && formulario.invalid) { <p class="form-error" role="alert">Completa correctamente todos los campos obligatorios.</p> }
+
+    @if (esAdmin) {
+    <div class="imagenes-producto">
+      <h3>Imágenes del producto</h3>
+      <p>Puedes agregar hasta 3 imágenes por producto. Una de ellas será utilizada como imagen principal.</p>
+
+      @if (imagenesProducto.length > 0) {
+      <div class="imagenes-actuales">
+        @for (imagen of imagenesProducto; track imagen.imagenId) {
+        <div class="imagen-item">
+          <img [src]="imagen.urlImagen" [alt]="imagen.textoAlternativo || 'Imagen del producto'">
+
+          @if (imagen.esPrincipal) {
+          <span class="imagen-principal">Principal</span>
+          }
+
+          <div class="imagen-acciones">
+            @if (!imagen.esPrincipal) {
+            <button class="btn btn-sm btn-outline-primary" type="button" (click)="hacerPrincipal(imagen.imagenId)">Hacer principal</button>
+            }
+
+            <button class="btn btn-sm btn-outline-danger" type="button" (click)="eliminarImagen(imagen)">Eliminar</button>
+          </div>
+        </div>
+        }
       </div>
-      @if (formulario.touched && formulario.invalid) { <p class="form-error" role="alert">Completa correctamente todos los campos obligatorios.</p> }
-      <footer><button class="btn btn-outline-secondary" type="button" (click)="cancelarFormulario()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">{{ guardando ? 'Guardando…' : 'Guardar producto' }}</button></footer>
-    </form>
+      } @else {
+      <p class="sin-imagenes">Este producto todavía no tiene imágenes.</p>
+      }
+
+      @if (imagenesProducto.length < 3) {
+      <div class="subir-imagenes">
+        <label for="producto-imagenes">Seleccionar imágenes</label>
+        <input id="producto-imagenes" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple (change)="seleccionarImagenes($event)">
+        <small>Puedes tener un máximo de 3 imágenes. Cada imagen puede pesar hasta 5 MB.</small>
+      </div>
+      }
+
+      @if (previsualizaciones.length > 0) {
+      <div class="previsualizaciones">
+        <h4>Vista previa</h4>
+
+        <div class="imagenes-preview">
+          @for (preview of previsualizaciones; track $index) {
+          <div class="preview-item">
+            <img [src]="preview" alt="Vista previa de la imagen">
+
+            <button class="btn btn-sm btn-outline-danger"
+                    type="button"
+                    (click)="eliminarImagenSeleccionada($index)">
+              Eliminar
+            </button>
+          </div>
+          }
+        </div>
+        @if (editandoId > 0) {
+        <button class="btn btn-primary" type="button" [disabled]="subiendoImagenes" (click)="subirImagenes()">
+          {{ subiendoImagenes ? 'Subiendo imágenes…' : 'Subir imágenes' }}
+        </button>
+        } @else {
+        <small>Las imágenes se subirán automáticamente al guardar el producto.</small>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    <footer><button class="btn btn-outline-secondary" type="button" (click)="cancelarFormulario()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">{{ guardando ? 'Guardando…' : 'Guardar producto' }}</button></footer>
+  </form>
   }
 
   <!-- Estados y tarjetas del catálogo de productos -->

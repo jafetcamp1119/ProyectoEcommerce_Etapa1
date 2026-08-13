@@ -9,6 +9,8 @@ import { AutenticacionService } from '../../services/autenticacion';
 import { ProductoService } from '../../services/producto';
 import { CarritoService } from '../../services/carrito';
 import { FamiliasCliente } from '../familias-cliente/familias-cliente';
+import { IProductoImagen } from '../../model/IProductoImagen';
+import { ProductoImagenService } from '../../services/producto-imagen';
 
 type ProductoVista = IProductoCatalogo & Partial<IProducto>;
 
@@ -27,6 +29,7 @@ export class Producto implements OnInit {
   private readonly carrito = inject(CarritoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly servicioImagen = inject(ProductoImagenService);
 
   readonly esAdmin = this.autenticacion.esAdministrador();
   readonly esCliente = this.autenticacion.esCliente();
@@ -39,6 +42,17 @@ export class Producto implements OnInit {
   procesandoCarrito = new Set<number>();
   cargando = true;
   guardando = false;
+  // Guarda las imágenes que ya tiene el producto.
+  imagenesProducto: IProductoImagen[] = [];
+
+  // Guarda las imágenes que el administrador selecciona desde la computadora.
+  archivosSeleccionados: File[] = [];
+
+  // Guarda las vistas previas antes de subir las imágenes.
+  previsualizaciones: string[] = [];
+
+  // Indica si las imágenes se están subiendo.
+  subiendoImagenes = false;
   mostrarFormulario = false;
   editandoId = 0;
   pagina = 1;
@@ -245,6 +259,7 @@ export class Producto implements OnInit {
   editar(producto: ProductoVista): void {
     if (!this.esAdmin || producto.codigo === undefined) return;
     this.editandoId = producto.productoId;
+    this.cargarImagenes(producto.productoId);
     this.formulario.reset({
       codigo: producto.codigo,
       nombre: producto.nombre,
@@ -263,14 +278,32 @@ export class Producto implements OnInit {
   }
 
   cancelarFormulario(): void {
+
+    // Oculta el formulario de productos.
     this.mostrarFormulario = false;
+
+    // Reinicia el producto que se estaba editando.
     this.editandoId = 0;
+
+    // Limpia las imágenes que estaban cargadas en el formulario.
+    this.imagenesProducto = [];
+
+    // Limpia los archivos seleccionados desde la computadora.
+    this.archivosSeleccionados = [];
+
+    // Limpia las vistas previas de las imágenes.
+    this.previsualizaciones = [];
   }
 
   guardar(): void {
     this.formulario.markAllAsTouched();
-    if (!this.esAdmin || this.formulario.invalid || this.guardando) return;
+
+    if (!this.esAdmin || this.formulario.invalid || this.guardando) {
+      return;
+    }
+
     const valores = this.formulario.getRawValue();
+
     const datos: IProductoGuardar = {
       productoId: this.editandoId,
       categoriaId: valores.categoriaId,
@@ -284,17 +317,77 @@ export class Producto implements OnInit {
       stockMinimo: Number(valores.stockMinimo),
       activo: valores.activo
     };
+
     const editando = this.editandoId > 0;
+
     this.guardando = true;
     this.limpiarMensajes();
-    const solicitud = editando ? this.servicio.modificar(datos) : this.servicio.insertar(datos);
-    solicitud.pipe(finalize(() => { this.guardando = false; this.cdr.markForCheck(); })).subscribe({
-      next: () => {
-        this.mensaje = editando ? 'Producto actualizado correctamente.' : 'Producto creado correctamente.';
-        this.cancelarFormulario();
-        this.cargar(false);
+
+    const solicitud = editando
+      ? this.servicio.modificar(datos)
+      : this.servicio.insertar(datos);
+
+    solicitud.subscribe({
+      next: respuesta => {
+
+        if (editando) {
+          this.guardando = false;
+          this.mensaje = 'Producto actualizado correctamente.';
+          this.cancelarFormulario();
+          this.cargar(false);
+          this.cdr.markForCheck();
+          return;
+        }
+
+        const productoId = respuesta.data?.productoId;
+
+        if (!productoId) {
+          this.guardando = false;
+          this.error = 'El producto se creó, pero no se pudo obtener su ID.';
+          this.cdr.markForCheck();
+          return;
+        }
+
+        if (this.archivosSeleccionados.length === 0) {
+          this.guardando = false;
+          this.mensaje = 'Producto creado correctamente.';
+          this.cancelarFormulario();
+          this.cargar(false);
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.servicioImagen
+          .subirImagenes(productoId, this.archivosSeleccionados)
+          .pipe(
+            finalize(() => {
+              this.guardando = false;
+              this.cdr.markForCheck();
+            })
+          )
+          .subscribe({
+            next: () => {
+              this.mensaje = 'Producto e imágenes creados correctamente.';
+              this.cancelarFormulario();
+              this.cargar(false);
+            },
+
+            error: err => {
+              this.error =
+                'El producto se creó, pero hubo un problema al subir las imágenes. ' +
+                this.mensajeError(err);
+
+              this.editandoId = productoId;
+              this.cargar(false);
+            }
+          });
       },
-      error: err => this.error = this.mensajeError(err)
+
+      error: err => {
+        this.guardando = false;
+        this.error = this.mensajeError(err);
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -327,6 +420,238 @@ export class Producto implements OnInit {
         error: err => this.error = this.mensajeError(err)
       });
   }
+
+  
+  cargarImagenes(productoId: number): void {
+    this.servicioImagen
+      .listarPorProducto(productoId)
+      .subscribe({
+        next: respuesta => {
+         
+          this.imagenesProducto =
+            respuesta.data ?? [];
+
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.imagenesProducto = [];
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+
+  seleccionarImagenes(event: Event): void {
+
+  // Obtiene el input donde se seleccionaron los archivos.
+  const input = event.target as HTMLInputElement;
+
+  // Verifica que se hayan seleccionado archivos.
+  if (!input.files?.length) {
+    return;
+  }
+
+  // Convierte los nuevos archivos seleccionados en una lista.
+  const nuevosArchivos = Array.from(input.files);
+
+  // Calcula el total entre imágenes guardadas,
+  // imágenes seleccionadas anteriormente y las nuevas.
+  const cantidadTotal =
+    this.imagenesProducto.length +
+    this.archivosSeleccionados.length +
+    nuevosArchivos.length;
+
+  // No permite superar el máximo de 3 imágenes.
+  if (cantidadTotal > 3) {
+    this.error = 'El producto puede tener como máximo 3 imágenes.';
+    input.value = '';
+    return;
+  }
+
+  // Agrega las nuevas imágenes sin borrar las seleccionadas anteriormente.
+  this.archivosSeleccionados.push(...nuevosArchivos);
+
+  // Crea la vista previa únicamente de las imágenes nuevas.
+  for (const archivo of nuevosArchivos) {
+
+    if (!archivo.type.startsWith('image/')) {
+      continue;
+    }
+
+    const lector = new FileReader();
+
+    lector.onload = () => {
+      this.previsualizaciones.push(lector.result as string);
+      this.cdr.markForCheck();
+    };
+
+    lector.readAsDataURL(archivo);
+  }
+
+  // Limpia el input para permitir seleccionar otra imagen después.
+  input.value = '';
+
+  this.error = '';
+}
+
+
+  // Elimina una imagen seleccionada antes de guardar el producto.
+  eliminarImagenSeleccionada(indice: number): void {
+
+    // Elimina el archivo de la lista de imágenes seleccionadas.
+    this.archivosSeleccionados.splice(indice, 1);
+
+    // Elimina también su vista previa de la pantalla.
+    this.previsualizaciones.splice(indice, 1);
+
+    // Actualiza la interfaz para reflejar el cambio.
+    this.cdr.markForCheck();
+  }
+
+
+
+
+  subirImagenes(): void {
+
+    // Verifica que el producto ya exista.
+    if (this.editandoId <= 0)
+      return;
+
+    // Verifica que haya imágenes seleccionadas.
+    if (!this.archivosSeleccionados.length)
+      return;
+
+    // Evita que se envíen varias veces mientras se están subiendo.
+    if (this.subiendoImagenes)
+      return;
+
+    // Activa el estado de carga.
+    this.subiendoImagenes = true;
+
+    // Limpia mensajes anteriores.
+    this.limpiarMensajes();
+
+    // Envía las imágenes al backend.
+    this.servicioImagen
+      .subirImagenes(
+        this.editandoId,
+        this.archivosSeleccionados
+      )
+      .pipe(
+        finalize(() => {
+
+          // Finaliza el estado de carga.
+          this.subiendoImagenes = false;
+
+          // Actualiza la pantalla.
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: () => {
+
+          // Muestra un mensaje cuando termina correctamente.
+          this.mensaje =
+            'Imágenes agregadas correctamente.';
+
+          // Limpia los archivos seleccionados.
+          this.archivosSeleccionados = [];
+
+          // Limpia las vistas previas.
+          this.previsualizaciones = [];
+
+          // Vuelve a cargar las imágenes del producto.
+          this.cargarImagenes(this.editandoId);
+
+          // Actualiza también la lista de productos.
+          this.cargar(false);
+        },
+
+        error: err => {
+
+          // Muestra el error recibido desde la API.
+          this.error =
+            this.mensajeError(err);
+        }
+      });
+  }
+
+
+
+
+  hacerPrincipal(imagenId: number): void {
+
+    // Limpia mensajes anteriores.
+    this.limpiarMensajes();
+
+    // Envía a la API la imagen que se quiere colocar como principal.
+    this.servicioImagen
+      .establecerPrincipal(imagenId)
+      .subscribe({
+        next: () => {
+
+          // Muestra un mensaje cuando el cambio se realiza correctamente.
+          this.mensaje =
+            'Imagen principal actualizada correctamente.';
+
+          // Vuelve a cargar las imágenes del producto.
+          this.cargarImagenes(this.editandoId);
+
+          // Actualiza también la imagen que aparece en el catálogo.
+          this.cargar(false);
+        },
+        error: err => {
+
+          // Muestra el error recibido desde la API.
+          this.error =
+            this.mensajeError(err);
+        }
+      });
+  }
+
+
+
+
+  eliminarImagen(imagen: IProductoImagen): void {
+
+    // Pregunta al administrador antes de eliminar la imagen.
+    const confirmar = confirm(
+      '¿Desea eliminar esta imagen del producto?'
+    );
+
+    // Si cancela, no se realiza ninguna acción.
+    if (!confirmar)
+      return;
+
+    // Limpia mensajes anteriores.
+    this.limpiarMensajes();
+
+    // Envía a la API el ID de la imagen que se quiere eliminar.
+    this.servicioImagen
+      .eliminar(imagen.imagenId)
+      .subscribe({
+        next: () => {
+
+          // Muestra un mensaje cuando se elimina correctamente.
+          this.mensaje =
+            'Imagen eliminada correctamente.';
+
+          // Vuelve a cargar las imágenes que todavía tiene el producto.
+          this.cargarImagenes(this.editandoId);
+
+          // Actualiza también la lista de productos.
+          this.cargar(false);
+        },
+        error: err => {
+
+          // Muestra el error recibido desde la API.
+          this.error =
+            this.mensajeError(err);
+        }
+      });
+  }
+
+
 
   marcarImagenError(productoId: number): void {
     this.imagenesFallidas.add(productoId);
