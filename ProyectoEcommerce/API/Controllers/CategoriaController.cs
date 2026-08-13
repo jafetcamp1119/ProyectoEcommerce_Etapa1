@@ -14,7 +14,17 @@ namespace ProyectoEcommerce.API.Controllers
     public class CategoriaController : ControllerBase
     {
         private ICategoriaLN _categoriaLN { get; }
-        public CategoriaController(ICategoriaLN categoriaLN) { _categoriaLN = categoriaLN; }
+        // Permite conocer la ubicación del proyecto
+        // para guardar las imágenes de las categorías.
+        private readonly IWebHostEnvironment _environment;
+
+        public CategoriaController(
+            ICategoriaLN categoriaLN,
+            IWebHostEnvironment environment)
+        {
+            _categoriaLN = categoriaLN;
+            _environment = environment;
+        }
 
         /// <summary>Lista categorías para la administración.</summary>
         [HttpGet("Listar")]
@@ -88,6 +98,116 @@ namespace ProyectoEcommerce.API.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var resultado = await _categoriaLN.ModificarAsync(categoria);
             if (!string.IsNullOrEmpty(resultado.Error)) return BadRequest(resultado);
+            return Ok(resultado);
+        }
+
+
+        // Permite al administrador subir o cambiar la imagen de una categoría.
+        [Authorize(Roles = "Administrador")]
+        [HttpPost("SubirImagen/{categoriaId:int}")]
+        [RequestSizeLimit(5_000_000)]
+        public async Task<IActionResult> SubirImagen(
+            int categoriaId,
+            IFormFile archivo)
+        {
+            // Verifica que el ID sea válido.
+            if (categoriaId <= 0)
+                return BadRequest("Categoría inválida.");
+
+            // Verifica que se haya seleccionado una imagen.
+            if (archivo == null || archivo.Length == 0)
+                return BadRequest("Debe seleccionar una imagen.");
+
+            // Cada imagen puede pesar como máximo 5 MB.
+            if (archivo.Length > 5 * 1024 * 1024)
+                return BadRequest("La imagen supera los 5 MB.");
+
+            // Extensiones permitidas.
+            var extensionesPermitidas = new[]
+            {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp"
+    };
+
+            var extension =
+                Path.GetExtension(archivo.FileName)
+                    .ToLowerInvariant();
+
+            // Verifica que el archivo sea una imagen permitida.
+            if (!extensionesPermitidas.Contains(extension))
+                return BadRequest(
+                    "El archivo seleccionado no es una imagen permitida.");
+
+            // Busca la categoría para comprobar que exista.
+            var respuestaCategoria =
+                await _categoriaLN.ObtenerAsync(
+                    new TCategoria
+                    {
+                        CategoriaId = categoriaId
+                    });
+
+            if (respuestaCategoria.Data == null)
+                return NotFound("La categoría no existe.");
+
+            // Obtiene la ubicación de wwwroot.
+            var webRoot = _environment.WebRootPath;
+
+            if (string.IsNullOrWhiteSpace(webRoot))
+            {
+                webRoot = Path.Combine(
+                    _environment.ContentRootPath,
+                    "wwwroot");
+            }
+
+            // Crea una carpeta específica para la categoría.
+            var carpetaCategoria = Path.Combine(
+                webRoot,
+                "categorias",
+                categoriaId.ToString());
+
+            Directory.CreateDirectory(carpetaCategoria);
+
+            // Genera un nombre único para la imagen.
+            var nombreArchivo =
+                $"{Guid.NewGuid():N}{extension}";
+
+            var rutaFisica = Path.Combine(
+                carpetaCategoria,
+                nombreArchivo);
+
+            // Guarda físicamente la imagen.
+            await using (var stream =
+                new FileStream(
+                    rutaFisica,
+                    FileMode.Create))
+            {
+                await archivo.CopyToAsync(stream);
+            }
+
+            // Construye la URL que utilizará Angular.
+            var urlImagen =
+                $"{Request.Scheme}://{Request.Host}" +
+                $"/categorias/{categoriaId}/{nombreArchivo}";
+
+            // Guarda la URL en la categoría.
+            var categoria = respuestaCategoria.Data;
+            categoria.UrlImagen = urlImagen;
+
+            var resultado =
+                await _categoriaLN.ModificarAsync(categoria);
+
+            // Si falla la base de datos,
+            // elimina también el archivo físico.
+            if (!string.IsNullOrEmpty(resultado.Error))
+            {
+                if (System.IO.File.Exists(rutaFisica))
+                    System.IO.File.Delete(rutaFisica);
+
+                return BadRequest(resultado);
+            }
+
             return Ok(resultado);
         }
 

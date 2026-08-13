@@ -51,6 +51,7 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.HasIndex(e => e.Nombre, "UQ_FamiliasProducto_Nombre").IsUnique();
             entity.Property(e => e.Nombre).HasMaxLength(80);
             entity.Property(e => e.Descripcion).HasMaxLength(250);
+            entity.Property(e => e.UrlImagen).HasMaxLength(500);
             entity.Property(e => e.Activo).HasDefaultValue(true, "DF_FamiliasProducto_Activo");
         });
 
@@ -62,6 +63,7 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.HasIndex(e => new { e.FamiliaId, e.Nombre }, "UQ_Categorias_Familia_Nombre").IsUnique();
             entity.Property(e => e.Nombre).HasMaxLength(80);
             entity.Property(e => e.Descripcion).HasMaxLength(250);
+            entity.Property(e => e.UrlImagen).HasMaxLength(500);
             entity.Property(e => e.Activo).HasDefaultValue(true, "DF_Categorias_Activo");
             entity.HasOne(d => d.Familia).WithMany(p => p.Categorias)
                 .HasForeignKey(d => d.FamiliaId)

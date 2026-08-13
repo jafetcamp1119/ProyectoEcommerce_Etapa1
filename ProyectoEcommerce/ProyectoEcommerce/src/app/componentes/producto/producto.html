@@ -107,6 +107,12 @@
           @for (preview of previsualizaciones; track $index) {
           <div class="preview-item">
             <img [src]="preview" alt="Vista previa de la imagen">
+
+            <button class="btn btn-sm btn-outline-danger"
+                    type="button"
+                    (click)="eliminarImagenSeleccionada($index)">
+              Eliminar
+            </button>
           </div>
           }
         </div>

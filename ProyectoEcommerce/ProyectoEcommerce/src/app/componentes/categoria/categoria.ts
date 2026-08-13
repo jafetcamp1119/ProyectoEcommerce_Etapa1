@@ -28,6 +28,9 @@ export class Categoria implements OnInit {
   guardando = false;
   mostrarFormulario = false;
   editandoId = 0;
+  imagenSeleccionada: File | null = null;
+  previsualizacionImagen: string | null = null;
+  eliminarImagenActual = false;
   mensaje = '';
   error = '';
   pagina = 1;
@@ -79,46 +82,200 @@ export class Categoria implements OnInit {
 
   nueva(): void {
     this.editandoId = 0;
-    this.formulario.reset({ familiaId: this.familiaId, nombre: '', descripcion: '' });
+    this.eliminarImagenActual = false;
+    this.imagenSeleccionada = null;
+    this.previsualizacionImagen = null;
+
+    this.formulario.reset({
+      familiaId: this.familiaId,
+      nombre: '',
+      descripcion: ''
+    });
+
     this.mostrarFormulario = true;
     this.limpiarMensajes();
   }
 
   editar(categoria: ICategoria): void {
     this.editandoId = categoria.categoriaId;
+    this.eliminarImagenActual = false;
+    this.imagenSeleccionada = null;
+    this.previsualizacionImagen = categoria.urlImagen ?? null;
+
     this.formulario.reset({
       familiaId: categoria.familiaId,
       nombre: categoria.nombre,
       descripcion: categoria.descripcion ?? ''
     });
+
     this.mostrarFormulario = true;
     this.limpiarMensajes();
   }
 
-  cancelar(): void { this.mostrarFormulario = false; this.editandoId = 0; this.formulario.reset(); }
+  cancelar(): void {
+    this.mostrarFormulario = false;
+    this.editandoId = 0;
+    this.eliminarImagenActual = false;
+    this.imagenSeleccionada = null;
+    this.previsualizacionImagen = null;
+    this.formulario.reset();
+  }
+
+
+  seleccionarImagen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    if (!input.files?.length) {
+      return;
+    }
+
+    const archivo = input.files[0];
+
+    if (!archivo.type.startsWith('image/')) {
+      this.error = 'Debe seleccionar un archivo de imagen.';
+      input.value = '';
+      return;
+    }
+
+    if (archivo.size > 5 * 1024 * 1024) {
+      this.error = 'La imagen no puede superar los 5 MB.';
+      input.value = '';
+      return;
+    }
+
+    this.imagenSeleccionada = archivo;
+    this.eliminarImagenActual = false;
+
+    const lector = new FileReader();
+
+    lector.onload = () => {
+      this.previsualizacionImagen = lector.result as string;
+      this.cdr.markForCheck();
+    };
+
+    lector.readAsDataURL(archivo);
+
+    this.error = '';
+  }
+
+  quitarImagenSeleccionada(): void {
+    if (this.imagenSeleccionada) {
+      this.imagenSeleccionada = null;
+      this.previsualizacionImagen = null;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    if (this.editandoId > 0 && this.previsualizacionImagen) {
+      this.eliminarImagenActual = true;
+      this.previsualizacionImagen = null;
+      this.cdr.markForCheck();
+    }
+  }
+
+
 
   guardar(): void {
     this.formulario.markAllAsTouched();
-    if (this.formulario.invalid || this.guardando) return;
+
+    if (this.formulario.invalid || this.guardando) {
+      return;
+    }
+
+    if (
+      this.editandoId > 0 &&
+      this.eliminarImagenActual &&
+      !this.imagenSeleccionada
+    ) {
+      this.error =
+        'Debes seleccionar una nueva imagen antes de guardar la categoría.';
+      this.cdr.markForCheck();
+      return;
+    }
+
     const valores = this.formulario.getRawValue();
-    const actual = this.categorias.find(x => x.categoriaId === this.editandoId);
+
+    const actual = this.categorias.find(
+      x => x.categoriaId === this.editandoId
+    );
+
     const datos: ICategoria = {
       categoriaId: this.editandoId,
       familiaId: valores.familiaId,
       nombre: valores.nombre.trim(),
       descripcion: valores.descripcion.trim() || null,
+      urlImagen: this.eliminarImagenActual
+        ? null
+        : actual?.urlImagen ?? null,
       activo: actual?.activo ?? true
     };
-    const solicitud = this.editandoId ? this.servicio.modificar(datos) : this.servicio.insertar(datos);
+
+    const editando = this.editandoId > 0;
+
+    const solicitud = editando
+      ? this.servicio.modificar(datos)
+      : this.servicio.insertar(datos);
+
     this.guardando = true;
     this.limpiarMensajes();
-    solicitud.pipe(finalize(() => { this.guardando = false; this.cdr.markForCheck(); })).subscribe({
-      next: () => {
-        this.mensaje = this.editandoId ? 'Categoría actualizada correctamente.' : 'Categoría creada correctamente.';
-        this.cancelar();
-        this.cargarCategorias();
+
+    solicitud.subscribe({
+      next: respuesta => {
+        const categoriaId =
+          respuesta.data?.categoriaId ?? this.editandoId;
+
+        if (!categoriaId) {
+          this.guardando = false;
+          this.error =
+            'La categoría se guardó, pero no se pudo obtener su ID.';
+          this.cdr.markForCheck();
+          return;
+        }
+
+        if (!this.imagenSeleccionada) {
+          this.guardando = false;
+
+          this.mensaje = editando
+            ? 'Categoría actualizada correctamente.'
+            : 'Categoría creada correctamente.';
+
+          this.cancelar();
+          this.cargarCategorias();
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.servicio
+          .subirImagen(
+            categoriaId,
+            this.imagenSeleccionada
+          )
+          .subscribe({
+            next: () => {
+              this.guardando = false;
+
+              this.mensaje = editando
+                ? 'Categoría e imagen actualizadas correctamente.'
+                : 'Categoría e imagen creadas correctamente.';
+
+              this.cancelar();
+              this.cargarCategorias();
+              this.cdr.markForCheck();
+            },
+
+            error: err => {
+              this.guardando = false;
+              this.error = this.mensajeError(err);
+              this.cdr.markForCheck();
+            }
+          });
       },
-      error: err => this.error = this.mensajeError(err)
+
+      error: err => {
+        this.guardando = false;
+        this.error = this.mensajeError(err);
+        this.cdr.markForCheck();
+      }
     });
   }
 

@@ -24,6 +24,13 @@ export class FamiliaProducto implements OnInit {
   mensaje = '';
   error = '';
   editandoId = 0;
+  eliminarImagenActual = false;
+
+  // Guarda temporalmente la imagen seleccionada para la familia.
+  imagenSeleccionada: File | null = null;
+
+  // Guarda la vista previa de la imagen antes de subirla.
+  previsualizacionImagen: string | null = null;
 
   readonly formulario = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.maxLength(80)]],
@@ -43,46 +50,231 @@ export class FamiliaProducto implements OnInit {
 
   nuevo(): void {
     this.editandoId = 0;
-    this.formulario.reset({ nombre: '', descripcion: '' });
+    this.eliminarImagenActual = false;
+    // Limpia cualquier imagen seleccionada anteriormente.
+    this.imagenSeleccionada = null;
+    this.previsualizacionImagen = null;
+    this.formulario.reset({
+      nombre: '',
+      descripcion: ''
+    });
     this.mostrarFormulario = true;
     this.limpiarMensajes();
   }
 
   editar(familia: IFamiliaProducto): void {
     this.editandoId = familia.familiaId;
-    this.formulario.reset({ nombre: familia.nombre, descripcion: familia.descripcion ?? '' });
+    this.eliminarImagenActual = false;
+    // Todavía no hay una imagen nueva seleccionada.
+    this.imagenSeleccionada = null;
+    // Muestra la imagen que ya tiene guardada la familia.
+    this.previsualizacionImagen = familia.urlImagen ?? null;
+    this.formulario.reset({
+      nombre: familia.nombre,
+      descripcion: familia.descripcion ?? ''
+    });
     this.mostrarFormulario = true;
     this.limpiarMensajes();
   }
+
 
   cancelar(): void {
     this.mostrarFormulario = false;
     this.editandoId = 0;
     this.formulario.reset();
+
+    // Limpia la imagen seleccionada y su vista previa.
+    this.imagenSeleccionada = null;
+    this.previsualizacionImagen = null;
   }
 
-  guardar(): void {
-    this.formulario.markAllAsTouched();
-    if (this.formulario.invalid || this.guardando) return;
+ 
+  seleccionarImagen(event: Event): void {
+    const input = event.target as HTMLInputElement;
 
+    // Verifica que se haya seleccionado una imagen.
+    if (!input.files?.length) {
+      return;
+    }
+
+    const archivo = input.files[0];
+
+    // Verifica que el archivo sea una imagen.
+    if (!archivo.type.startsWith('image/')) {
+      this.error = 'Debe seleccionar un archivo de imagen.';
+      input.value = '';
+      return;
+    }
+
+    // No permite imágenes mayores a 5 MB.
+    if (archivo.size > 5 * 1024 * 1024) {
+      this.error = 'La imagen no puede superar los 5 MB.';
+      input.value = '';
+      return;
+    }
+
+    // Guarda temporalmente la imagen seleccionada.
+    this.imagenSeleccionada = archivo;
+
+    // Como ya se seleccionó una imagen nueva,
+    // ya no queda pendiente eliminar la anterior sin reemplazo.
+    this.eliminarImagenActual = false;
+
+    // Crea la vista previa de la imagen.
+    const lector = new FileReader();
+
+    lector.onload = () => {
+      this.previsualizacionImagen = lector.result as string;
+      this.cdr.markForCheck();
+    };
+
+    lector.readAsDataURL(archivo);
+
+    this.error = '';
+  }
+
+  quitarImagenSeleccionada(): void {
+    // Si había una imagen nueva seleccionada,
+    // solamente elimina esa selección.
+    if (this.imagenSeleccionada) {
+      this.imagenSeleccionada = null;
+      this.previsualizacionImagen = null;
+      this.cdr.markForCheck();
+      return;
+    }
+    // Si estamos editando una familia que ya tenía imagen,
+    // marca que la imagen actual fue quitada.
+    if (this.editandoId > 0 && this.previsualizacionImagen) {
+      this.eliminarImagenActual = true;
+      this.previsualizacionImagen = null;
+      this.cdr.markForCheck();
+    }
+  }
+
+  
+
+
+  guardar(): void {
+
+    // Valida los campos del formulario.
+    this.formulario.markAllAsTouched();
+
+    if (this.formulario.invalid || this.guardando) {
+      return;
+    }
+
+    // Si se quitó la imagen actual al editar,
+    // obliga a seleccionar una nueva antes de guardar.
+    if (
+      this.editandoId > 0 &&
+      this.eliminarImagenActual &&
+      !this.imagenSeleccionada
+    ) {
+      this.error =
+        'Debes seleccionar una nueva imagen antes de guardar la familia.';
+
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Obtiene los valores escritos en el formulario.
     const valores = this.formulario.getRawValue();
-    const actual = this.familias.find(x => x.familiaId === this.editandoId);
+
+    // Busca la familia actual cuando se está editando.
+    const actual = this.familias.find(
+      x => x.familiaId === this.editandoId
+    );
+
+    // Prepara los datos que se enviarán a la API.
     const datos: IFamiliaProducto = {
       familiaId: this.editandoId,
       nombre: valores.nombre.trim(),
       descripcion: valores.descripcion.trim() || null,
+
+      // Si se quitó la imagen actual, envía null.
+      // Si no, conserva la imagen que ya tenía.
+      urlImagen: this.eliminarImagenActual
+        ? null
+        : actual?.urlImagen ?? null,
+
       activo: actual?.activo ?? true
     };
-    const solicitud = this.editandoId ? this.servicio.modificar(datos) : this.servicio.insertar(datos);
+
+    // Determina si estamos creando o editando una familia.
+    const editando = this.editandoId > 0;
+
+    const solicitud = editando
+      ? this.servicio.modificar(datos)
+      : this.servicio.insertar(datos);
+
     this.guardando = true;
     this.limpiarMensajes();
-    solicitud.pipe(finalize(() => { this.guardando = false; this.cdr.markForCheck(); })).subscribe({
-      next: () => {
-        this.mensaje = this.editandoId ? 'Familia actualizada correctamente.' : 'Familia creada correctamente.';
-        this.cancelar();
-        this.cargar();
+
+    solicitud.subscribe({
+      next: respuesta => {
+
+        // Obtiene el ID de la familia creada o editada.
+        const familiaId =
+          respuesta.data?.familiaId ?? this.editandoId;
+
+        if (!familiaId) {
+          this.guardando = false;
+          this.error =
+            'La familia se guardó, pero no se pudo obtener su ID.';
+
+          this.cdr.markForCheck();
+          return;
+        }
+
+        // Si no se seleccionó una imagen nueva,
+        // termina normalmente.
+        if (!this.imagenSeleccionada) {
+          this.guardando = false;
+
+          this.mensaje = editando
+            ? 'Familia actualizada correctamente.'
+            : 'Familia creada correctamente.';
+
+          this.cancelar();
+          this.cargar();
+          this.cdr.markForCheck();
+          return;
+        }
+
+        // Después de guardar la familia,
+        // sube la imagen nueva seleccionada.
+        this.servicio
+          .subirImagen(
+            familiaId,
+            this.imagenSeleccionada
+          )
+          .subscribe({
+
+            next: () => {
+              this.guardando = false;
+
+              this.mensaje = editando
+                ? 'Familia e imagen actualizadas correctamente.'
+                : 'Familia e imagen creadas correctamente.';
+
+              this.cancelar();
+              this.cargar();
+              this.cdr.markForCheck();
+            },
+
+            error: err => {
+              this.guardando = false;
+              this.error = this.mensajeError(err);
+              this.cdr.markForCheck();
+            }
+          });
       },
-      error: err => this.error = this.mensajeError(err)
+
+      error: err => {
+        this.guardando = false;
+        this.error = this.mensajeError(err);
+        this.cdr.markForCheck();
+      }
     });
   }
 

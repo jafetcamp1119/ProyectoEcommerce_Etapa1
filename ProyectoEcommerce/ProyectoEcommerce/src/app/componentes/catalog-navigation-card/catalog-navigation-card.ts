@@ -13,6 +13,7 @@ export class CatalogNavigationCard {
   readonly descripcion = input<string | null>(null);
   readonly textoBoton = input.required<string>();
   readonly ruta = input.required<any[]>();
+  readonly imagen = input<string | null>(null);
 
   iniciales(): string {
     const palabras = this.titulo().trim().split(/\s+/).filter(Boolean);

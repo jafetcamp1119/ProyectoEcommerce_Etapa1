@@ -441,73 +441,71 @@ export class Producto implements OnInit {
   }
 
 
-  // Recibe las imágenes que el administrador selecciona desde la computadora.
   seleccionarImagenes(event: Event): void {
 
-    // Obtiene el input donde se seleccionaron los archivos.
-    const input =
-      event.target as HTMLInputElement;
+  // Obtiene el input donde se seleccionaron los archivos.
+  const input = event.target as HTMLInputElement;
 
-    // Verifica que realmente se hayan seleccionado archivos.
-    if (!input.files?.length)
-      return;
+  // Verifica que se hayan seleccionado archivos.
+  if (!input.files?.length) {
+    return;
+  }
 
-    // Convierte los archivos seleccionados en una lista.
-    const nuevosArchivos =
-      Array.from(input.files);
+  // Convierte los nuevos archivos seleccionados en una lista.
+  const nuevosArchivos = Array.from(input.files);
 
-    // Calcula cuántas imágenes tendría el producto en total.
-    const cantidadTotal =
-      this.imagenesProducto.length +
-      nuevosArchivos.length;
+  // Calcula el total entre imágenes guardadas,
+  // imágenes seleccionadas anteriormente y las nuevas.
+  const cantidadTotal =
+    this.imagenesProducto.length +
+    this.archivosSeleccionados.length +
+    nuevosArchivos.length;
 
-    // No permite que el producto tenga más de 3 imágenes.
-    if (cantidadTotal > 3) {
+  // No permite superar el máximo de 3 imágenes.
+  if (cantidadTotal > 3) {
+    this.error = 'El producto puede tener como máximo 3 imágenes.';
+    input.value = '';
+    return;
+  }
 
-      this.error =
-        `El producto puede tener como máximo 3 imágenes. ` +
-        `Actualmente tiene ${this.imagenesProducto.length}.`;
+  // Agrega las nuevas imágenes sin borrar las seleccionadas anteriormente.
+  this.archivosSeleccionados.push(...nuevosArchivos);
 
-      // Limpia el input para que pueda volver a seleccionar.
-      input.value = '';
+  // Crea la vista previa únicamente de las imágenes nuevas.
+  for (const archivo of nuevosArchivos) {
 
-      return;
+    if (!archivo.type.startsWith('image/')) {
+      continue;
     }
 
-    // Guarda los archivos seleccionados.
-    this.archivosSeleccionados =
-      nuevosArchivos;
+    const lector = new FileReader();
 
-    // Limpia las vistas previas anteriores.
-    this.previsualizaciones = [];
+    lector.onload = () => {
+      this.previsualizaciones.push(lector.result as string);
+      this.cdr.markForCheck();
+    };
 
-    // Recorre cada archivo seleccionado.
-    for (const archivo of this.archivosSeleccionados) {
+    lector.readAsDataURL(archivo);
+  }
 
-      // Verifica que el archivo sea una imagen.
-      if (!archivo.type.startsWith('image/'))
-        continue;
+  // Limpia el input para permitir seleccionar otra imagen después.
+  input.value = '';
 
-      // Crea un lector para mostrar la imagen antes de subirla.
-      const lector = new FileReader();
+  this.error = '';
+}
 
-      lector.onload = () => {
 
-        // Guarda la vista previa de la imagen.
-        this.previsualizaciones.push(
-          lector.result as string
-        );
+  // Elimina una imagen seleccionada antes de guardar el producto.
+  eliminarImagenSeleccionada(indice: number): void {
 
-        // Actualiza la pantalla.
-        this.cdr.markForCheck();
-      };
+    // Elimina el archivo de la lista de imágenes seleccionadas.
+    this.archivosSeleccionados.splice(indice, 1);
 
-      // Lee el archivo como una imagen temporal.
-      lector.readAsDataURL(archivo);
-    }
+    // Elimina también su vista previa de la pantalla.
+    this.previsualizaciones.splice(indice, 1);
 
-    // Limpia cualquier mensaje de error anterior.
-    this.error = '';
+    // Actualiza la interfaz para reflejar el cambio.
+    this.cdr.markForCheck();
   }
 
 

@@ -7,6 +7,7 @@ public partial class Categoria
     public int FamiliaId { get; set; }
     public string Nombre { get; set; } = null!;
     public string? Descripcion { get; set; }
+    public string? UrlImagen { get; set; }
     public bool Activo { get; set; }
     public virtual FamiliaProducto Familia { get; set; } = null!;
     public virtual ICollection<Producto> Productos { get; set; } = new List<Producto>();

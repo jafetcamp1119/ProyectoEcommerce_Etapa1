@@ -4,5 +4,6 @@ export interface ICategoria {
   familiaId: number;
   nombre: string;
   descripcion: string | null;
+  urlImagen: string | null;
   activo: boolean;
 }
