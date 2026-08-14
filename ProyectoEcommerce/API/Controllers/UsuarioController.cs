@@ -52,14 +52,11 @@ namespace ProyectoEcommerce.API.Controllers
 
             return Ok(new TEstadoConfiguracionInicial
             {
-                RequiereConfiguracionInicial = resultado.Data,
-                // solo devuelve el correo reservado de configuracion, nunca una contraseña
-                CorreoAdministradorInicial =
-                    (_configuration["InitialAdmin:Email"] ?? string.Empty).Trim().ToLowerInvariant()
+                RequiereConfiguracionInicial = resultado.Data
             });
         }
 
-        // recibe el formulario inicial y deja que la LN revise correo reservado y que no exista otro Admin
+        // recibe el formulario inicial y deja que la LN revise que no exista otro Admin
         [AllowAnonymous]
         [HttpPost("/api/auth/setup-admin")]
         public async Task<IActionResult> CrearAdministradorInicial([FromBody] TRegistroUsuario registro)

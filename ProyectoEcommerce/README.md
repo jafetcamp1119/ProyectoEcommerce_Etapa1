@@ -33,6 +33,8 @@ La seguridad de acceso se valida siempre en la API y queda persistida en SQL Ser
 
 El correo se recorta, se convierte a minúsculas y tiene una restricción única en SQL Server. La contraseña nunca se guarda en texto plano; únicamente se persiste `PasswordHash`, generado y verificado con `PasswordHasher<Usuario>` de ASP.NET Core.
 
+La configuración inicial consulta únicamente si existe algún usuario con el rol `Administrador`. En una instalación sin administradores, `GET /api/auth/setup-status` habilita `/configuracion-inicial` y `POST /api/auth/setup-admin` permite registrar el primer Administrador con cualquier correo válido. La API repite la comprobación dentro de una transacción `Serializable`; cuando ya existe un Administrador, rechaza el setup aunque se invoque manualmente. No existe un correo inicial reservado en `appsettings`. El registro público continúa asignando siempre el rol `Cliente`.
+
 El componente `/auth` alterna dentro de la misma tarjeta entre:
 
 - Inicio de sesión: correo electrónico y contraseña.
@@ -72,12 +74,12 @@ Endpoints principales:
 - `GET api/Producto/Administracion`: productos activos e inactivos con datos completos; requiere Administrador.
 - `GET api/Producto/Detalle/{id}` y `GET api/Producto/DetalleAdministracion/{id}`.
 - `GET api/Producto/Catalogos`: familias, categorías e impuestos activos.
-- `POST api/Producto/Insertar`, `PUT api/Producto/Modificar` y `PUT api/Producto/CambiarEstado/{id}`; requieren Administrador.
+- `PUT api/Producto/Modificar` y `PUT api/Producto/CambiarEstado/{id}`; requieren Administrador.
 - `GET api/ProductoImagen/ListarPorProducto/{id}` y `GET api/ProductoImagen/Principal/{id}`.
 
 El listado se pagina en SQL Server y admite 25, 50, 75 o 100 elementos. Los filtros disponibles son texto por nombre/código, familia, categoría, precio mínimo/máximo, disponibilidad, orden y, únicamente para administración, estado activo/inactivo. El estado de inventario se deriva sin guardarse en otra columna: `Disponible` cuando `Stock > StockMinimo`, `Stock bajo` cuando `Stock > 0` y `Stock <= StockMinimo`, y `Agotado` cuando `Stock = 0`.
 
-El contrato de Cliente expone el código comercial, pero no costo, stock exacto, stock mínimo, estado administrativo ni fecha de creación. La API también impide consultar productos, categorías o familias inactivos desde los endpoints de Cliente. La administración permite crear, editar, activar y desactivar; no realiza eliminación física.
+El contrato de Cliente expone el código comercial, pero no costo, stock exacto, stock mínimo, estado administrativo ni fecha de creación. La API también impide consultar productos, categorías o familias inactivos desde los endpoints de Cliente. La administración permite editar, activar y desactivar; los productos nuevos se originan en el catálogo de un proveedor y no existe creación arbitraria sin proveedor.
 
 ### Incorporar imágenes reales posteriormente
 
@@ -137,6 +139,35 @@ dotnet user-secrets set "Smtp:Enabled" "true" --project API/ProyectoEcommerce.AP
 - `PUT api/Orden/Cancelar/{ordenId}` permite cancelar únicamente una venta propia que todavía esté `PENDIENTE`; no restaura inventario porque una orden pendiente aún no lo descontó.
 - Las listas usan tarjetas, filtros y paginación de 25, 50, 75 o 100 registros; el detalle muestra importes históricos y el estado de envío de la factura.
 
+## Proveedores y compras
+
+El módulo mantiene tres conceptos distintos:
+
+- `ProductosProveedorCatalogo` contiene ofertas que un proveedor puede suministrar. Cada oferta guarda categoría, precio de compra, impuesto y estado, y puede existir sin `ProductoId`.
+- `Productos` contiene únicamente los artículos incorporados al catálogo vendible de LessPrice.
+- `Productos.Stock` representa unidades compradas y solo cambia al confirmar una compra o una venta.
+
+`ProveedorCategorias` relaciona categorías globales con cada proveedor. Desde `#/proveedores/catalogo/:proveedorId` se puede escoger una categoría existente sin duplicarla o crear una categoría global nueva y relacionarla dentro de la misma transacción. Si el nombre ya existe en esa familia, el backend reutiliza la categoría encontrada. La imagen opcional se carga después mediante el mismo endpoint y la misma carpeta de `CategoriaController`.
+
+Dentro de una categoría del proveedor se puede:
+
+- Relacionar un producto que ya existe en LessPrice, guardando solamente la oferta y `ProductoProveedor`.
+- Crear una oferta nueva con nombre, precio de compra, `ImpuestoId` y estado. Esta acción no inserta en `Productos` ni modifica inventario.
+- Incorporar una oferta disponible. `sp_IncorporarProductoProveedor` vuelve a leer precio, impuesto, proveedor y categoría; genera un código `PROD-000001`, calcula `PrecioVenta = PrecioCompra * 1.30`, crea el producto con stock 0 y enlaza `ProductoProveedor`.
+- Editar precio, impuesto y estado de la oferta sin alterar los precios históricos ya guardados en compras anteriores.
+
+La compra usa un carrito Angular independiente del carrito del Cliente. Proforma y correo recalculan los precios desde SQL Server y no cambian stock. `sp_ConfirmarCompraProveedor` valida proveedor activo, productos incorporados, relaciones activas y cantidades; toma nuevamente los precios, guarda cabecera y detalle histórico, aumenta stock, registra movimientos `ENTRADA` y bitácora dentro de una transacción `Serializable`. `ClaveConfirmacion` tiene índice único y hace idempotente un reintento, por lo que una misma confirmación no suma inventario dos veces.
+
+Después del commit se reutilizan la generación PDF y la configuración SMTP existentes. El historial permite filtrar, paginar 25/50/75/100, ver detalle y obtener el PDF. Desactivar un proveedor bloquea proformas y compras nuevas, pero no elimina productos, stock, movimientos ni compras históricas; los Clientes pueden seguir adquiriendo las unidades disponibles.
+
+Rutas administrativas principales:
+
+- `#/proveedores`: menú de gestión, compras e historial.
+- `#/proveedores/gestion`: mantenimiento e imagen de proveedores.
+- `#/proveedores/catalogo/:proveedorId`: categorías y ofertas.
+- `#/proveedores/compras/:proveedorId`: carrito, proforma y confirmación.
+- `#/proveedores/historial`: historial y PDF.
+
 ## Base de datos
 
 Para una instalación nueva, ejecutar en este orden:
@@ -145,6 +176,8 @@ Para una instalación nueva, ejecutar en este orden:
 ProyectoEcommerceDB_Etapa1.sql
 ProyectoEcommerceDB_AmpliacionImportante.sql
 ProyectoEcommerceDB_DatosIniciales.sql
+ProyectoEcommerceDB_Proveedores.sql
+ProyectoEcommerceDB_Descuentos.sql
 ProyectoEcommerceDB_Carrito.sql
 ProyectoEcommerceDB_FlujoCliente.sql
 ```
@@ -155,15 +188,19 @@ Para una base creada con una versión anterior, ejecutar primero la migración d
 ProyectoEcommerceDB_Autenticacion.sql
 ProyectoEcommerceDB_AmpliacionImportante.sql
 ProyectoEcommerceDB_DatosIniciales.sql
+ProyectoEcommerceDB_Proveedores.sql
+ProyectoEcommerceDB_Descuentos.sql
 ProyectoEcommerceDB_Carrito.sql
 ProyectoEcommerceDB_FlujoCliente.sql
 ```
+
+Los archivos SQL están guardados en UTF-8. Si se ejecutan con `sqlcmd`, se debe indicar explícitamente esa codificación para conservar tildes y eñes, por ejemplo: `sqlcmd -S ".\SQLEXPRESS" -E -C -f 65001 -b -i "ProyectoEcommerceDB_Proveedores.sql"`. SQL Server Management Studio detecta el archivo UTF-8 directamente.
 
 Los scripts son incrementales, idempotentes y no eliminan tablas ni datos. `ProyectoEcommerceDB_Etapa1.sql` se detiene si detecta una instalación existente para impedir una recreación destructiva. La ampliación conserva la estructura Database First e incorpora solo soporte útil para la evolución del mismo e-commerce: roles, historial de accesos, opciones de menú, imágenes de producto ordenadas, proveedores/compras, descuentos, carrito, pagos/documentos preparados, calificaciones, lista de deseos, movimientos de inventario y bitácora.
 
 La tabla `ProductoImagenes` admite una imagen principal activa por producto, varias secundarias ordenadas, texto alternativo y evita repetir una misma ruta para el producto. Angular incluye el componente reutilizable `app-producto-carrusel`, que presenta tres imágenes a la vez, avanza sobre cinco o más registros y muestra un estado vacío sin inventar imágenes ni direcciones URL.
 
-Los datos iniciales crean o normalizan exactamente 5 familias, 31 categorías vinculadas y los impuestos `IVA 13%` y `Exento`. Se pueden ejecutar repetidamente sin duplicar registros.
+Los datos iniciales crean o normalizan exactamente 5 familias, 32 categorías vinculadas y los impuestos `IVA 13%`, `IVA 1%` y `Exento`. `ProyectoEcommerceDB_Proveedores.sql` agrega cinco proveedores reproducibles, entre ellos Dos Pinos, y ofertas costarricenses por categoría. En una base limpia deja incorporados solamente `Frescoleche Chocolate 250 ml` y `Leche Entera 1 L`; las demás ofertas de Dos Pinos permanecen disponibles para demostrar la incorporación. Los scripts se pueden ejecutar repetidamente sin duplicar relaciones ni catálogos.
 
 `ProyectoEcommerceDB_Carrito.sql` agrega de forma idempotente la opción de menú `/carrito` al rol Cliente y no modifica permisos administrativos. `ProyectoEcommerceDB_FlujoCliente.sql` amplía de forma incremental `Ordenes`, `OrdenDetalle` y `Documentos`, normaliza las restricciones de estados/tipos y crea o actualiza `sp_ConfirmarOrdenVenta`; puede ejecutarse repetidamente. `ProyectoEcommerceDB_LimpiezaDatosCodex.sql` es una utilidad transaccional e idempotente de QA: elimina únicamente las cuentas y códigos temporales exactos documentados dentro del script, junto con sus dependencias, y se detiene si detecta relaciones no previstas. No debe usarse para eliminar datos reales.
 
@@ -251,4 +288,4 @@ Para comprobar la transacción sin dejar datos, se recomienda ejecutar una orden
 
 Hay Controllers y lógica de negocio para familias de producto, categorías, impuestos, productos, imágenes de producto, usuarios y órdenes. Familias, categorías e impuestos validan duplicados y datos obligatorios; su acción de eliminar realiza desactivación lógica. La ruta `/categorias/:familiaId` filtra realmente por la familia seleccionada y el inicio calcula sus indicadores con datos de la API.
 
-El carrito, checkout, venta, método de pago, factura PDF, envío SMTP configurable y consulta de órdenes están activos en Angular y API para el rol Cliente. Compras a proveedores y calificaciones continúan reservadas para etapas posteriores. `OrdenDetalle` conserva su entidad y mapeo Database First; el flujo de venta se coordina desde `OrdenController → IOrdenLN → OrdenLN`, sin crear otra arquitectura, repositorios paralelos ni modificar `UnidadTrabajoEF`.
+El carrito, checkout, venta, método de pago, factura PDF, envío SMTP configurable y consulta de órdenes están activos en Angular y API para el rol Cliente. La gestión de proveedores, el catálogo previo, las compras, las entradas de inventario y su historial están activos para Administrador. Las calificaciones continúan reservadas para una etapa posterior. `OrdenDetalle` conserva su entidad y mapeo Database First; los flujos mantienen la arquitectura existente sin repositorios paralelos ni capas nuevas.

@@ -85,20 +85,6 @@ public class ProductoController : ControllerBase
         return Ok(resultado);
     }
 
-    // crea un producto y toma el ID del Administrador del JWT para la bitacora
-    [Authorize(Roles = "Administrador")]
-    [HttpPost("Insertar")]
-    [HttpPost("Crear")]
-    public async Task<IActionResult> Insertar([FromBody] TProducto producto)
-    {
-        if (!ModelState.IsValid) return ValidationProblem(ModelState);
-        var resultado = await _productoLN.InsertarAsync(producto, UsuarioIdActual());
-        // un codigo repetido devuelve 409 porque choca con otro producto existente
-        if (resultado.Error == Mensajes.CodigoProductoDuplicado) return Conflict(resultado);
-        if (!string.IsNullOrEmpty(resultado.Error)) return BadRequest(resultado);
-        return Ok(resultado);
-    }
-
     // actualiza despues de revisar categoria, impuesto, cantidades y codigo unico
     [Authorize(Roles = "Administrador")]
     [HttpPut("Modificar")]

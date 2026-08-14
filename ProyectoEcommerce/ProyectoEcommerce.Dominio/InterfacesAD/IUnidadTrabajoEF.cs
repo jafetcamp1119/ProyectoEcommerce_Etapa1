@@ -23,6 +23,10 @@ namespace ProyectoEcommerce.Dominio.InterfacesAD
         IRepositorioAD<Carrito> TCarrito { get; }
         IRepositorioAD<CarritoDetalle> TCarritoDetalle { get; }
         IRepositorioAD<Descuento> TDescuento { get; }
+        IRepositorioAD<Proveedor> TProveedor { get; }
+        IRepositorioAD<ProveedorCategoria> TProveedorCategoria { get; }
+        IRepositorioAD<ProductoProveedorCatalogo> TProductoProveedorCatalogo { get; }
+        IRepositorioAD<ProductoProveedor> TProductoProveedor { get; }
         // manda a la BD los cambios que quedaron pendientes
         int Completar();
         // guarda y hace Commit de la transaccion que se inicio antes

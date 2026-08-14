@@ -240,11 +240,19 @@ public class ProductoLN : IProductoLN
             var actual = await _unidadDeTrabajo.TProducto.ObtenerEntidadAsync(x => x.ProductoId == datos.ProductoId);
             if (actual.Data == null) return Error<TProducto>(Mensajes.ProductoNoEncontrado);
 
+            // proveedor, código, nombre, categoría, costo, precio y stock no se editan manualmente
+            datos.Codigo = actual.Data.Codigo;
+            datos.Nombre = actual.Data.Nombre;
+            datos.CategoriaId = actual.Data.CategoriaId;
+            datos.Costo = actual.Data.Costo;
+            datos.PrecioVenta = actual.Data.PrecioVenta;
+            datos.Stock = actual.Data.Stock;
             var validacion = await ValidarAsync(datos, datos.ProductoId);
             if (validacion != null) return Error<TProducto>(validacion);
 
-            // esta version de Map actualiza la entidad sin tocar ID, fecha ni navegaciones ignoradas
-            _mapper.Map(datos, actual.Data);
+            actual.Data.Descripcion = datos.Descripcion;
+            actual.Data.ImpuestoId = datos.ImpuestoId;
+            actual.Data.StockMinimo = datos.StockMinimo;
             var actualizacion = await _unidadDeTrabajo.TProducto.ModificarAsync(actual.Data);
             if (actualizacion.Data == null || !string.IsNullOrEmpty(actualizacion.Error))
                 return Error<TProducto>(Mensajes.ErrorOperacion);

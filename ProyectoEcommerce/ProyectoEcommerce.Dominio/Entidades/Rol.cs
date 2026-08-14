@@ -1,6 +1,5 @@
 namespace ProyectoEcommerce.Dominio.Entidades;
 
-/// <summary>Representa un rol de seguridad asignado a usuarios y opciones de menú.</summary>
 public partial class Rol
 {
     public int RolId { get; set; }

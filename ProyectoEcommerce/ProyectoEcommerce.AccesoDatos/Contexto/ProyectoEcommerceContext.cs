@@ -33,6 +33,14 @@ public partial class ProyectoEcommerceContext : DbContext
     public virtual DbSet<Carrito> Carritos { get; set; }
     public virtual DbSet<CarritoDetalle> CarritoDetalles { get; set; }
     public virtual DbSet<Descuento> Descuentos { get; set; }
+    public virtual DbSet<Proveedor> Proveedores { get; set; }
+    public virtual DbSet<ProveedorFamilia> ProveedorFamilias { get; set; }
+    public virtual DbSet<ProveedorCategoria> ProveedorCategorias { get; set; }
+    public virtual DbSet<ProductoProveedorCatalogo> ProductosProveedorCatalogo { get; set; }
+    public virtual DbSet<ProductoProveedor> ProductoProveedor { get; set; }
+    public virtual DbSet<CompraProveedor> ComprasProveedor { get; set; }
+    public virtual DbSet<CompraProveedorDetalle> CompraProveedorDetalles { get; set; }
+    public virtual DbSet<MovimientoInventario> MovimientosInventario { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -336,6 +344,137 @@ public partial class ProyectoEcommerceContext : DbContext
 
             entity.HasOne(e => e.Familia).WithMany(e => e.Descuentos)
                 .HasForeignKey(e => e.FamiliaId).HasConstraintName("FK_Descuentos_Familias");
+        });
+
+        modelBuilder.Entity<Proveedor>(entity =>
+        {
+            entity.HasKey(e => e.ProveedorId).HasName("PK_Proveedores");
+            entity.ToTable("Proveedores");
+            entity.HasIndex(e => e.Nombre, "UX_Proveedores_Nombre").IsUnique();
+            entity.HasIndex(e => e.Correo, "UX_Proveedores_Correo").IsUnique().HasFilter("[Correo] IS NOT NULL");
+            entity.Property(e => e.Nombre).HasMaxLength(150);
+            entity.Property(e => e.Correo).HasMaxLength(150);
+            entity.Property(e => e.Telefono).HasMaxLength(30);
+            entity.Property(e => e.Direccion).HasMaxLength(250);
+            entity.Property(e => e.UrlImagen).HasMaxLength(500);
+            entity.Property(e => e.Activo).HasDefaultValue(true, "DF_Proveedores_Activo");
+            entity.Property(e => e.FechaRegistro).HasPrecision(3)
+                .HasDefaultValueSql("(sysdatetime())", "DF_Proveedores_FechaRegistro");
+        });
+
+        modelBuilder.Entity<ProveedorFamilia>(entity =>
+        {
+            entity.HasKey(e => e.ProveedorFamiliaId).HasName("PK_ProveedorFamilias");
+            entity.ToTable("ProveedorFamilias");
+            entity.HasIndex(e => new { e.ProveedorId, e.FamiliaId }, "UQ_ProveedorFamilias_Proveedor_Familia").IsUnique();
+            entity.HasIndex(e => e.FamiliaId, "IX_ProveedorFamilias_FamiliaId");
+            entity.Property(e => e.Activo).HasDefaultValue(true, "DF_ProveedorFamilias_Activo");
+            entity.HasOne(e => e.Proveedor).WithMany(e => e.Familias)
+                .HasForeignKey(e => e.ProveedorId).HasConstraintName("FK_ProveedorFamilias_Proveedores");
+            entity.HasOne(e => e.Familia).WithMany(e => e.Proveedores)
+                .HasForeignKey(e => e.FamiliaId).HasConstraintName("FK_ProveedorFamilias_Familias");
+        });
+
+        modelBuilder.Entity<ProveedorCategoria>(entity =>
+        {
+            entity.HasKey(e => e.ProveedorCategoriaId).HasName("PK_ProveedorCategorias");
+            entity.ToTable("ProveedorCategorias");
+            entity.HasIndex(e => new { e.ProveedorId, e.CategoriaId }, "UQ_ProveedorCategorias_Proveedor_Categoria").IsUnique();
+            entity.HasIndex(e => e.CategoriaId, "IX_ProveedorCategorias_CategoriaId");
+            entity.Property(e => e.Activo).HasDefaultValue(true, "DF_ProveedorCategorias_Activo");
+            entity.HasOne(e => e.Proveedor).WithMany(e => e.Categorias)
+                .HasForeignKey(e => e.ProveedorId).HasConstraintName("FK_ProveedorCategorias_Proveedores");
+            entity.HasOne(e => e.Categoria).WithMany(e => e.Proveedores)
+                .HasForeignKey(e => e.CategoriaId).HasConstraintName("FK_ProveedorCategorias_Categorias");
+        });
+
+        modelBuilder.Entity<ProductoProveedorCatalogo>(entity =>
+        {
+            entity.HasKey(e => e.ProductoProveedorCatalogoId).HasName("PK_ProductosProveedorCatalogo");
+            entity.ToTable("ProductosProveedorCatalogo");
+            entity.HasIndex(e => new { e.ProveedorCategoriaId, e.Nombre }, "UQ_ProductosProveedorCatalogo_Categoria_Nombre").IsUnique();
+            entity.HasIndex(e => e.ProductoId, "IX_ProductosProveedorCatalogo_ProductoId").HasFilter("[ProductoId] IS NOT NULL");
+            entity.HasIndex(e => e.ImpuestoId, "IX_ProductosProveedorCatalogo_ImpuestoId");
+            entity.HasIndex(e => new { e.ProveedorCategoriaId, e.Activo, e.ProductoId }, "IX_ProductosProveedorCatalogo_Disponibles");
+            entity.Property(e => e.Nombre).HasMaxLength(120);
+            entity.Property(e => e.PrecioCompra).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Activo).HasDefaultValue(true, "DF_ProductosProveedorCatalogo_Activo");
+            entity.Property(e => e.FechaActualizacion).HasPrecision(3)
+                .HasDefaultValueSql("(sysdatetime())", "DF_ProductosProveedorCatalogo_Fecha");
+            entity.HasOne(e => e.ProveedorCategoria).WithMany(e => e.Productos)
+                .HasForeignKey(e => e.ProveedorCategoriaId)
+                .HasConstraintName("FK_ProductosProveedorCatalogo_ProveedorCategorias");
+            entity.HasOne(e => e.Impuesto).WithMany(e => e.OfertasProveedor)
+                .HasForeignKey(e => e.ImpuestoId)
+                .HasConstraintName("FK_ProductosProveedorCatalogo_Impuestos");
+            entity.HasOne(e => e.Producto).WithMany(e => e.OfertasProveedor)
+                .HasForeignKey(e => e.ProductoId)
+                .HasConstraintName("FK_ProductosProveedorCatalogo_Productos");
+        });
+
+        modelBuilder.Entity<ProductoProveedor>(entity =>
+        {
+            entity.HasKey(e => new { e.ProductoId, e.ProveedorId }).HasName("PK_ProductoProveedor");
+            entity.ToTable("ProductoProveedor");
+            entity.HasIndex(e => e.ProveedorId, "IX_ProductoProveedor_ProveedorId");
+            entity.Property(e => e.PrecioCompra).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Activo).HasDefaultValue(true, "DF_ProductoProveedor_Activo");
+            entity.HasOne(e => e.Producto).WithMany(e => e.Proveedores)
+                .HasForeignKey(e => e.ProductoId).HasConstraintName("FK_ProductoProveedor_Productos");
+            entity.HasOne(e => e.Proveedor).WithMany(e => e.Productos)
+                .HasForeignKey(e => e.ProveedorId).HasConstraintName("FK_ProductoProveedor_Proveedores");
+        });
+
+        modelBuilder.Entity<CompraProveedor>(entity =>
+        {
+            entity.HasKey(e => e.CompraProveedorId).HasName("PK_ComprasProveedor");
+            entity.ToTable("ComprasProveedor");
+            entity.HasIndex(e => e.Numero, "UX_ComprasProveedor_Numero").IsUnique();
+            entity.HasIndex(e => e.ClaveConfirmacion, "UX_ComprasProveedor_ClaveConfirmacion").IsUnique();
+            entity.HasIndex(e => new { e.ProveedorId, e.Fecha }, "IX_ComprasProveedor_Proveedor_Fecha");
+            entity.Property(e => e.Numero).HasMaxLength(40);
+            entity.Property(e => e.Estado).HasMaxLength(20).HasDefaultValue("PENDIENTE", "DF_ComprasProveedor_Estado");
+            entity.Property(e => e.Total).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Fecha).HasPrecision(3).HasDefaultValueSql("(sysdatetime())", "DF_ComprasProveedor_Fecha");
+            entity.Property(e => e.FechaConfirmacion).HasPrecision(3);
+            entity.HasOne(e => e.Proveedor).WithMany(e => e.Compras)
+                .HasForeignKey(e => e.ProveedorId).HasConstraintName("FK_ComprasProveedor_Proveedores");
+            entity.HasOne(e => e.Usuario).WithMany(e => e.ComprasProveedor)
+                .HasForeignKey(e => e.UsuarioId).HasConstraintName("FK_ComprasProveedor_Usuarios");
+        });
+
+        modelBuilder.Entity<CompraProveedorDetalle>(entity =>
+        {
+            entity.HasKey(e => e.CompraProveedorDetalleId).HasName("PK_CompraProveedorDetalle");
+            entity.ToTable("CompraProveedorDetalle");
+            entity.HasIndex(e => new { e.CompraProveedorId, e.ProductoId }, "UQ_CompraProveedorDetalle").IsUnique();
+            entity.HasIndex(e => e.ProductoId, "IX_CompraProveedorDetalle_ProductoId");
+            entity.Property(e => e.NombreProducto).HasMaxLength(120);
+            entity.Property(e => e.PrecioUnitario).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Subtotal).HasColumnType("decimal(18, 2)");
+            entity.HasOne(e => e.CompraProveedor).WithMany(e => e.Detalles)
+                .HasForeignKey(e => e.CompraProveedorId).HasConstraintName("FK_CompraProveedorDetalle_Compra");
+            entity.HasOne(e => e.Producto).WithMany(e => e.DetallesCompraProveedor)
+                .HasForeignKey(e => e.ProductoId).HasConstraintName("FK_CompraProveedorDetalle_Producto");
+            entity.HasOne(e => e.Oferta).WithMany(e => e.DetallesCompra)
+                .HasForeignKey(e => e.ProductoProveedorCatalogoId).HasConstraintName("FK_CompraProveedorDetalle_Oferta");
+        });
+
+        modelBuilder.Entity<MovimientoInventario>(entity =>
+        {
+            entity.HasKey(e => e.MovimientoInventarioId).HasName("PK_MovimientosInventario");
+            entity.ToTable("MovimientosInventario");
+            entity.HasIndex(e => new { e.ProductoId, e.Fecha }, "IX_MovimientosInventario_Producto_Fecha");
+            entity.HasIndex(e => e.UsuarioId, "IX_MovimientosInventario_UsuarioId").HasFilter("[UsuarioId] IS NOT NULL");
+            entity.Property(e => e.Tipo).HasMaxLength(10);
+            entity.Property(e => e.Motivo).HasMaxLength(200);
+            entity.Property(e => e.Fecha).HasPrecision(3).HasDefaultValueSql("(sysdatetime())", "DF_MovimientosInventario_Fecha");
+            entity.HasOne(e => e.Producto).WithMany(e => e.MovimientosInventario)
+                .HasForeignKey(e => e.ProductoId).HasConstraintName("FK_MovimientosInventario_Productos");
+            entity.HasOne(e => e.Usuario).WithMany(e => e.MovimientosInventario)
+                .HasForeignKey(e => e.UsuarioId).HasConstraintName("FK_MovimientosInventario_Usuarios");
+            entity.HasOne(e => e.CompraProveedor).WithMany(e => e.Movimientos)
+                .HasForeignKey(e => e.CompraProveedorId).HasConstraintName("FK_MovimientosInventario_ComprasProveedor");
         });
 
         // deja un punto para agregar configuracion adicional sin tocar esta parte generada

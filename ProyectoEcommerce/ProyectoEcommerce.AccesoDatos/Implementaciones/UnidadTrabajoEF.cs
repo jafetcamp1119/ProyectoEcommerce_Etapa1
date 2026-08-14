@@ -35,6 +35,10 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         private RepositorioAD<Carrito>? _TCarrito;
         private RepositorioAD<CarritoDetalle>? _TCarritoDetalle;
         private RepositorioAD<Descuento>? _TDescuento;
+        private RepositorioAD<Proveedor>? _TProveedor;
+        private RepositorioAD<ProveedorCategoria>? _TProveedorCategoria;
+        private RepositorioAD<ProductoProveedorCatalogo>? _TProductoProveedorCatalogo;
+        private RepositorioAD<ProductoProveedor>? _TProductoProveedor;
 
         #endregion
 
@@ -96,6 +100,18 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
         public IRepositorioAD<Descuento> TDescuento =>
             _TDescuento ??= new RepositorioAD<Descuento>(_Contexto);
+
+        public IRepositorioAD<Proveedor> TProveedor =>
+            _TProveedor ??= new RepositorioAD<Proveedor>(_Contexto);
+
+        public IRepositorioAD<ProveedorCategoria> TProveedorCategoria =>
+            _TProveedorCategoria ??= new RepositorioAD<ProveedorCategoria>(_Contexto);
+
+        public IRepositorioAD<ProductoProveedorCatalogo> TProductoProveedorCatalogo =>
+            _TProductoProveedorCatalogo ??= new RepositorioAD<ProductoProveedorCatalogo>(_Contexto);
+
+        public IRepositorioAD<ProductoProveedor> TProductoProveedor =>
+            _TProductoProveedor ??= new RepositorioAD<ProductoProveedor>(_Contexto);
 
         public int Completar()
         {

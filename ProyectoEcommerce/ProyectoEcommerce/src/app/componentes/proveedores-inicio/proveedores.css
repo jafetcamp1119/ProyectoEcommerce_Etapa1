@@ -1,0 +1,263 @@
+:host {
+  display: block;
+}
+
+.provider-menu-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.secondary-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+.provider-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.provider-card,
+.panel-card,
+.offer-card {
+  overflow: hidden;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+  box-shadow: 0 0.3rem 1rem rgba(32, 56, 85, 0.08);
+}
+
+.provider-image {
+  display: block;
+  width: 100%;
+  height: 165px;
+  object-fit: cover;
+  background: var(--cui-tertiary-bg);
+}
+
+.provider-placeholder {
+  display: grid;
+  place-items: center;
+  height: 165px;
+  color: #315270;
+  font-size: 2.2rem;
+  font-weight: 750;
+  background: linear-gradient(135deg, #e9eef5, #d6e3f2);
+}
+
+.provider-content,
+.panel-card,
+.offer-card {
+  padding: 1rem;
+}
+
+.provider-content h2,
+.offer-card h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.12rem;
+}
+
+.provider-meta {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 4.5rem;
+  color: var(--cui-secondary-color);
+  font-size: 0.9rem;
+}
+
+.provider-actions,
+.choice-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.choice-tabs {
+  margin-top: 0;
+}
+
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-pill.active {
+  color: #136c32;
+  background: #dff5e7;
+}
+
+.status-pill.inactive {
+  color: #8b2635;
+  background: #fde4e8;
+}
+
+.provider-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.provider-form .full {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.feedback {
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.75rem;
+}
+
+.feedback.error {
+  color: #8b2635;
+  background: #fde4e8;
+}
+
+.feedback.success {
+  color: #136c32;
+  background: #dff5e7;
+}
+
+.catalog-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.55fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.offer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.85rem;
+}
+
+.offer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.offer-card.offer-inactive {
+  opacity: 0.72;
+}
+
+.offer-card .price {
+  color: var(--cui-primary);
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.offer-card .provider-actions {
+  margin-top: auto;
+}
+
+.info-box {
+  padding: 0.75rem;
+  color: var(--cui-secondary-color);
+  background: var(--cui-tertiary-bg);
+  border-radius: 0.65rem;
+}
+
+.cart-panel {
+  position: sticky;
+  top: 5.8rem;
+}
+
+.cart-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.4rem 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--cui-border-color);
+}
+
+.cart-line small {
+  color: var(--cui-secondary-color);
+}
+
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 0;
+  font-size: 1.08rem;
+  font-weight: 750;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+}
+
+.provider-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.provider-table th,
+.provider-table td {
+  padding: 0.8rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--cui-border-color);
+}
+
+.provider-table th {
+  color: var(--cui-secondary-color);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.pagination-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.detail-panel {
+  margin-top: 1rem;
+}
+
+.quantity-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 820px) {
+  .catalog-columns,
+  .provider-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-panel {
+    position: static;
+  }
+}

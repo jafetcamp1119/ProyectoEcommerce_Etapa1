@@ -128,14 +128,12 @@
         </label>
 
 
-        <!-- el correo viene definido para la configuracion inicial
-             readonly permite verlo pero evita cambiarlo desde este input -->
+        <!-- cada instalación define el correo de su primer Administrador -->
         <input id="setup-correo"
                class="form-control"
                type="email"
                formControlName="correo"
-               autocomplete="email"
-               readonly>
+               autocomplete="email">
 
 
         <!-- primero revisa si el correo esta vacio -->
@@ -152,15 +150,6 @@
 
         <span class="field-error">
           Ingresa un correo electrónico válido.
-        </span>
-
-        }
-
-        <!-- este error aparece si el correo no es el autorizado para crear el primer admin -->
-        @else if (tieneError('correo', 'correoNoAutorizado')) {
-
-        <span class="field-error">
-          Este correo no está autorizado para la configuración inicial.
         </span>
 
         }

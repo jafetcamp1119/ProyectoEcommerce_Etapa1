@@ -1,0 +1,36 @@
+<section class="catalog-page">
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Administración</span>
+      <h1>Proveedores</h1>
+      <p>Gestiona la oferta que abastece el catálogo y el inventario de LessPrice.</p>
+    </div>
+  </header>
+
+  <div class="navigation-grid provider-menu-grid">
+    <app-catalog-navigation-card
+      titulo="Gestión de proveedores"
+      descripcion="Registra, actualiza, activa o desactiva distribuidores."
+      textoBoton="Ingresar"
+      imagen="proveedores/menu-gestion.svg"
+      [ruta]="['/proveedores/gestion']" />
+
+    <app-catalog-navigation-card
+      titulo="Compras a proveedores"
+      descripcion="Selecciona productos, genera una proforma y confirma entradas de inventario."
+      textoBoton="Ingresar"
+      imagen="proveedores/menu-compras.svg"
+      [ruta]="['/proveedores/compras']" />
+
+    <app-catalog-navigation-card
+      titulo="Historial de compras"
+      descripcion="Consulta compras confirmadas, su detalle y el comprobante PDF."
+      textoBoton="Ingresar"
+      imagen="proveedores/menu-historial.svg"
+      [ruta]="['/proveedores/historial']" />
+  </div>
+
+  <div class="secondary-action">
+    <a class="btn btn-outline-primary" href="#/proveedores/catalogo">Catálogo de proveedores</a>
+  </div>
+</section>

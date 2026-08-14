@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Distribuidora de ropa">
+  <rect width="640" height="360" fill="#f5edff"/><circle cx="320" cy="150" r="92" fill="#9b51e0"/>
+  <path d="m269 91-46 37 27 36 21-16v78h98v-78l21 16 27-36-46-37-27 24h-48Z" fill="#fff"/>
+  <text x="320" y="300" text-anchor="middle" font-family="Arial" font-size="30" font-weight="700" fill="#553078">Textiles del Istmo</text>
+</svg>

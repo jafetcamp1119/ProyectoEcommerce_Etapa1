@@ -1,0 +1,145 @@
+<section class="catalog-page">
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Proveedores</span>
+      <h1>Gestión de proveedores</h1>
+      <p>
+        Los cambios de estado no eliminan productos, inventario ni compras históricas.
+      </p>
+    </div>
+    <button
+      class="btn btn-primary"
+      type="button"
+      (click)="nuevo()">
+      Agregar proveedor
+    </button>
+  </header>
+
+  @if (error) {
+    <div class="feedback error">{{ error }}</div>
+  }
+  @if (exito) {
+    <div class="feedback success">{{ exito }}</div>
+  }
+
+  @if (mostrandoFormulario) {
+    <form
+      class="panel-card provider-form"
+      [formGroup]="formulario"
+      (ngSubmit)="guardar()">
+      <div>
+        <label class="form-label" for="proveedor-nombre">Nombre</label>
+        <input
+          id="proveedor-nombre"
+          class="form-control"
+          formControlName="nombre"
+          maxlength="150" />
+      </div>
+      <div>
+        <label class="form-label" for="proveedor-correo">Correo</label>
+        <input
+          id="proveedor-correo"
+          class="form-control"
+          type="email"
+          formControlName="correo"
+          maxlength="150" />
+      </div>
+      <div>
+        <label class="form-label" for="proveedor-telefono">Teléfono</label>
+        <input
+          id="proveedor-telefono"
+          class="form-control"
+          formControlName="telefono"
+          maxlength="30" />
+      </div>
+      <div>
+        <label class="form-label" for="proveedor-direccion">Dirección</label>
+        <input
+          id="proveedor-direccion"
+          class="form-control"
+          formControlName="direccion"
+          maxlength="250" />
+      </div>
+      <div class="full">
+        <label class="form-label" for="proveedor-imagen">Imagen</label>
+        <input
+          id="proveedor-imagen"
+          class="form-control"
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp"
+          (change)="seleccionarArchivo($event)" />
+        <small class="text-body-secondary">JPG, PNG o WebP, máximo 5 MB.</small>
+      </div>
+      <div class="form-actions">
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          (click)="cancelar()">
+          Cancelar
+        </button>
+        <button
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : 'Guardar proveedor' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (cargando) {
+    <div class="state-card">Cargando proveedores...</div>
+  } @else if (!proveedores.length) {
+    <div class="state-card">No hay proveedores registrados.</div>
+  } @else {
+    <div class="provider-grid">
+      @for (proveedor of proveedores; track proveedor.proveedorId) {
+        <article class="provider-card">
+          @if (proveedor.urlImagen) {
+            <img
+              class="provider-image"
+              [src]="proveedor.urlImagen"
+              [alt]="proveedor.nombre" />
+          } @else {
+            <div class="provider-placeholder">{{ iniciales(proveedor.nombre) }}</div>
+          }
+          <div class="provider-content">
+            <h2>{{ proveedor.nombre }}</h2>
+            <span
+              class="status-pill"
+              [class.active]="proveedor.activo"
+              [class.inactive]="!proveedor.activo">
+              {{ proveedor.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+            <div class="provider-meta">
+              <span>{{ proveedor.correo || 'Correo no registrado' }}</span>
+              <span>{{ proveedor.telefono || 'Teléfono no registrado' }}</span>
+              <span>{{ proveedor.direccion || 'Dirección no registrada' }}</span>
+            </div>
+            <div class="provider-actions">
+              <a
+                class="btn btn-primary btn-sm"
+                [routerLink]="['/proveedores/catalogo', proveedor.proveedorId]">
+                Categorías y productos
+              </a>
+              <button
+                class="btn btn-outline-primary btn-sm"
+                type="button"
+                (click)="editar(proveedor)">
+                Editar
+              </button>
+              <button
+                class="btn btn-sm"
+                type="button"
+                [class.btn-outline-danger]="proveedor.activo"
+                [class.btn-outline-success]="!proveedor.activo"
+                (click)="cambiarEstado(proveedor)">
+                {{ proveedor.activo ? 'Desactivar' : 'Activar' }}
+              </button>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

@@ -76,6 +76,91 @@ public class FacturaLN : IFacturaLN
         }).GeneratePdf();
     }
 
+    // usa la misma libreria y la misma identidad visual para proformas y compras a proveedores
+    public byte[] GenerarCompraProveedor(TDocumentoCompraProveedor documento, bool esProforma)
+    {
+        ArgumentNullException.ThrowIfNull(documento);
+        var titulo = esProforma ? "PROFORMA DE COMPRA" : "COMPROBANTE DE COMPRA";
+
+        return Document.Create(pdf =>
+        {
+            pdf.Page(pagina =>
+            {
+                pagina.Size(PageSizes.A4);
+                pagina.Margin(32);
+                pagina.DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Grey.Darken3));
+                pagina.Header().Column(columna =>
+                {
+                    columna.Item().Row(fila =>
+                    {
+                        fila.RelativeItem().Text("LESSPRICE").FontSize(18).SemiBold().FontColor(Colors.Blue.Darken2);
+                        fila.ConstantItem(220).AlignRight().Column(datos =>
+                        {
+                            datos.Item().Text(titulo).FontSize(13).SemiBold();
+                            datos.Item().Text($"Número: {documento.Numero}");
+                            datos.Item().Text(documento.Fecha.ToString("dd/MM/yyyy HH:mm", Cultura));
+                        });
+                    });
+                    columna.Item().PaddingTop(12).LineHorizontal(1).LineColor(Colors.Blue.Lighten1);
+                });
+                pagina.Content().PaddingVertical(16).Column(columna =>
+                {
+                    columna.Spacing(14);
+                    columna.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(12).Column(datos =>
+                    {
+                        datos.Spacing(4);
+                        datos.Item().Text("PROVEEDOR").SemiBold().FontColor(Colors.Blue.Darken2);
+                        datos.Item().Text($"Nombre: {documento.Proveedor}");
+                        datos.Item().Text($"Correo: {documento.CorreoProveedor ?? "No registrado"}");
+                        datos.Item().Text($"Teléfono: {documento.TelefonoProveedor ?? "No registrado"}");
+                        datos.Item().Text($"Dirección: {documento.DireccionProveedor ?? "No registrada"}");
+                    });
+                    columna.Item().Table(tabla =>
+                    {
+                        tabla.ColumnsDefinition(columnas =>
+                        {
+                            columnas.RelativeColumn();
+                            columnas.ConstantColumn(60);
+                            columnas.ConstantColumn(100);
+                            columnas.ConstantColumn(100);
+                        });
+                        tabla.Header(encabezado =>
+                        {
+                            Encabezado(encabezado.Cell(), "Producto");
+                            Encabezado(encabezado.Cell().AlignCenter(), "Cantidad");
+                            Encabezado(encabezado.Cell().AlignRight(), "Precio compra");
+                            Encabezado(encabezado.Cell().AlignRight(), "Subtotal");
+                        });
+                        foreach (var item in documento.Productos)
+                        {
+                            Celda(tabla.Cell(), item.Nombre);
+                            Celda(tabla.Cell().AlignCenter(), item.Cantidad.ToString(Cultura));
+                            Celda(tabla.Cell().AlignRight(), Moneda(item.PrecioUnitario));
+                            Celda(tabla.Cell().AlignRight(), Moneda(item.Subtotal));
+                        }
+                    });
+                    columna.Item().AlignRight().Width(260).BorderTop(1).PaddingTop(8).Row(fila =>
+                    {
+                        fila.RelativeItem().Text("TOTAL").SemiBold();
+                        fila.RelativeItem().AlignRight().Text(Moneda(documento.Total))
+                            .SemiBold().FontColor(Colors.Blue.Darken2);
+                    });
+                    columna.Item().Text(esProforma
+                        ? "Esta proforma no modifica el inventario. El stock cambia únicamente al confirmar la compra."
+                        : $"Estado: {documento.Estado}")
+                        .FontColor(Colors.Grey.Darken1);
+                });
+                pagina.Footer().AlignCenter().Text(texto =>
+                {
+                    texto.Span("Página ");
+                    texto.CurrentPageNumber();
+                    texto.Span(" de ");
+                    texto.TotalPages();
+                });
+            });
+        }).GeneratePdf();
+    }
+
     // dibuja la caja con nombre, correo y direccion de entrega
     private static void DatosCliente(IContainer contenedor, TFacturaDatos factura)
     {

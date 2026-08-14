@@ -27,33 +27,60 @@ public class CorreoFacturaLN : ICorreoFacturaLN
         string rutaPdf,
         CancellationToken cancellationToken = default)
     {
-        // Host es el servidor, Port el puerto y FromEmail y FromName forman el remitente
-        // Enabled deja apagar correos cuando SMTP no esta preparado en el entorno
+        var asunto = $"Factura de tu compra en LessPrice - Orden #{factura.NumeroOrden}";
+        var texto = $"Hola {factura.Cliente}:\n\nGracias por comprar en LessPrice.\n\n" +
+            $"Adjuntamos la factura correspondiente a tu orden #{factura.NumeroOrden}.\n\n" +
+            $"Total: CRC {factura.Total:N2}\n\nGracias por tu compra.\n\nLessPrice";
+        return await EnviarMensajeAsync(factura.Correo, asunto, texto, rutaPdf, cancellationToken);
+    }
+
+    public async Task<TResultadoCorreoFactura> EnviarCompraProveedorAsync(
+        TDocumentoCompraProveedor documento,
+        string rutaPdf,
+        bool esProforma,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(documento.CorreoProveedor))
+            return new TResultadoCorreoFactura { Error = "El proveedor no tiene un correo registrado." };
+
+        var tipo = esProforma ? "Proforma" : "Comprobante";
+        var asunto = $"{tipo} de compra LessPrice - {documento.Numero}";
+        var texto = $"Hola {documento.Proveedor}:\n\n" +
+            $"Adjuntamos la {tipo.ToLowerInvariant()} de compra {documento.Numero}.\n\n" +
+            $"Total: CRC {documento.Total:N2}\n\nLessPrice";
+        return await EnviarMensajeAsync(
+            documento.CorreoProveedor,
+            asunto,
+            texto,
+            rutaPdf,
+            cancellationToken);
+    }
+
+    // toda salida usa la misma sección SMTP y las mismas credenciales ya configuradas
+    private async Task<TResultadoCorreoFactura> EnviarMensajeAsync(
+        string destino,
+        string asunto,
+        string texto,
+        string rutaPdf,
+        CancellationToken cancellationToken)
+    {
         var seccion = _configuration.GetSection("Smtp");
-        var habilitado = seccion.GetValue<bool>("Enabled");
         var servidor = seccion["Host"]?.Trim();
         var remitente = (seccion["FromEmail"] ?? seccion["SenderEmail"])?.Trim();
-        if (!habilitado || string.IsNullOrWhiteSpace(servidor) || string.IsNullOrWhiteSpace(remitente))
+        if (!seccion.GetValue<bool>("Enabled") || string.IsNullOrWhiteSpace(servidor) ||
+            string.IsNullOrWhiteSpace(remitente))
             return new TResultadoCorreoFactura { Error = "SMTP no configurado." };
 
         try
         {
-            // MimeMessage guarda remitente, destino, asunto y contenido del correo
             var mensaje = new MimeMessage();
             var nombreRemitente = (seccion["FromName"] ?? seccion["SenderName"])?.Trim();
             mensaje.From.Add(new MailboxAddress(
                 string.IsNullOrWhiteSpace(nombreRemitente) ? "LessPrice" : nombreRemitente,
                 remitente));
-            mensaje.To.Add(MailboxAddress.Parse(factura.Correo));
-            mensaje.Subject = $"Factura de tu compra en LessPrice - Orden #{factura.NumeroOrden}";
-
-            // BodyBuilder arma el texto y permite adjuntar el PDF desde su ruta
-            var cuerpo = new BodyBuilder
-            {
-                TextBody =
-                $"Hola {factura.Cliente}:\n\nGracias por comprar en LessPrice.\n\nAdjuntamos la factura correspondiente a tu orden #{
-                factura.NumeroOrden}.\n\nTotal: CRC {factura.Total:N2}\n\nGracias por tu compra.\n\nLessPrice"
-            };
+            mensaje.To.Add(MailboxAddress.Parse(destino));
+            mensaje.Subject = asunto;
+            var cuerpo = new BodyBuilder { TextBody = texto };
             cuerpo.Attachments.Add(rutaPdf, new ContentType("application", "pdf"));
             mensaje.Body = cuerpo.ToMessageBody();
 
@@ -62,32 +89,23 @@ public class CorreoFacturaLN : ICorreoFacturaLN
             var habilitarSsl = seccion.GetValue<bool?>("EnableSsl")
                 ?? seccion.GetValue<bool?>("UseStartTls")
                 ?? true;
-            // escoge SSL directo, StartTls o sin cifrado segun la configuracion
             var seguridad = seccion.GetValue<bool>("UseSsl")
                 ? SecureSocketOptions.SslOnConnect
-                : habilitarSsl
-                    ? SecureSocketOptions.StartTls
-                    : SecureSocketOptions.None;
-
-            // abre la conexion SMTP usando la seguridad escogida
+                : habilitarSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None;
             await cliente.ConnectAsync(servidor, puerto, seguridad, cancellationToken);
 
-            // Password llega desde User Secrets, variable de entorno u otro proveedor configurado
-            // no se guarda ni se muestra dentro del codigo
             var usuario = seccion["Username"]?.Trim();
-            var contrasena = seccion["Password"];
             if (!string.IsNullOrWhiteSpace(usuario))
-                await cliente.AuthenticateAsync(usuario, contrasena ?? string.Empty, cancellationToken);
+                await cliente.AuthenticateAsync(usuario, seccion["Password"] ?? string.Empty, cancellationToken);
 
-            // manda el mensaje completo y cierra la conexion de forma ordenada
             await cliente.SendAsync(mensaje, cancellationToken);
             await cliente.DisconnectAsync(true, cancellationToken);
             return new TResultadoCorreoFactura { Enviado = true };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "No fue posible enviar la factura de OrdenId {OrdenId} por SMTP.", factura.OrdenId);
-            return new TResultadoCorreoFactura { Error = "No fue posible enviar la factura por correo." };
+            _logger.LogError(ex, "No fue posible enviar un documento PDF de LessPrice por SMTP.");
+            return new TResultadoCorreoFactura { Error = "No fue posible enviar el documento por correo." };
         }
     }
 }

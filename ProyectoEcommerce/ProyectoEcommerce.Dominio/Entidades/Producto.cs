@@ -21,4 +21,8 @@ public partial class Producto
     public virtual ICollection<OrdenDetalle> OrdenDetalles { get; set; } = new List<OrdenDetalle>();
     public virtual ICollection<CarritoDetalle> CarritoDetalles { get; set; } = new List<CarritoDetalle>();
     public virtual ICollection<Descuento> Descuentos { get; set; } = new List<Descuento>();
+    public virtual ICollection<ProductoProveedor> Proveedores { get; set; } = new List<ProductoProveedor>();
+    public virtual ICollection<ProductoProveedorCatalogo> OfertasProveedor { get; set; } = new List<ProductoProveedorCatalogo>();
+    public virtual ICollection<CompraProveedorDetalle> DetallesCompraProveedor { get; set; } = new List<CompraProveedorDetalle>();
+    public virtual ICollection<MovimientoInventario> MovimientosInventario { get; set; } = new List<MovimientoInventario>();
 }

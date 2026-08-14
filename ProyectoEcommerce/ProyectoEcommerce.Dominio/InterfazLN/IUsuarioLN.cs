@@ -17,7 +17,7 @@ namespace ProyectoEcommerce.Dominio.InterfazLN
         Task<Respuesta<TUsuario>> RegistrarAsync(TRegistroUsuario datos);
         // revisa si todavia hace falta crear el primer Administrador
         Task<Respuesta<bool>> RequiereConfiguracionInicialAsync();
-        // recibe los datos iniciales y crea el Administrador reservado dentro de una transaccion
+        // recibe los datos iniciales y crea el primer Administrador dentro de una transaccion
         Task<Respuesta<TUsuario>> CrearAdministradorInicialAsync(TRegistroUsuario datos);
         // revisa correo, contraseña, bloqueos y estado antes de dejar que el controller cree el JWT
         Task<Respuesta<TEstadoAutenticacion>> AutenticarAsync(TLoginUsuario datos);

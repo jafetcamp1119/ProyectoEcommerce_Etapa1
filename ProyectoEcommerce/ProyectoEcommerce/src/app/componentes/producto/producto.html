@@ -104,11 +104,9 @@
     <!-- el boton para crear productos solamente aparece al Administrador -->
     @if (esAdmin) {
 
-    <button class="btn btn-primary"
-            type="button"
-            (click)="nuevo()">
-      Nuevo producto
-    </button>
+    <a class="btn btn-primary" routerLink="/proveedores/catalogo">
+      Productos disponibles
+    </a>
 
     }
 
@@ -523,6 +521,7 @@
         <input id="producto-codigo"
                class="form-control"
                formControlName="codigo"
+               readonly
                maxlength="50">
 
         @if (
@@ -550,6 +549,7 @@
         <input id="producto-nombre"
                class="form-control"
                formControlName="nombre"
+               readonly
                maxlength="120">
 
         @if (
@@ -594,6 +594,7 @@
 
         <select id="producto-categoria-form"
                 class="form-select"
+                [disabled]="true"
                 formControlName="categoriaId">
 
           <!-- ngValue mantiene este valor como numero -->
@@ -655,7 +656,7 @@
       <div class="field">
 
         <label for="producto-precio">
-          Precio final (impuesto incluido) *
+          Precio final calculado (30 %) *
         </label>
 
         <input id="producto-precio"
@@ -663,6 +664,7 @@
                type="number"
                min="0"
                step="0.01"
+               readonly
                formControlName="precioVenta">
 
       </div>
@@ -673,7 +675,7 @@
       <div class="field">
 
         <label for="producto-costo">
-          Costo *
+          Precio de compra vigente *
         </label>
 
         <input id="producto-costo"
@@ -681,6 +683,7 @@
                type="number"
                min="0"
                step="0.01"
+               readonly
                formControlName="costo">
 
       </div>
@@ -699,6 +702,7 @@
                type="number"
                min="0"
                step="1"
+               readonly
                formControlName="stock">
 
       </div>
@@ -727,6 +731,7 @@
       <label class="active-check">
 
         <input type="checkbox"
+               [disabled]="true"
                formControlName="activo">
 
         Producto activo

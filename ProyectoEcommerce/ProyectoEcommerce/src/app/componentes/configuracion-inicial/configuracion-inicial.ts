@@ -38,10 +38,6 @@ export class ConfiguracionInicial implements OnInit {
 
   mensajeError = '';
 
-  // aqui se guarda el correo que tiene permitido crear al primer Administrador
-  correoAutorizado = '';
-
-
   // formulario que pide los datos necesarios para crear la cuenta administradora inicial
   readonly configuracionForm = this.formBuilder.nonNullable.group({
 
@@ -66,10 +62,7 @@ export class ConfiguracionInicial implements OnInit {
       [
         this.textoObligatorio,
         Validators.email,
-        Validators.maxLength(120),
-
-        // ademas de validar el formato revisa que sea exactamente el correo autorizado
-        (control: AbstractControl) => this.correoPermitido(control)
+        Validators.maxLength(120)
       ]
     ],
 
@@ -130,20 +123,6 @@ export class ConfiguracionInicial implements OnInit {
             void this.router.navigate(['/auth']);
             return;
           }
-
-          // guarda el correo autorizado sin espacios y en minusculas
-          this.correoAutorizado = estado.correoAdministradorInicial
-            .trim()
-            .toLowerCase();
-
-          // pone automaticamente ese correo dentro del formulario
-          this.configuracionForm.controls.correo
-            .setValue(this.correoAutorizado);
-
-          // vuelve a ejecutar las validaciones del correo
-          // ahora que ya conocemos cual correo esta autorizado
-          this.configuracionForm.controls.correo
-            .updateValueAndValidity();
 
         },
 
@@ -293,28 +272,6 @@ export class ConfiguracionInicial implements OnInit {
       control.value.trim().length > 0
       ? null
       : { required: true };
-  }
-
-
-  // revisa que el correo del formulario sea exactamente el permitido
-  // para crear al primer Administrador
-  private correoPermitido(
-    control: AbstractControl
-  ): ValidationErrors | null {
-
-    // si el valor es texto lo limpia y lo pasa a minusculas
-    // si no es texto usa un string vacio
-    const correo =
-      typeof control.value === 'string'
-        ? control.value.trim().toLowerCase()
-        : '';
-
-    // solo queda valido si ya existe un correo autorizado
-    // y el correo escrito coincide exactamente con el
-    return this.correoAutorizado &&
-      correo === this.correoAutorizado
-      ? null
-      : { correoNoAutorizado: true };
   }
 
 

@@ -1,0 +1,185 @@
+<section class="catalog-page">
+  <nav class="catalog-breadcrumb">
+    <a routerLink="/proveedores">Proveedores</a>
+    <span>›</span>
+    <a routerLink="/proveedores/compras">Compras a proveedores</a>
+    @if (proveedor) {
+      <span>›</span>
+      <span>{{ proveedor.nombre }}</span>
+    }
+  </nav>
+
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Entrada de inventario</span>
+      <h1>{{ proveedor ? proveedor.nombre : 'Compras a proveedores' }}</h1>
+      <p>
+        El carrito y la proforma no modifican stock. Solo lo hace una confirmación
+        correcta.
+      </p>
+    </div>
+  </header>
+
+  @if (error) {
+    <div class="feedback error">{{ error }}</div>
+  }
+  @if (exito) {
+    <div class="feedback success">{{ exito }}</div>
+  }
+
+  @if (!proveedorId && !cargando) {
+    <div class="provider-grid">
+      @for (item of proveedores; track item.proveedorId) {
+        <article class="provider-card">
+          @if (item.urlImagen) {
+            <img
+              class="provider-image"
+              [src]="item.urlImagen"
+              [alt]="item.nombre" />
+          } @else {
+            <div class="provider-placeholder">{{ iniciales(item.nombre) }}</div>
+          }
+          <div class="provider-content">
+            <h2>{{ item.nombre }}</h2>
+            <p class="text-body-secondary">
+              {{ item.correo || 'Correo no registrado' }}
+            </p>
+            <a
+              class="btn btn-primary btn-sm"
+              [routerLink]="['/proveedores/compras', item.proveedorId]">
+              Ingresar
+            </a>
+          </div>
+        </article>
+      }
+    </div>
+  } @else if (proveedor) {
+    <div class="catalog-columns">
+      <section>
+        <div class="provider-toolbar">
+          <div>
+            <label class="form-label" for="categoria-compra">Categoría</label>
+            <select
+              id="categoria-compra"
+              class="form-select"
+              [ngModel]="categoriaId"
+              (ngModelChange)="seleccionarCategoria($event)">
+              @for (categoria of categorias; track categoria.categoriaId) {
+                <option [value]="categoria.categoriaId">
+                  {{ categoria.familiaNombre }} › {{ categoria.nombre }}
+                </option>
+              }
+            </select>
+          </div>
+        </div>
+
+        @if (cargando) {
+          <div class="state-card">Cargando productos...</div>
+        } @else {
+          <div class="offer-grid">
+            @for (producto of productos; track producto.productoProveedorCatalogoId) {
+              <article class="offer-card">
+                <h3>{{ producto.nombre }}</h3>
+                <span class="price">{{ moneda(producto.precioCompra) }}</span>
+                @if (producto.incorporado) {
+                  <small>Stock actual en LessPrice: {{ producto.stock }}</small>
+                  <div class="quantity-row">
+                    <input
+                      class="form-control"
+                      type="number"
+                      min="1"
+                      step="1"
+                      [ngModel]="cantidades[producto.productoProveedorCatalogoId]"
+                      (ngModelChange)="cambiarCantidad(
+                        producto.productoProveedorCatalogoId,
+                        $event
+                      )" />
+                    <button
+                      class="btn btn-primary btn-sm"
+                      type="button"
+                      (click)="agregar(producto)">
+                      Agregar
+                    </button>
+                  </div>
+                } @else {
+                  <span class="status-pill inactive">Aún no incorporado</span>
+                  <a
+                    class="btn btn-outline-primary btn-sm"
+                    [routerLink]="[
+                      '/proveedores/catalogo',
+                      proveedorId,
+                      'categoria',
+                      categoriaId
+                    ]">
+                    Ir a productos disponibles
+                  </a>
+                }
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <aside class="panel-card cart-panel">
+        <h2>Compra al proveedor</h2>
+        <p class="text-body-secondary">{{ proveedor.nombre }}</p>
+        @if (!carrito.length) {
+          <div class="state-card">El carrito está vacío.</div>
+        } @else {
+          @for (linea of carrito; track linea.producto.productoProveedorCatalogoId) {
+            <div class="cart-line">
+              <div>
+                <strong>{{ linea.producto.nombre }}</strong>
+                <br />
+                <small>
+                  {{ linea.cantidad }} × {{ moneda(linea.producto.precioCompra) }}
+                </small>
+              </div>
+              <div class="text-end">
+                <strong>
+                  {{ moneda(linea.cantidad * linea.producto.precioCompra) }}
+                </strong>
+                <br />
+                <button
+                  class="btn btn-link btn-sm text-danger p-0"
+                  type="button"
+                  (click)="quitar(linea.producto.productoProveedorCatalogoId)">
+                  Quitar
+                </button>
+              </div>
+            </div>
+          }
+          <div class="cart-total">
+            <span>Total</span>
+            <span>{{ moneda(total()) }}</span>
+          </div>
+          <div class="d-grid gap-2">
+            <button
+              class="btn btn-outline-primary"
+              type="button"
+              [disabled]="procesando"
+              (click)="generarProforma()">
+              Generar proforma PDF
+            </button>
+            <button
+              class="btn btn-outline-primary"
+              type="button"
+              [disabled]="procesando || !proveedor.correo"
+              (click)="enviarProforma()">
+              Enviar proforma por correo
+            </button>
+            <button
+              class="btn btn-success"
+              type="button"
+              [disabled]="procesando"
+              (click)="confirmar()">
+              Confirmar compra
+            </button>
+          </div>
+        }
+      </aside>
+    </div>
+  } @else if (cargando) {
+    <div class="state-card">Cargando proveedores...</div>
+  }
+</section>

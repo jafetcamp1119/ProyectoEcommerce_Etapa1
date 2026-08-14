@@ -79,17 +79,6 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        // crea una categoria despues de comprobar que la familia exista
-        [HttpPost("Insertar")]
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Insertar([FromBody] TCategoria categoria)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var resultado = await _categoriaLN.InsertarAsync(categoria);
-            if (!string.IsNullOrEmpty(resultado.Error)) return BadRequest(resultado);
-            return Ok(resultado);
-        }
-
         // guarda los cambios de la categoria, incluida su UrlImagen opcional
         [HttpPut("Modificar")]
         [Authorize(Roles = "Administrador")]

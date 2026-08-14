@@ -13,4 +13,5 @@ public partial class Categoria
     public virtual FamiliaProducto Familia { get; set; } = null!;
     public virtual ICollection<Producto> Productos { get; set; } = new List<Producto>();
     public virtual ICollection<Descuento> Descuentos { get; set; } = new List<Descuento>();
+    public virtual ICollection<ProveedorCategoria> Proveedores { get; set; } = new List<ProveedorCategoria>();
 }

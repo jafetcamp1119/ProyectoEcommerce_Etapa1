@@ -21,7 +21,6 @@ export interface IRegistroUsuario {
 
 export interface IEstadoConfiguracionInicial {
   requiereConfiguracionInicial: boolean;
-  correoAdministradorInicial: string;
 }
 
 /** Datos no sensibles del usuario que Angular conserva durante la sesión de la pestaña. */

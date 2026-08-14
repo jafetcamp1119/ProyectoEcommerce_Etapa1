@@ -10,4 +10,6 @@ public partial class Impuesto
     public DateOnly? FechaFin { get; set; }
     public bool Activo { get; set; }
     public virtual ICollection<Producto> Productos { get; set; } = new List<Producto>();
+    public virtual ICollection<ProductoProveedorCatalogo> OfertasProveedor { get; set; } =
+        new List<ProductoProveedorCatalogo>();
 }

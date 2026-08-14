@@ -54,6 +54,7 @@ INSERT @Categorias (Familia, Nombre, Descripcion) VALUES
 (N'Alimentos y bebidas', N'Frutas', N'Frutas frescas y productos relacionados.'),
 (N'Alimentos y bebidas', N'Verduras', N'Verduras y hortalizas.'),
 (N'Alimentos y bebidas', N'Carnes', N'Carnes y cortes para consumo.'),
+(N'Alimentos y bebidas', N'Embutidos', N'Jamones, salchichas y otros productos cárnicos preparados.'),
 (N'Alimentos y bebidas', N'L' + NCHAR(225) + N'cteos y huevos', N'Leche, derivados l' + NCHAR(225) + N'cteos y huevos.'),
 (N'Alimentos y bebidas', N'Granos y pastas', N'Granos, cereales y pastas.'),
 (N'Alimentos y bebidas', N'Condimentos y b' + NCHAR(225) + N'sicos de cocina', N'Condimentos e ingredientes esenciales.'),
@@ -134,6 +135,10 @@ GO
 IF NOT EXISTS (SELECT 1 FROM dbo.Impuestos WHERE Nombre = N'IVA 13%')
     INSERT dbo.Impuestos (Nombre, Porcentaje, FechaInicio, FechaFin, Activo)
     VALUES (N'IVA 13%', 13.00, CONVERT(DATE, GETDATE()), NULL, 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Impuestos WHERE Nombre = N'IVA 1%')
+    INSERT dbo.Impuestos (Nombre, Porcentaje, FechaInicio, FechaFin, Activo)
+    VALUES (N'IVA 1%', 1.00, CONVERT(DATE, GETDATE()), NULL, 1);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.Impuestos WHERE Nombre = N'Exento')
     INSERT dbo.Impuestos (Nombre, Porcentaje, FechaInicio, FechaFin, Activo)

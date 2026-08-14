@@ -10,4 +10,10 @@ public interface ICorreoFacturaLN
         TFacturaDatos factura,
         string rutaPdf,
         CancellationToken cancellationToken = default);
+
+    Task<TResultadoCorreoFactura> EnviarCompraProveedorAsync(
+        TDocumentoCompraProveedor documento,
+        string rutaPdf,
+        bool esProforma,
+        CancellationToken cancellationToken = default);
 }

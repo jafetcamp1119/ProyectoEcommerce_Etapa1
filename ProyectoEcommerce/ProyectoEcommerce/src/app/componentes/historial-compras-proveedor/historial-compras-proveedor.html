@@ -1,0 +1,212 @@
+<section class="catalog-page">
+  <nav class="catalog-breadcrumb">
+    <a routerLink="/proveedores">Proveedores</a>
+    <span>›</span>
+    <span>Historial de compras</span>
+  </nav>
+
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Compras confirmadas</span>
+      <h1>Historial de compras</h1>
+      <p>
+        Consulta el costo histórico y descarga el comprobante de cada entrada de
+        inventario.
+      </p>
+    </div>
+  </header>
+
+  @if (error) {
+    <div class="feedback error">{{ error }}</div>
+  }
+
+  <section class="panel-card mb-3">
+    <div class="provider-form">
+      <div>
+        <label class="form-label" for="historial-proveedor">Proveedor</label>
+        <select
+          id="historial-proveedor"
+          class="form-select"
+          [(ngModel)]="proveedorId">
+          <option [ngValue]="undefined">Todos</option>
+          @for (proveedor of proveedores; track proveedor.proveedorId) {
+            <option [ngValue]="proveedor.proveedorId">{{ proveedor.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="historial-estado">Estado</label>
+        <select
+          id="historial-estado"
+          class="form-select"
+          [(ngModel)]="estado">
+          <option value="">Todos</option>
+          <option value="CONFIRMADA">Confirmada</option>
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="CANCELADA">Cancelada</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="historial-desde">Desde</label>
+        <input
+          id="historial-desde"
+          class="form-control"
+          type="date"
+          [(ngModel)]="fechaDesde" />
+      </div>
+      <div>
+        <label class="form-label" for="historial-hasta">Hasta</label>
+        <input
+          id="historial-hasta"
+          class="form-control"
+          type="date"
+          [(ngModel)]="fechaHasta" />
+      </div>
+      <div class="form-actions">
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          (click)="limpiar()">
+          Limpiar
+        </button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          (click)="cargar(1)">
+          Buscar
+        </button>
+      </div>
+    </div>
+  </section>
+
+  @if (cargando) {
+    <div class="state-card">Cargando compras...</div>
+  } @else if (!compras.length) {
+    <div class="state-card">No hay compras que coincidan con los filtros.</div>
+  } @else {
+    <div class="table-wrap">
+      <table class="provider-table">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Proveedor</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (compra of compras; track compra.compraProveedorId) {
+            <tr>
+              <td>{{ compra.numero }}</td>
+              <td>{{ compra.proveedor }}</td>
+              <td>{{ compra.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ moneda(compra.total) }}</td>
+              <td>
+                <span class="status-pill active">{{ compra.estado }}</span>
+              </td>
+              <td>
+                <div class="provider-actions mt-0">
+                  <button
+                    class="btn btn-primary btn-sm"
+                    type="button"
+                    (click)="verDetalle(compra)">
+                    Ver detalle
+                  </button>
+                  <button
+                    class="btn btn-outline-primary btn-sm"
+                    type="button"
+                    [disabled]="!compra.pdfDisponible"
+                    (click)="descargarPdf(compra)">
+                    PDF
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-bar">
+      <label>
+        Mostrar
+        <select
+          class="form-select d-inline-block w-auto ms-1"
+          [(ngModel)]="tamanoPagina"
+          (ngModelChange)="cargar(1)">
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="75">75</option>
+          <option [ngValue]="100">100</option>
+        </select>
+      </label>
+      <span>Página {{ pagina }} de {{ paginas() }} · {{ total }} compras</span>
+      <div class="btn-group">
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          [disabled]="pagina <= 1"
+          (click)="cargar(pagina - 1)">
+          Anterior
+        </button>
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          [disabled]="pagina >= paginas()"
+          (click)="cargar(pagina + 1)">
+          Siguiente
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (detalle) {
+    <section class="panel-card detail-panel">
+      <div class="provider-toolbar">
+        <div>
+          <span class="eyebrow">Detalle</span>
+          <h2>{{ detalle.numero }}</h2>
+        </div>
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          [disabled]="!detalle.pdfDisponible"
+          (click)="descargarPdf(detalle)">
+          Descargar PDF
+        </button>
+      </div>
+      <p>
+        <strong>Proveedor:</strong>
+        {{ detalle.proveedor }} · {{ detalle.correoProveedor || 'Sin correo' }}
+      </p>
+      <div class="table-wrap">
+        <table class="provider-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio de compra</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (producto of detalle.productos; track producto.productoId) {
+              <tr>
+                <td>{{ producto.nombre }}</td>
+                <td>{{ producto.cantidad }}</td>
+                <td>{{ moneda(producto.precioUnitario) }}</td>
+                <td>{{ moneda(producto.subtotal) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="cart-total">
+        <span>Total</span>
+        <span>{{ moneda(detalle.total) }}</span>
+      </div>
+    </section>
+  }
+</section>

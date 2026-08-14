@@ -1,6 +1,5 @@
 namespace ProyectoEcommerce.Dominio.Entidades;
 
-/// <summary>Representa una cuenta, su rol, credenciales protegidas y estado de acceso.</summary>
 public partial class Usuario
 {
     public int UsuarioId { get; set; }
@@ -20,4 +19,6 @@ public partial class Usuario
     public virtual ICollection<HistorialAcceso> HistorialAccesos { get; set; } = new List<HistorialAcceso>();
     public virtual ICollection<Orden> Ordenes { get; set; } = new List<Orden>();
     public virtual ICollection<Carrito> Carritos { get; set; } = new List<Carrito>();
+    public virtual ICollection<CompraProveedor> ComprasProveedor { get; set; } = new List<CompraProveedor>();
+    public virtual ICollection<MovimientoInventario> MovimientosInventario { get; set; } = new List<MovimientoInventario>();
 }

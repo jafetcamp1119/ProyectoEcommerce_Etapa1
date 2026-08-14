@@ -69,6 +69,8 @@ builder.Services.AddScoped<ICarritoLN, CarritoLN>();
 builder.Services.AddScoped<IFacturaLN, FacturaLN>();
 builder.Services.AddScoped<ICorreoFacturaLN, CorreoFacturaLN>();
 builder.Services.AddScoped<IDescuentoLN, DescuentoLN>();
+builder.Services.AddScoped<IProveedorLN, ProveedorLN>();
+builder.Services.AddScoped<ICompraProveedorLN, CompraProveedorLN>();
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 // la clave firma los JWT para que nadie pueda cambiar sus datos por fuera de la API

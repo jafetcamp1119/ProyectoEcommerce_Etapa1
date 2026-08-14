@@ -14,6 +14,14 @@ namespace ProyectoEcommerce.Dominio.DTO
             CreateMap<TFamiliaProducto, FamiliaProducto>().ReverseMap();
             CreateMap<TCategoria, Categoria>().ReverseMap();
             CreateMap<TImpuesto, Impuesto>().ReverseMap();
+            CreateMap<TProveedor, Proveedor>()
+                .ForMember(x => x.ProveedorId, o => o.Ignore())
+                .ForMember(x => x.FechaRegistro, o => o.Ignore())
+                .ForMember(x => x.Familias, o => o.Ignore())
+                .ForMember(x => x.Categorias, o => o.Ignore())
+                .ForMember(x => x.Productos, o => o.Ignore())
+                .ForMember(x => x.Compras, o => o.Ignore());
+            CreateMap<Proveedor, TProveedor>();
 
             // al guardar un producto ignora datos que controla la BD, Entity Framework o la LN
             CreateMap<TProducto, Producto>()

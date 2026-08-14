@@ -22,10 +22,13 @@ public class UsuarioLN : IUsuarioLN
     private readonly IPasswordHasher<Usuario> _passwordHasher;
     private readonly int _maxIntentos;
     private readonly int _minutosBloqueo;
-    private readonly string _correoAdministradorInicial;
 
-    public UsuarioLN(IUnidadTrabajoEF unidadTrabajo, ILogger<UsuarioLN> logger, IMapper mapper,
-        IPasswordHasher<Usuario> passwordHasher, IConfiguration configuration)
+    public UsuarioLN(
+        IUnidadTrabajoEF unidadTrabajo,
+        ILogger<UsuarioLN> logger,
+        IMapper mapper,
+        IPasswordHasher<Usuario> passwordHasher,
+        IConfiguration configuration)
     {
         _unidadDeTrabajo = unidadTrabajo;
         _logger = logger;
@@ -34,7 +37,6 @@ public class UsuarioLN : IUsuarioLN
         // lee los limites de appsettings y Math.Max evita valores menores que uno
         _maxIntentos = Math.Max(1, configuration.GetValue<int?>("Seguridad:MaxIntentosFallidos") ?? 3);
         _minutosBloqueo = Math.Max(1, configuration.GetValue<int?>("Seguridad:BloqueoMinutos") ?? 15);
-        _correoAdministradorInicial = NormalizarCorreo(configuration["InitialAdmin:Email"]);
     }
 
     // recibe nombre, correo y contraseña del registro publico
@@ -46,10 +48,6 @@ public class UsuarioLN : IUsuarioLN
             // normaliza textos y deja el correo en minusculas antes de comparar
             LimpiarRegistro(datos);
             var correo = NormalizarCorreo(datos.Correo);
-            // el correo reservado no puede ocuparse como Cliente antes de completar el setup
-            if (string.Equals(correo, _correoAdministradorInicial, StringComparison.Ordinal))
-                return Error<TUsuario>(Mensajes.CorreoReservadoConfiguracionInicial);
-
             // busca el correo exacto y devuelve null si todavia no esta registrado
             var existente = await _unidadDeTrabajo.TUsuario.ObtenerEntidadAsync(x => x.Correo == correo);
             if (!string.IsNullOrEmpty(existente.Error)) return Error<TUsuario>(Mensajes.ErrorRegistro);
@@ -91,7 +89,7 @@ public class UsuarioLN : IUsuarioLN
         }
     }
 
-    // devuelve true solamente cuando todavia no existe ningun Administrador activo
+    // devuelve true solamente cuando todavia no existe ningun Administrador
     public async Task<Respuesta<bool>> RequiereConfiguracionInicialAsync()
     {
         try
@@ -103,7 +101,7 @@ public class UsuarioLN : IUsuarioLN
 
             // ContarAsync hace el COUNT en SQL y no trae todos los usuarios a memoria
             var administradores = await _unidadDeTrabajo.TUsuario.ContarAsync(
-                x => x.Activo && x.RolId == rolAdministrador.Data.RolId);
+                x => x.RolId == rolAdministrador.Data.RolId);
             if (!string.IsNullOrEmpty(administradores.Error) || administradores.Data == null)
                 return Error<bool>(Mensajes.ErrorConfiguracionInicial);
 
@@ -116,17 +114,12 @@ public class UsuarioLN : IUsuarioLN
         }
     }
 
-    // recibe los datos del setup y solo acepta el correo reservado en configuracion
+    // recibe los datos del setup y permite que cada instalacion elija su propio correo
     // usa una transaccion Serializable para que dos solicitudes no creen dos Administradores iniciales
     public async Task<Respuesta<TUsuario>> CrearAdministradorInicialAsync(TRegistroUsuario datos)
     {
         LimpiarRegistro(datos);
         var correo = NormalizarCorreo(datos.Correo);
-
-        // si falta la configuracion o el correo no coincide se detiene antes de tocar la BD
-        if (string.IsNullOrWhiteSpace(_correoAdministradorInicial) ||
-            !string.Equals(correo, _correoAdministradorInicial, StringComparison.Ordinal))
-            return Error<TUsuario>(Mensajes.CorreoAdministradorInicialNoAutorizado);
 
         try
         {
@@ -143,7 +136,7 @@ public class UsuarioLN : IUsuarioLN
             }
 
             var administradores = await _unidadDeTrabajo.TUsuario.ContarAsync(
-                x => x.Activo && x.RolId == rolAdministrador.Data.RolId);
+                x => x.RolId == rolAdministrador.Data.RolId);
             if (!string.IsNullOrEmpty(administradores.Error) || administradores.Data == null)
             {
                 _unidadDeTrabajo.Rollback();
@@ -525,8 +518,11 @@ public class UsuarioLN : IUsuarioLN
     // limpia los textos antes de guardar un registro
     private static void LimpiarRegistro(TRegistroUsuario datos)
     {
-        datos.Nombre = datos.Nombre.Trim(); datos.Apellidos = datos.Apellidos.Trim(); datos.Correo = NormalizarCorreo(datos.Correo);
+        datos.Nombre = datos.Nombre.Trim();
+        datos.Apellidos = datos.Apellidos.Trim();
+        datos.Correo = NormalizarCorreo(datos.Correo);
         datos.Telefono = datos.Telefono.Trim();
     }
+
     private static Respuesta<T> Error<T>(string mensaje) => new() { Success = false, Error = mensaje };
 }

@@ -1,0 +1,571 @@
+<section class="catalog-page">
+  <nav class="catalog-breadcrumb">
+    <a routerLink="/proveedores">Proveedores</a>
+    <span>›</span>
+    <a routerLink="/proveedores/catalogo">Catálogo de proveedores</a>
+    @if (proveedor) {
+      <span>›</span>
+      <a [routerLink]="['/proveedores/catalogo', proveedorId]">
+        {{ proveedor.nombre }}
+      </a>
+    }
+    @if (categoriaActual()) {
+      <span>›</span>
+      <span>{{ categoriaActual()?.nombre }}</span>
+    }
+  </nav>
+
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">Oferta previa a LessPrice</span>
+      <h1>{{ proveedor ? proveedor.nombre : 'Catálogo de proveedores' }}</h1>
+      <p>
+        El catálogo del proveedor, los productos vendidos por LessPrice y el inventario
+        se administran por separado.
+      </p>
+    </div>
+
+    @if (proveedorId && !categoriaId) {
+      <button
+        class="btn btn-primary"
+        type="button"
+        (click)="abrirCategoria('existente')">
+        Agregar categoría
+      </button>
+    }
+
+    @if (proveedorId && categoriaId) {
+      <button
+        class="btn btn-primary"
+        type="button"
+        (click)="abrirProducto('existente')">
+        Agregar producto
+      </button>
+    }
+  </header>
+
+  @if (error) {
+    <div class="feedback error">{{ error }}</div>
+  }
+
+  @if (exito) {
+    <div class="feedback success">{{ exito }}</div>
+  }
+
+  @if (cargando) {
+    <div class="state-card">Cargando catálogo...</div>
+  } @else if (!proveedorId) {
+    <div class="provider-grid">
+      @for (item of proveedores; track item.proveedorId) {
+        <article class="provider-card">
+          @if (item.urlImagen) {
+            <img
+              class="provider-image"
+              [src]="item.urlImagen"
+              [alt]="item.nombre">
+          } @else {
+            <div class="provider-placeholder">{{ iniciales(item.nombre) }}</div>
+          }
+
+          <div class="provider-content">
+            <h2>{{ item.nombre }}</h2>
+            <span
+              class="status-pill"
+              [class.active]="item.activo"
+              [class.inactive]="!item.activo">
+              {{ item.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+            <p class="text-body-secondary">
+              Administra las categorías y los productos que ofrece.
+            </p>
+            <a
+              class="btn btn-primary btn-sm"
+              [routerLink]="['/proveedores/catalogo', item.proveedorId]">
+              Ingresar
+            </a>
+          </div>
+        </article>
+      }
+    </div>
+  } @else if (!categoriaId) {
+    @if (mostrarCategoria) {
+      <section class="panel-card mb-3">
+        <div class="provider-toolbar">
+          <div>
+            <span class="eyebrow">Categorías del proveedor</span>
+            <h2>Agregar categoría</h2>
+          </div>
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            (click)="cancelarCategoria()">
+            Cerrar
+          </button>
+        </div>
+
+        <div class="choice-tabs">
+          <button
+            class="btn"
+            type="button"
+            [class.btn-primary]="modoCategoria === 'existente'"
+            [class.btn-outline-primary]="modoCategoria !== 'existente'"
+            (click)="abrirCategoria('existente')">
+            Usar existente
+          </button>
+          <button
+            class="btn"
+            type="button"
+            [class.btn-primary]="modoCategoria === 'nueva'"
+            [class.btn-outline-primary]="modoCategoria !== 'nueva'"
+            (click)="abrirCategoria('nueva')">
+            Crear nueva
+          </button>
+        </div>
+
+        @if (modoCategoria === 'existente') {
+          <form
+            class="provider-form mt-3"
+            [formGroup]="categoriaExistenteForm"
+            (ngSubmit)="guardarCategoriaExistente()">
+            <div class="full">
+              <label class="form-label" for="categoria-existente">
+                Categoría global
+              </label>
+              <select
+                id="categoria-existente"
+                class="form-select"
+                formControlName="categoriaId">
+                <option [value]="0">Seleccione una categoría</option>
+                @for (categoria of categoriasDisponibles; track categoria.categoriaId) {
+                  <option [value]="categoria.categoriaId">
+                    {{ categoria.familiaNombre }} › {{ categoria.nombre }}
+                  </option>
+                }
+              </select>
+              @if (!categoriasDisponibles.length) {
+                <small class="text-body-secondary">
+                  Todas las categorías existentes ya están relacionadas.
+                </small>
+              }
+            </div>
+            <div class="form-actions">
+              <button
+                class="btn btn-primary"
+                type="submit"
+                [disabled]="guardando || !categoriasDisponibles.length">
+                {{ guardando ? 'Guardando...' : 'Relacionar categoría' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <form
+            class="provider-form mt-3"
+            [formGroup]="categoriaNuevaForm"
+            (ngSubmit)="guardarCategoriaNueva()">
+            <div>
+              <label class="form-label" for="categoria-nombre">Nombre</label>
+              <input
+                id="categoria-nombre"
+                class="form-control"
+                maxlength="80"
+                formControlName="nombre">
+            </div>
+            <div>
+              <label class="form-label" for="categoria-familia">Familia</label>
+              <select
+                id="categoria-familia"
+                class="form-select"
+                formControlName="familiaId">
+                <option [value]="0">Seleccione una familia</option>
+                @for (familia of familias; track familia.familiaId) {
+                  <option [value]="familia.familiaId">{{ familia.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="full">
+              <label class="form-label" for="categoria-descripcion">
+                Descripción
+              </label>
+              <textarea
+                id="categoria-descripcion"
+                class="form-control"
+                rows="3"
+                maxlength="250"
+                formControlName="descripcion"></textarea>
+            </div>
+            <div class="full">
+              <label class="form-label" for="categoria-imagen">Imagen</label>
+              <input
+                id="categoria-imagen"
+                class="form-control"
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                (change)="seleccionarArchivoCategoria($event)">
+              <small class="text-body-secondary">
+                Se utiliza el mismo almacenamiento de imágenes del mantenimiento de categorías.
+              </small>
+            </div>
+            <div class="form-actions">
+              <button
+                class="btn btn-primary"
+                type="submit"
+                [disabled]="guardando">
+                {{ guardando ? 'Guardando...' : 'Crear y relacionar' }}
+              </button>
+            </div>
+          </form>
+        }
+      </section>
+    }
+
+    <h2 class="mb-3">Categorías del proveedor</h2>
+    @if (!categorias.length) {
+      <div class="state-card">
+        Este proveedor todavía no tiene categorías relacionadas.
+      </div>
+    } @else {
+      <div class="navigation-grid">
+        @for (categoria of categorias; track categoria.categoriaId) {
+          <app-catalog-navigation-card
+            [titulo]="categoria.nombre"
+            [descripcion]="categoria.familiaNombre"
+            textoBoton="Ingresar"
+            [imagen]="categoria.urlImagen"
+            [ruta]="['/proveedores/catalogo', proveedorId, 'categoria', categoria.categoriaId]" />
+        }
+      </div>
+    }
+  } @else {
+    @if (mostrarProducto) {
+      <section class="panel-card mb-3">
+        <div class="provider-toolbar">
+          <div>
+            <span class="eyebrow">{{ categoriaActual()?.nombre }}</span>
+            <h2>Agregar producto al proveedor</h2>
+          </div>
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            (click)="cancelarProducto()">
+            Cerrar
+          </button>
+        </div>
+
+        <div class="choice-tabs">
+          <button
+            class="btn"
+            type="button"
+            [class.btn-primary]="modoProducto === 'existente'"
+            [class.btn-outline-primary]="modoProducto !== 'existente'"
+            (click)="abrirProducto('existente')">
+            Usar existente
+          </button>
+          <button
+            class="btn"
+            type="button"
+            [class.btn-primary]="modoProducto === 'nuevo'"
+            [class.btn-outline-primary]="modoProducto !== 'nuevo'"
+            (click)="abrirProducto('nuevo')">
+            Crear nuevo
+          </button>
+        </div>
+
+        @if (modoProducto === 'existente') {
+          <form
+            class="provider-form mt-3"
+            [formGroup]="productoExistenteForm"
+            (ngSubmit)="guardarProductoExistente()">
+            <div>
+              <label class="form-label" for="producto-existente">Producto</label>
+              <select
+                id="producto-existente"
+                class="form-select"
+                formControlName="productoId">
+                <option [value]="0">Seleccione un producto</option>
+                @for (producto of productosExistentes; track producto.productoId) {
+                  <option [value]="producto.productoId">
+                    {{ producto.codigo }} · {{ producto.nombre }}
+                  </option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="form-label" for="producto-existente-precio">
+                Precio de compra
+              </label>
+              <input
+                id="producto-existente-precio"
+                class="form-control"
+                type="number"
+                min="0.01"
+                step="0.01"
+                formControlName="precioCompra">
+            </div>
+            @if (productoExistenteSeleccionado()) {
+              <div class="full info-box">
+                Impuesto configurado en LessPrice:
+                <strong>{{ productoExistenteSeleccionado()?.impuestoNombre }}</strong>
+              </div>
+            }
+            <div class="form-actions">
+              <button
+                class="btn btn-primary"
+                type="submit"
+                [disabled]="guardando || !productosExistentes.length">
+                {{ guardando ? 'Guardando...' : 'Relacionar producto' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <form
+            class="provider-form mt-3"
+            [formGroup]="productoNuevoForm"
+            (ngSubmit)="guardarProductoNuevo()">
+            <div>
+              <label class="form-label" for="producto-nuevo-nombre">Nombre</label>
+              <input
+                id="producto-nuevo-nombre"
+                class="form-control"
+                maxlength="120"
+                formControlName="nombre">
+            </div>
+            <div>
+              <label class="form-label" for="producto-nuevo-precio">
+                Precio de compra
+              </label>
+              <input
+                id="producto-nuevo-precio"
+                class="form-control"
+                type="number"
+                min="0.01"
+                step="0.01"
+                formControlName="precioCompra">
+            </div>
+            <div>
+              <label class="form-label" for="producto-nuevo-impuesto">Impuesto</label>
+              <select
+                id="producto-nuevo-impuesto"
+                class="form-select"
+                formControlName="impuestoId">
+                <option [value]="0">Seleccione un impuesto</option>
+                @for (impuesto of impuestos; track impuesto.impuestoId) {
+                  <option [value]="impuesto.impuestoId">
+                    {{ impuesto.nombre }} ({{ impuesto.porcentaje }} %)
+                  </option>
+                }
+              </select>
+            </div>
+            <label class="form-check align-self-end">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                formControlName="activo">
+              <span class="form-check-label">Oferta activa</span>
+            </label>
+            <div class="full info-box">
+              Guardar esta oferta no crea stock ni incorpora el producto a LessPrice.
+            </div>
+            <div class="form-actions">
+              <button
+                class="btn btn-primary"
+                type="submit"
+                [disabled]="guardando">
+                {{ guardando ? 'Guardando...' : 'Guardar en catálogo del proveedor' }}
+              </button>
+            </div>
+          </form>
+        }
+      </section>
+    }
+
+    <div class="catalog-columns">
+      <section>
+        <div class="provider-toolbar">
+          <div>
+            <span class="eyebrow">{{ categoriaActual()?.familiaNombre }}</span>
+            <h2>Productos del proveedor</h2>
+          </div>
+          <span class="text-body-secondary">
+            {{ productosDisponibles().length }} disponibles para incorporar
+          </span>
+        </div>
+
+        @if (!productos.length) {
+          <div class="state-card">
+            Esta categoría todavía no tiene productos ofrecidos por el proveedor.
+          </div>
+        } @else {
+          <div class="offer-grid">
+            @for (producto of productos; track producto.productoProveedorCatalogoId) {
+              <article class="offer-card" [class.offer-inactive]="!producto.activo">
+                <small>{{ producto.categoriaNombre }}</small>
+                <h3>{{ producto.nombre }}</h3>
+                <span class="price">Compra: {{ moneda(producto.precioCompra) }}</span>
+                <span>
+                  Impuesto: {{ producto.impuestoNombre }}
+                  ({{ producto.impuestoPorcentaje }} %)
+                </span>
+
+                @if (producto.incorporado) {
+                  <span class="status-pill active">
+                    En LessPrice · {{ producto.codigo }} · stock {{ producto.stock }}
+                  </span>
+                } @else if (producto.activo) {
+                  <span class="status-pill inactive">Disponible para incorporar</span>
+                } @else {
+                  <span class="status-pill inactive">Oferta inactiva</span>
+                }
+
+                <div class="provider-actions">
+                  @if (!producto.incorporado && producto.activo) {
+                    <button
+                      class="btn btn-primary btn-sm"
+                      type="button"
+                      (click)="seleccionarProducto(producto)">
+                      Incorporar a LessPrice
+                    </button>
+                  }
+                  <button
+                    class="btn btn-outline-primary btn-sm"
+                    type="button"
+                    (click)="editarOferta(producto)">
+                    Editar oferta
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <aside class="panel-card cart-panel">
+        @if (editandoOferta) {
+          <h2>Editar oferta</h2>
+          <p>{{ editandoOferta.nombre }}</p>
+          <form [formGroup]="ofertaForm" (ngSubmit)="guardarOferta()">
+            <label class="form-label" for="oferta-precio">Precio de compra</label>
+            <input
+              id="oferta-precio"
+              class="form-control mb-2"
+              type="number"
+              min="0.01"
+              step="0.01"
+              formControlName="precioCompra">
+
+            <label class="form-label" for="oferta-impuesto">Impuesto</label>
+            <select
+              id="oferta-impuesto"
+              class="form-select mb-3"
+              formControlName="impuestoId">
+              @for (impuesto of impuestos; track impuesto.impuestoId) {
+                <option [value]="impuesto.impuestoId">
+                  {{ impuesto.nombre }} ({{ impuesto.porcentaje }} %)
+                </option>
+              }
+            </select>
+
+            <label class="form-check mb-3">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                formControlName="activo">
+              <span class="form-check-label">Oferta activa</span>
+            </label>
+
+            <div class="provider-actions">
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                (click)="cancelarEdicionOferta()">
+                Cancelar
+              </button>
+              <button
+                class="btn btn-primary"
+                type="submit"
+                [disabled]="guardando">
+                Guardar cambios
+              </button>
+            </div>
+          </form>
+        } @else {
+          <h2>Incorporar a LessPrice</h2>
+          @if (!seleccionada) {
+            <p class="text-body-secondary">
+              Selecciona un producto disponible. El precio de compra, la categoría y el
+              impuesto vienen de la oferta del proveedor.
+            </p>
+          } @else {
+            <h3>{{ seleccionada.nombre }}</h3>
+            <p>
+              Precio de compra:
+              <strong>{{ moneda(seleccionada.precioCompra) }}</strong>
+            </p>
+            <p>
+              Precio de venta (30 %):
+              <strong>{{ moneda(seleccionada.precioCompra * 1.3) }}</strong>
+            </p>
+            <p>
+              Impuesto:
+              <strong>{{ seleccionada.impuestoNombre }}</strong>
+            </p>
+            <p>Stock inicial: <strong>0</strong></p>
+
+            <form
+              [formGroup]="incorporacionForm"
+              (ngSubmit)="incorporarProducto()">
+              <label class="form-label" for="incorporar-stock-minimo">
+                Stock mínimo
+              </label>
+              <input
+                id="incorporar-stock-minimo"
+                class="form-control mb-2"
+                type="number"
+                min="0"
+                step="1"
+                formControlName="stockMinimo">
+
+              <label class="form-label" for="incorporar-descripcion">
+                Descripción
+              </label>
+              <textarea
+                id="incorporar-descripcion"
+                class="form-control mb-2"
+                rows="4"
+                maxlength="500"
+                formControlName="descripcion"></textarea>
+
+              <label class="form-label" for="incorporar-imagenes">
+                Imágenes (opcional)
+              </label>
+              <input
+                id="incorporar-imagenes"
+                class="form-control mb-3"
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                multiple
+                (change)="seleccionarImagenesProducto($event)">
+              <small class="text-body-secondary d-block mb-3">
+                Hasta 3 imágenes; se usa el mecanismo actual de productos.
+              </small>
+
+              <div class="provider-actions">
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  (click)="cancelarIncorporacion()">
+                  Cancelar
+                </button>
+                <button
+                  class="btn btn-primary"
+                  type="submit"
+                  [disabled]="guardando">
+                  {{ guardando ? 'Incorporando...' : 'Confirmar incorporación' }}
+                </button>
+              </div>
+            </form>
+          }
+        }
+      </aside>
+    </div>
+  }
+</section>

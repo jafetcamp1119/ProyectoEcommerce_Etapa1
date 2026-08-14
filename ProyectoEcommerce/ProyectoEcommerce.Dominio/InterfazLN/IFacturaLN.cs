@@ -7,4 +7,5 @@ public interface IFacturaLN
 {
     // el arreglo de bytes despues se puede guardar en disco o mandar en la respuesta HTTP
     byte[] Generar(TFacturaDatos factura);
+    byte[] GenerarCompraProveedor(TDocumentoCompraProveedor documento, bool esProforma);
 }

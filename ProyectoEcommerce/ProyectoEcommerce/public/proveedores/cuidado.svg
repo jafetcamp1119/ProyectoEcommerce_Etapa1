@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Distribuidora de cuidado personal">
+  <rect width="640" height="360" fill="#fff0f5"/><circle cx="320" cy="150" r="92" fill="#e55382"/>
+  <path d="M320 224s-72-39-72-91c0-42 52-58 72-20 20-38 72-22 72 20 0 52-72 91-72 91Z" fill="#fff"/>
+  <text x="320" y="300" text-anchor="middle" font-family="Arial" font-size="30" font-weight="700" fill="#7b314b">Bienestar Costarricense</text>
+</svg>

@@ -17,6 +17,11 @@ import { Principal } from './componentes/principal/principal';
 import { Producto } from './componentes/producto/producto';
 import { ProductoDetalle } from './componentes/producto-detalle/producto-detalle';
 import { Usuario } from './componentes/usuario/usuario';
+import { ProveedoresInicio } from './componentes/proveedores-inicio/proveedores-inicio';
+import { ProveedorGestion } from './componentes/proveedor-gestion/proveedor-gestion';
+import { CatalogoProveedor } from './componentes/catalogo-proveedor/catalogo-proveedor';
+import { CompraProveedor } from './componentes/compra-proveedor/compra-proveedor';
+import { HistorialComprasProveedor } from './componentes/historial-compras-proveedor/historial-compras-proveedor';
 
 import { adminGuard } from './guards/admin.guard';
 import { authGuard } from './guards/auth.guard';
@@ -107,6 +112,54 @@ export const routes: Routes = [
       {
         path: 'usuarios',
         redirectTo: 'roles'
+      },
+
+      {
+        path: 'proveedores',
+        component: ProveedoresInicio,
+        canActivate: [adminGuard]
+      },
+
+      {
+        path: 'proveedores/gestion',
+        component: ProveedorGestion,
+        canActivate: [adminGuard]
+      },
+
+      {
+        path: 'proveedores/catalogo/:proveedorId/categoria/:categoriaId',
+        component: CatalogoProveedor,
+        canActivate: [adminGuard]
+      },
+
+      {
+        path: 'proveedores/catalogo/:proveedorId',
+        component: CatalogoProveedor,
+        canActivate: [adminGuard]
+      },
+
+      {
+        path: 'proveedores/catalogo',
+        component: CatalogoProveedor,
+        canActivate: [adminGuard]
+      },
+
+      {
+        path: 'proveedores/compras/:proveedorId',
+        component: CompraProveedor,
+        canActivate: [adminGuard]
+      },
+
+      {
+        path: 'proveedores/compras',
+        component: CompraProveedor,
+        canActivate: [adminGuard]
+      },
+
+      {
+        path: 'proveedores/historial',
+        component: HistorialComprasProveedor,
+        canActivate: [adminGuard]
       },
 
 

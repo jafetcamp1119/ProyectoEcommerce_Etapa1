@@ -82,17 +82,9 @@ public static class Mensajes
     public const string ConfiguracionInicialNoDisponible =
         "La configuración inicial de LessPrice ya fue completada.";
 
-    // se usa si intentan crear el administrador inicial con un correo diferente al permitido
-    public const string CorreoAdministradorInicialNoAutorizado =
-        "El correo indicado no está autorizado para la configuración inicial.";
-
     // mensaje general si algo falla mientras se crea el primer administrador
     public const string ErrorConfiguracionInicial =
         "No fue posible completar la configuración inicial de LessPrice.";
-
-    // evita que el correo reservado para el primer administrador se pueda registrar como Cliente normal
-    public const string CorreoReservadoConfiguracionInicial =
-        "El correo está reservado para la configuración inicial de LessPrice.";
 
 
 

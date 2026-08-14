@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Distribuidora para el hogar">
+  <rect width="640" height="360" fill="#eaf4ff"/><circle cx="320" cy="150" r="92" fill="#3399ff"/>
+  <path d="M245 151 320 84l75 67v74h-48v-54h-54v54h-48Z" fill="#fff"/>
+  <text x="320" y="300" text-anchor="middle" font-family="Arial" font-size="30" font-weight="700" fill="#214b72">Casa Tica</text>
+</svg>
