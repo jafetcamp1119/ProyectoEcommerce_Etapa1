@@ -1,72 +1,141 @@
-:host { display: block; }
-.products-page { padding-bottom: 2rem; }
-.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
-.page-heading h1, .product-form h2 { margin: .15rem 0; font-size: clamp(1.7rem, 3vw, 2.35rem); }
-.page-heading p { max-width: 720px; margin: 0; color: var(--cui-secondary-color); }
-.eyebrow { color: var(--cui-primary); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.catalog-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-bottom: 1rem; color: var(--cui-secondary-color); font-size: .88rem; }
-.catalog-breadcrumb a { color: var(--cui-primary); font-weight: 650; text-decoration: none; }
-.catalog-breadcrumb a:hover { text-decoration: underline; }
-.filters { display: grid; grid-template-columns: minmax(210px, 1.6fr) repeat(3, minmax(140px, 1fr)); gap: .85rem; margin-bottom: 1.35rem; padding: 1rem; background: var(--cui-card-bg); border: 1px solid var(--cui-border-color); border-radius: 1rem; box-shadow: 0 .3rem 1rem rgba(32, 56, 85, .08); }
-.field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
-.field label { margin: 0; color: var(--cui-secondary-color); font-size: .77rem; font-weight: 700; }
-.filter-actions { display: flex; align-items: end; justify-content: flex-end; gap: .45rem; }
-.filter-actions .btn { min-width: 105px; }
-.product-form { margin-bottom: 1.35rem; padding: 1.2rem; background: var(--cui-card-bg); border: 1px solid var(--cui-border-color); border-radius: 1rem; box-shadow: 0 .35rem 1.2rem rgba(32, 56, 85, .09); }
-.product-form header, .product-form footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-.product-form header { margin-bottom: 1rem; }.product-form footer { justify-content: flex-end; margin-top: 1rem; }
-.close-form { width: 2.25rem; height: 2.25rem; padding: 0; color: var(--cui-secondary-color); background: transparent; border: 1px solid var(--cui-border-color); border-radius: 50%; font-size: 1.4rem; line-height: 1; }
-.form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .9rem; }.field-wide { grid-column: span 2; }.field-full { grid-column: 1 / -1; }
-.field small, .form-error { color: var(--cui-danger); }.field textarea { resize: vertical; }
-.active-check { display: flex; align-items: center; align-self: end; min-height: 2.35rem; gap: .5rem; }.active-check input { width: 1rem; height: 1rem; accent-color: var(--cui-primary); }.form-error { margin: .8rem 0 0; font-size: .85rem; }
-.products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.1rem; align-items: stretch; }
-.product-card { display: flex; flex-direction: column; min-width: 0; height: 100%; }
-.product-image { position: relative; min-height: 170px; overflow: hidden; text-decoration: none; }
-.product-image:focus-visible { outline: 3px solid var(--cui-primary); outline-offset: -3px; }
-.product-image img { width: 100%; height: 100%; min-height: 170px; max-height: 210px; object-fit: cover; transition: transform .25s ease; }
-.product-card:hover .product-image img { transform: scale(1.035); }
-.image-placeholder { display: grid; place-items: center; width: 100%; height: 100%; min-height: 170px; color: #fff; font-size: 2.25rem; font-weight: 800; letter-spacing: .08em; text-decoration: none; }
-.inactive-label { position: absolute; top: .65rem; right: .65rem; padding: .25rem .58rem; color: #fff; background: rgba(35, 43, 51, .84); border: 1px solid rgba(255,255,255,.45); border-radius: 999px; font-size: .68rem; font-weight: 800; text-transform: uppercase; }
-.product-content { display: flex; flex: 1; flex-direction: column; min-height: 310px; }
-.taxonomy { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .6rem; }
-.taxonomy span { overflow: hidden; max-width: 100%; padding: .18rem .48rem; color: var(--cui-primary); background: color-mix(in srgb, var(--cui-primary) 10%, transparent); border-radius: 999px; font-size: .68rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.product-content h2 { min-height: 2.5em; margin: 0; font-size: 1.12rem; line-height: 1.25; }
-.product-content h2 a { display: -webkit-box; overflow: hidden; color: var(--cui-body-color); text-decoration: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.product-content h2 a:hover { color: var(--cui-primary); }
-.description { display: -webkit-box; overflow: hidden; min-height: 3.9em; margin: .65rem 0 .85rem; color: var(--cui-secondary-color); font-size: .86rem; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-.price-row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-top: auto; }
-.price-row > strong, .price-block > strong { color: var(--cui-body-color); font-size: 1.2rem; }
-.price-block { display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem .55rem; }
-.price-block del { color: var(--cui-secondary-color); font-size: .82rem; }
-.discount-badge { padding: .24rem .48rem; border-radius: 999px; background: #d1fadf; color: #067647; font-size: .7rem; font-weight: 800; }
-.stock { flex: 0 0 auto; padding: .25rem .5rem; border-radius: 999px; font-size: .67rem; font-weight: 750; }.stock-ok { color: #167a45; background: #dff7e9; }.stock-low { color: #8a5d00; background: #fff1c7; }.stock-out { color: #a62d36; background: #fde3e5; }
-.admin-data { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem .7rem; margin: .8rem 0 0; padding: .75rem; background: var(--cui-tertiary-bg); border-radius: .7rem; }
-.admin-data div { min-width: 0; }.admin-data dt { color: var(--cui-secondary-color); font-size: .62rem; text-transform: uppercase; }.admin-data dd { overflow: hidden; margin: 0; font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
-.card-actions, .admin-actions { display: flex; flex-wrap: wrap; gap: .45rem; }.card-actions { margin-top: .9rem; }.admin-actions { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--cui-border-color); }
-.card-actions .btn, .admin-actions .btn { flex: 1; min-width: 105px; font-size: .78rem; }
-.state-panel { display: flex; align-items: center; flex-direction: column; justify-content: center; min-height: 260px; gap: .45rem; padding: 2.5rem; color: var(--cui-secondary-color); background: var(--cui-card-bg); border: 1px dashed var(--cui-border-color); border-radius: 1rem; text-align: center; }.state-panel strong { color: var(--cui-body-color); }.state-panel p { margin: 0; }.state-icon { font-size: 3rem; }
-.pagination-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; margin-top: 1.25rem; padding: .8rem 1rem; color: var(--cui-secondary-color); background: var(--cui-card-bg); border: 1px solid var(--cui-border-color); border-radius: .8rem; font-size: .82rem; }
-.pagination-bar label { display: flex; align-items: center; gap: .5rem; margin: 0; }.pagination-bar select { width: 78px; }.pagination-bar > div { display: flex; justify-content: flex-end; gap: .45rem; }
-@media (max-width: 1100px) { .filters { grid-template-columns: repeat(3, minmax(140px, 1fr)); }.form-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 760px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }.field-search { grid-column: span 2; }.pagination-bar { grid-template-columns: 1fr 1fr; }.pagination-bar > span { grid-column: 1 / -1; grid-row: 2; text-align: center; } }
-@media (max-width: 560px) { .page-heading { align-items: stretch; flex-direction: column; }.filters, .form-grid { grid-template-columns: 1fr; }.field-search, .field-wide, .field-full { grid-column: auto; }.filter-actions { flex-wrap: wrap; }.filter-actions .btn { flex: 1; }.products-grid { grid-template-columns: 1fr; }.pagination-bar { grid-template-columns: 1fr; text-align: center; }.pagination-bar > span { grid-column: auto; grid-row: auto; }.pagination-bar label, .pagination-bar > div { justify-content: center; } }
-:host { display: block;}
-.products-page { padding-bottom: 2rem;}
-.page-heading { display: flex;align-items: end;justify-content: space-between;gap: 1rem;margin-bottom: 1.5rem;}
-.page-heading h1, .product-form h2 { margin: .15rem 0;font-size: clamp(1.7rem, 3vw, 2.35rem);}
-.page-heading p {max-width: 720px;margin: 0;color: var(--cui-secondary-color);}
-.eyebrow {color: var(--cui-primary);font-size: .78rem;font-weight: 700;letter-spacing: .12em;text-transform: uppercase;}
-.catalog-breadcrumb {display: flex;flex-wrap: wrap;align-items: center;gap: .45rem;margin-bottom: 1rem;color: var(--cui-secondary-color);font-size: .88rem;}
-.catalog-breadcrumb a {color: var(--cui-primary);font-weight: 650;text-decoration: none;}
-.catalog-breadcrumb a:hover {text-decoration: underline;}
-.filters {display: grid;grid-template-columns: minmax(210px, 1.6fr) repeat(3, minmax(140px, 1fr));gap: .85rem;margin-bottom: 1.35rem;padding: 1rem;background: var(--cui-card-bg);border: 1px solid var(--cui-border-color);border-radius: 1rem;box-shadow: 0 .3rem 1rem rgba(32, 56, 85, .08);}
-.field {display: flex;flex-direction: column; gap: .35rem; min-width: 0;}
-.field label {margin: 0;color: var(--cui-secondary-color);font-size: .77rem;font-weight: 700;}
-.filter-actions {display: flex; align-items: end; justify-content: flex-end;gap: .45rem;}
+/* esta pagina junta todo el mantenimiento de productos
+   incluye filtros formulario tarjetas estados paginacion e imagenes */
 
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+
+.products-page {
+  /* deja espacio al final de la pagina */
+  padding-bottom: 2rem;
+}
+
+
+
+/* acomoda el titulo y las acciones principales */
+.page-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+
+  /* titulo principal y titulo del formulario */
+  .page-heading h1,
+  .product-form h2 {
+    margin: 0.15rem 0;
+    /* adapta el tamaño segun el ancho de la pantalla */
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+  }
+
+
+  /* descripcion debajo del titulo */
+  .page-heading p {
+    max-width: 720px;
+    margin: 0;
+    color: var(--cui-secondary-color);
+  }
+
+
+/* texto pequeño que aparece encima de algunos titulos */
+.eyebrow {
+  color: var(--cui-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+
+/* ========================= RUTA DEL CATALOGO ========================= */
+
+/* muestra la ruta actual como Familia > Categoria > Productos */
+.catalog-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  color: var(--cui-secondary-color);
+  font-size: 0.88rem;
+}
+
+
+  /* enlaces dentro de la ruta */
+  .catalog-breadcrumb a {
+    color: var(--cui-primary);
+    font-weight: 650;
+    text-decoration: none;
+  }
+
+
+    /* subraya el enlace cuando pasa el mouse */
+    .catalog-breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+
+/* ========================= FILTROS ========================= */
+
+/* acomoda buscador filtros y acciones dentro de un grid */
+.filters {
+  display: grid;
+  /* el primer campo tiene un poco mas de espacio
+     los otros 3 usan columnas del mismo tamaño */
+  grid-template-columns: minmax(210px, 1.6fr) repeat(3, minmax(140px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.35rem;
+  padding: 1rem;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+  box-shadow: 0 0.3rem 1rem rgba(32, 56, 85, 0.08);
+}
+
+
+/* cada field acomoda label e input uno debajo del otro */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  /* evita que un campo haga crecer demasiado su columna */
+  min-width: 0;
+}
+
+
+  /* texto que identifica cada campo */
+  .field label {
+    margin: 0;
+    color: var(--cui-secondary-color);
+    font-size: 0.77rem;
+    font-weight: 700;
+  }
+
+
+/* ========================= ACCIONES DE FILTRO ========================= */
+
+.filter-actions {
+  display: flex;
+  /* deja los botones alineados con la parte de abajo de los filtros */
+  align-items: end;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+
+  /* evita que los botones queden demasiado pequeños */
   .filter-actions .btn {
     min-width: 105px;
   }
+
+
+/* ========================= FORMULARIO DE PRODUCTO ========================= */
 
 .product-form {
   margin-bottom: 1.35rem;
@@ -74,24 +143,763 @@
   background: var(--cui-card-bg);
   border: 1px solid var(--cui-border-color);
   border-radius: 1rem;
-  box-shadow: 0 .35rem 1.2rem rgba(32, 56, 85, .09);
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.09);
 }
 
-  .product-form header, .product-form footer {
+
+  /* encabezado y pie del formulario usan flex */
+  .product-form header,
+  .product-form footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
   }
 
+
+  /* separa el encabezado de los campos */
   .product-form header {
     margin-bottom: 1rem;
   }
+
+
+  /* pone los botones del formulario hacia la derecha */
+  .product-form footer {
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+
+
+/* boton circular para cerrar el formulario */
+.close-form {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: var(--cui-secondary-color);
+  background: transparent;
+  border: 1px solid var(--cui-border-color);
+  border-radius: 50%;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+
+/* ========================= CAMPOS DEL FORMULARIO ========================= */
+
+/* acomoda los campos en 4 columnas */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.9rem;
+}
+
+
+/* ocupa 2 columnas */
+.field-wide {
+  grid-column: span 2;
+}
+
+
+/* ocupa todo el ancho del grid */
+.field-full {
+  grid-column: 1 / -1;
+}
+
+
+/* errores de los campos */
+.field small,
+.form-error {
+  color: var(--cui-danger);
+}
+
+
+/* permite cambiar verticalmente el tamaño del textarea */
+.field textarea {
+  resize: vertical;
+}
+
+
+/* ========================= CHECK ACTIVO ========================= */
+
+.active-check {
+  display: flex;
+  align-items: center;
+  /* lo deja alineado hacia abajo dentro del grid */
+  align-self: end;
+  min-height: 2.35rem;
+  gap: 0.5rem;
+}
+
+
+  /* tamaño y color del checkbox */
+  .active-check input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--cui-primary);
+  }
+
+
+/* error general del formulario */
+.form-error {
+  margin: 0.8rem 0 0;
+  font-size: 0.85rem;
+}
+
+
+/* ========================= GRID DE PRODUCTOS ========================= */
+
+/* crea automaticamente todas las columnas que quepan */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.1rem;
+  align-items: stretch;
+}
+
+
+/* ========================= TARJETA DEL PRODUCTO ========================= */
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+
+/* ========================= IMAGEN DEL PRODUCTO ========================= */
+
+.product-image {
+  /* sirve como referencia para elementos posicionados encima */
+  position: relative;
+  min-height: 170px;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+
+  /* marca visualmente la imagen cuando se navega con teclado */
+  .product-image:focus-visible {
+    outline: 3px solid var(--cui-primary);
+    outline-offset: -3px;
+  }
+
+
+  /* imagen principal de la tarjeta */
+  .product-image img {
+    width: 100%;
+    height: 100%;
+    min-height: 170px;
+    max-height: 210px;
+    /* llena el espacio sin deformarse */
+    object-fit: cover;
+    transition: transform 0.25s ease;
+  }
+
+
+/* hace un pequeño zoom cuando se pasa el mouse por la tarjeta */
+.product-card:hover .product-image img {
+  transform: scale(1.035);
+}
+
+
+/* se usa cuando el producto no tiene imagen */
+.image-placeholder {
+  display: grid;
+  /* centra el contenido horizontal y verticalmente */
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 170px;
+  color: #fff;
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+
+
+/* ========================= PRODUCTO INACTIVO ========================= */
+
+/* etiqueta que aparece encima de la imagen si el producto esta inactivo */
+.inactive-label {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  padding: 0.25rem 0.58rem;
+  color: #fff;
+  background: rgba(35, 43, 51, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+
+/* ========================= CONTENIDO DEL PRODUCTO ========================= */
+
+.product-content {
+  display: flex;
+  /* usa el espacio que queda disponible en la tarjeta */
+  flex: 1;
+  flex-direction: column;
+  min-height: 310px;
+}
+
+
+/* ========================= FAMILIA Y CATEGORIA ========================= */
+
+.taxonomy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+}
+
+
+  /* etiquetas donde aparece la taxonomia del producto */
+  .taxonomy span {
+    overflow: hidden;
+    max-width: 100%;
+    padding: 0.18rem 0.48rem;
+    color: var(--cui-primary);
+    background: color-mix( in srgb, var(--cui-primary) 10%, transparent );
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 650;
+    /* si el texto es muy largo muestra puntos al final */
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+
+/* ========================= NOMBRE DEL PRODUCTO ========================= */
+
+.product-content h2 {
+  /* reserva espacio para mantener las tarjetas parejas */
+  min-height: 2.5em;
+  margin: 0;
+  font-size: 1.12rem;
+  line-height: 1.25;
+}
+
+
+  /* enlace del nombre del producto */
+  .product-content h2 a {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--cui-body-color);
+    text-decoration: none;
+    /* permite limitar el texto por cantidad de lineas */
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+
+    /* cambia el color al pasar el mouse */
+    .product-content h2 a:hover {
+      color: var(--cui-primary);
+    }
+
+
+/* ========================= DESCRIPCION ========================= */
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 3.9em;
+  margin: 0.65rem 0 0.85rem;
+  color: var(--cui-secondary-color);
+  font-size: 0.86rem;
+  line-height: 1.3;
+  /* limita la descripcion a 3 lineas */
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+
+/* ========================= PRECIO ========================= */
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  /* empuja esta fila hacia la parte baja de la tarjeta */
+  margin-top: auto;
+}
+
+
+  /* precio principal */
+  .price-row > strong,
+  .price-block > strong {
+    color: var(--cui-body-color);
+    font-size: 1.2rem;
+  }
+
+
+/* junta precio normal precio anterior y descuento */
+.price-block {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+}
+
+
+  /* precio anterior cuando existe descuento */
+  .price-block del {
+    color: var(--cui-secondary-color);
+    font-size: 0.82rem;
+  }
+
+
+/* etiqueta del descuento */
+.discount-badge {
+  padding: 0.24rem 0.48rem;
+  border-radius: 999px;
+  background: #d1fadf;
+  color: #067647;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+
+/* ========================= STOCK ========================= */
+
+/* diseño base para los estados del stock */
+.stock {
+  /* mantiene su tamaño y evita que flex lo estire */
+  flex: 0 0 auto;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.67rem;
+  font-weight: 750;
+}
+
+
+/* stock disponible */
+.stock-ok {
+  color: #167a45;
+  background: #dff7e9;
+}
+
+
+/* stock bajo */
+.stock-low {
+  color: #8a5d00;
+  background: #fff1c7;
+}
+
+
+/* producto sin stock */
+.stock-out {
+  color: #a62d36;
+  background: #fde3e5;
+}
+
+
+/* ========================= DATOS DEL ADMIN ========================= */
+
+/* informacion adicional que se muestra en administracion */
+.admin-data {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem 0.7rem;
+  margin: 0.8rem 0 0;
+  padding: 0.75rem;
+  background: var(--cui-tertiary-bg);
+  border-radius: 0.7rem;
+}
+
+
+  /* evita que el contenido haga crecer las columnas */
+  .admin-data div {
+    min-width: 0;
+  }
+
+
+  /* nombre de cada dato */
+  .admin-data dt {
+    color: var(--cui-secondary-color);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+  }
+
+
+  /* valor de cada dato */
+  .admin-data dd {
+    overflow: hidden;
+    margin: 0;
+    font-size: 0.75rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+
+/* ========================= ACCIONES ========================= */
+
+.card-actions,
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+
+/* acciones normales de la tarjeta */
+.card-actions {
+  margin-top: 0.9rem;
+}
+
+
+/* acciones exclusivas de administracion */
+.admin-actions {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--cui-border-color);
+}
+
+
+  /* los botones comparten el espacio disponible */
+  .card-actions .btn,
+  .admin-actions .btn {
+    flex: 1;
+    min-width: 105px;
+    font-size: 0.78rem;
+  }
+
+
+/* ========================= ESTADOS GENERALES ========================= */
+
+/* aparece cuando carga cuando no hay datos u otros estados */
+.state-panel {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 260px;
+  gap: 0.45rem;
+  padding: 2.5rem;
+  color: var(--cui-secondary-color);
+  background: var(--cui-card-bg);
+  border: 1px dashed var(--cui-border-color);
+  border-radius: 1rem;
+  text-align: center;
+}
+
+
+  /* texto principal del estado */
+  .state-panel strong {
+    color: var(--cui-body-color);
+  }
+
+
+  /* quita margen extra del parrafo */
+  .state-panel p {
+    margin: 0;
+  }
+
+
+/* icono usado dentro del estado */
+.state-icon {
+  font-size: 3rem;
+}
+
+
+
+.pagination-bar {
+  display: grid;
+  /* extremos flexibles y centro con el espacio que necesite */
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 0.8rem 1rem;
+  color: var(--cui-secondary-color);
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 0.8rem;
+  font-size: 0.82rem;
+}
+
+
+  /* acomoda el texto y el select */
+  .pagination-bar label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+
+  /* ancho del select de cantidad de filas */
+  .pagination-bar select {
+    width: 78px;
+  }
+
+
+  /* botones para avanzar o retroceder */
+  .pagination-bar > div {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.45rem;
+  }
+
+
+/* ========================= PANTALLAS MEDIANAS ========================= */
+
+@media (max-width: 1100px) {
+
+  /* los filtros bajan a 3 columnas */
+  .filters {
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+  }
+
+
+  /* el formulario baja de 4 columnas a 2 */
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+
+  /* filtros en 2 columnas */
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+
+  /* el buscador ocupa las 2 columnas */
+  .field-search {
+    grid-column: span 2;
+  }
+
+
+  /* paginacion pasa a 2 columnas */
+  .pagination-bar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+
+    /* el texto central ocupa todo el ancho y baja a la segunda fila */
+    .pagination-bar > span {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      text-align: center;
+    }
+}
+
+
+/* ========================= CELULARES ========================= */
+
+@media (max-width: 560px) {
+
+  .page-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  /* filtros y formulario pasan a una sola columna */
+  .filters,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  /* ya no necesitan ocupar varias columnas */
+  .field-search,
+  .field-wide,
+  .field-full {
+    grid-column: auto;
+  }
+
+
+  /* permite que los botones bajen de linea */
+  .filter-actions {
+    flex-wrap: wrap;
+  }
+
+
+    .filter-actions .btn {
+      flex: 1;
+    }
+
+
+  /* un producto por fila */
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  /* paginacion pasa a una sola columna */
+  .pagination-bar {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+
+    .pagination-bar > span {
+      grid-column: auto;
+      grid-row: auto;
+    }
+
+
+    /* centra selector y botones */
+    .pagination-bar label,
+    .pagination-bar > div {
+      justify-content: center;
+    }
+}
+
+
+
+
+/* este bloque vuelve a definir los mismos estilos anteriores
+   lo dejo porque ya estaba dentro del archivo y no estamos cambiando nada */
+
+
+:host {
+  display: block;
+}
+
+
+.products-page {
+  padding-bottom: 2rem;
+}
+
+
+.page-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+
+  .page-heading h1,
+  .product-form h2 {
+    margin: 0.15rem 0;
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+  }
+
+
+  .page-heading p {
+    max-width: 720px;
+    margin: 0;
+    color: var(--cui-secondary-color);
+  }
+
+
+.eyebrow {
+  color: var(--cui-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+
+.catalog-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  color: var(--cui-secondary-color);
+  font-size: 0.88rem;
+}
+
+
+  .catalog-breadcrumb a {
+    color: var(--cui-primary);
+    font-weight: 650;
+    text-decoration: none;
+  }
+
+
+    .catalog-breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(210px, 1.6fr) repeat(3, minmax(140px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.35rem;
+  padding: 1rem;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+  box-shadow: 0 0.3rem 1rem rgba(32, 56, 85, 0.08);
+}
+
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+
+  .field label {
+    margin: 0;
+    color: var(--cui-secondary-color);
+    font-size: 0.77rem;
+    font-weight: 700;
+  }
+
+
+.filter-actions {
+  display: flex;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+
+  .filter-actions .btn {
+    min-width: 105px;
+  }
+
+
+/* ========================= FORMULARIO ========================= */
+
+.product-form {
+  margin-bottom: 1.35rem;
+  padding: 1.2rem;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.09);
+}
+
+
+  .product-form header,
+  .product-form footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+
+  .product-form header {
+    margin-bottom: 1rem;
+  }
+
 
   .product-form footer {
     justify-content: flex-end;
     margin-top: 1rem;
   }
+
 
 .close-form {
   width: 2.25rem;
@@ -105,35 +913,43 @@
   line-height: 1;
 }
 
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: .9rem;
+  gap: 0.9rem;
 }
+
 
 .field-wide {
   grid-column: span 2;
 }
 
+
 .field-full {
   grid-column: 1 / -1;
 }
 
-.field small, .form-error {
+
+.field small,
+.form-error {
   color: var(--cui-danger);
 }
+
 
 .field textarea {
   resize: vertical;
 }
+
 
 .active-check {
   display: flex;
   align-items: center;
   align-self: end;
   min-height: 2.35rem;
-  gap: .5rem;
+  gap: 0.5rem;
 }
+
 
   .active-check input {
     width: 1rem;
@@ -141,10 +957,14 @@
     accent-color: var(--cui-primary);
   }
 
+
 .form-error {
-  margin: .8rem 0 0;
-  font-size: .85rem;
+  margin: 0.8rem 0 0;
+  font-size: 0.85rem;
 }
+
+
+/* ========================= TARJETAS ========================= */
 
 .products-grid {
   display: grid;
@@ -153,12 +973,14 @@
   align-items: stretch;
 }
 
+
 .product-card {
   display: flex;
   flex-direction: column;
   min-width: 0;
   height: 100%;
 }
+
 
 .product-image {
   position: relative;
@@ -167,10 +989,12 @@
   text-decoration: none;
 }
 
+
   .product-image:focus-visible {
     outline: 3px solid var(--cui-primary);
     outline-offset: -3px;
   }
+
 
   .product-image img {
     width: 100%;
@@ -178,12 +1002,14 @@
     min-height: 170px;
     max-height: 210px;
     object-fit: cover;
-    transition: transform .25s ease;
+    transition: transform 0.25s ease;
   }
+
 
 .product-card:hover .product-image img {
   transform: scale(1.035);
 }
+
 
 .image-placeholder {
   display: grid;
@@ -194,23 +1020,25 @@
   color: #fff;
   font-size: 2.25rem;
   font-weight: 800;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
   text-decoration: none;
 }
 
+
 .inactive-label {
   position: absolute;
-  top: .65rem;
-  right: .65rem;
-  padding: .25rem .58rem;
+  top: 0.65rem;
+  right: 0.65rem;
+  padding: 0.25rem 0.58rem;
   color: #fff;
-  background: rgba(35, 43, 51, .84);
-  border: 1px solid rgba(255,255,255,.45);
+  background: rgba(35, 43, 51, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 999px;
-  font-size: .68rem;
+  font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
 }
+
 
 .product-content {
   display: flex;
@@ -219,25 +1047,28 @@
   min-height: 310px;
 }
 
+
 .taxonomy {
   display: flex;
   flex-wrap: wrap;
-  gap: .35rem;
-  margin-bottom: .6rem;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
 }
+
 
   .taxonomy span {
     overflow: hidden;
     max-width: 100%;
-    padding: .18rem .48rem;
+    padding: 0.18rem 0.48rem;
     color: var(--cui-primary);
-    background: color-mix(in srgb, var(--cui-primary) 10%, transparent);
+    background: color-mix( in srgb, var(--cui-primary) 10%, transparent );
     border-radius: 999px;
-    font-size: .68rem;
+    font-size: 0.68rem;
     font-weight: 650;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
 
 .product-content h2 {
   min-height: 2.5em;
@@ -245,6 +1076,7 @@
   font-size: 1.12rem;
   line-height: 1.25;
 }
+
 
   .product-content h2 a {
     display: -webkit-box;
@@ -255,128 +1087,159 @@
     -webkit-line-clamp: 2;
   }
 
+
     .product-content h2 a:hover {
       color: var(--cui-primary);
     }
+
 
 .description {
   display: -webkit-box;
   overflow: hidden;
   min-height: 3.9em;
-  margin: .65rem 0 .85rem;
+  margin: 0.65rem 0 0.85rem;
   color: var(--cui-secondary-color);
-  font-size: .86rem;
+  font-size: 0.86rem;
   line-height: 1.3;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
 
+
 .price-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: .6rem;
+  gap: 0.6rem;
   margin-top: auto;
 }
 
-  .price-row > strong, .price-block > strong {
+
+  .price-row > strong,
+  .price-block > strong {
     color: var(--cui-body-color);
     font-size: 1.2rem;
   }
+
 
 .price-block {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: .35rem .55rem;
+  gap: 0.35rem 0.55rem;
 }
+
 
   .price-block del {
     color: var(--cui-secondary-color);
-    font-size: .82rem;
+    font-size: 0.82rem;
   }
 
+
 .discount-badge {
-  padding: .24rem .48rem;
+  padding: 0.24rem 0.48rem;
   border-radius: 999px;
   background: #d1fadf;
   color: #067647;
-  font-size: .7rem;
+  font-size: 0.7rem;
   font-weight: 800;
 }
 
+
+/* ========================= STOCK ========================= */
+
 .stock {
   flex: 0 0 auto;
-  padding: .25rem .5rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 999px;
-  font-size: .67rem;
+  font-size: 0.67rem;
   font-weight: 750;
 }
+
 
 .stock-ok {
   color: #167a45;
   background: #dff7e9;
 }
 
+
 .stock-low {
   color: #8a5d00;
   background: #fff1c7;
 }
+
 
 .stock-out {
   color: #a62d36;
   background: #fde3e5;
 }
 
+
+/* ========================= INFORMACION DEL ADMIN ========================= */
+
 .admin-data {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: .45rem .7rem;
-  margin: .8rem 0 0;
-  padding: .75rem;
+  gap: 0.45rem 0.7rem;
+  margin: 0.8rem 0 0;
+  padding: 0.75rem;
   background: var(--cui-tertiary-bg);
-  border-radius: .7rem;
+  border-radius: 0.7rem;
 }
+
 
   .admin-data div {
     min-width: 0;
   }
 
+
   .admin-data dt {
     color: var(--cui-secondary-color);
-    font-size: .62rem;
+    font-size: 0.62rem;
     text-transform: uppercase;
   }
+
 
   .admin-data dd {
     overflow: hidden;
     margin: 0;
-    font-size: .75rem;
+    font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-.card-actions, .admin-actions {
+
+/* ========================= ACCIONES ========================= */
+
+.card-actions,
+.admin-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: .45rem;
+  gap: 0.45rem;
 }
+
 
 .card-actions {
-  margin-top: .9rem;
+  margin-top: 0.9rem;
 }
 
+
 .admin-actions {
-  margin-top: .6rem;
-  padding-top: .6rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
   border-top: 1px solid var(--cui-border-color);
 }
 
-  .card-actions .btn, .admin-actions .btn {
+
+  .card-actions .btn,
+  .admin-actions .btn {
     flex: 1;
     min-width: 105px;
-    font-size: .78rem;
+    font-size: 0.78rem;
   }
+
+
+/* ========================= ESTADOS ========================= */
 
 .state-panel {
   display: flex;
@@ -384,7 +1247,7 @@
   flex-direction: column;
   justify-content: center;
   min-height: 260px;
-  gap: .45rem;
+  gap: 0.45rem;
   padding: 2.5rem;
   color: var(--cui-secondary-color);
   background: var(--cui-card-bg);
@@ -393,17 +1256,23 @@
   text-align: center;
 }
 
+
   .state-panel strong {
     color: var(--cui-body-color);
   }
+
 
   .state-panel p {
     margin: 0;
   }
 
+
 .state-icon {
   font-size: 3rem;
 }
+
+
+/* ========================= PAGINACION ========================= */
 
 .pagination-bar {
   display: grid;
@@ -411,53 +1280,68 @@
   align-items: center;
   gap: 1rem;
   margin-top: 1.25rem;
-  padding: .8rem 1rem;
+  padding: 0.8rem 1rem;
   color: var(--cui-secondary-color);
   background: var(--cui-card-bg);
   border: 1px solid var(--cui-border-color);
-  border-radius: .8rem;
-  font-size: .82rem;
+  border-radius: 0.8rem;
+  font-size: 0.82rem;
 }
+
 
   .pagination-bar label {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: 0.5rem;
     margin: 0;
   }
+
 
   .pagination-bar select {
     width: 78px;
   }
 
+
   .pagination-bar > div {
     display: flex;
     justify-content: flex-end;
-    gap: .45rem;
+    gap: 0.45rem;
   }
 
+
+/* ========================= RESPONSIVE 1100PX ========================= */
+
 @media (max-width: 1100px) {
+
   .filters {
     grid-template-columns: repeat(3, minmax(140px, 1fr));
   }
+
 
   .form-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
+
+/* ========================= RESPONSIVE 760PX ========================= */
+
 @media (max-width: 760px) {
+
   .filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
 
   .field-search {
     grid-column: span 2;
   }
 
+
   .pagination-bar {
     grid-template-columns: 1fr 1fr;
   }
+
 
     .pagination-bar > span {
       grid-column: 1 / -1;
@@ -466,142 +1350,219 @@
     }
 }
 
+
+/* ========================= RESPONSIVE 560PX ========================= */
+
 @media (max-width: 560px) {
+
   .page-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .filters, .form-grid {
+
+  .filters,
+  .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .field-search, .field-wide, .field-full {
+
+  .field-search,
+  .field-wide,
+  .field-full {
     grid-column: auto;
   }
+
 
   .filter-actions {
     flex-wrap: wrap;
   }
 
+
     .filter-actions .btn {
       flex: 1;
     }
 
+
   .products-grid {
     grid-template-columns: 1fr;
   }
+
 
   .pagination-bar {
     grid-template-columns: 1fr;
     text-align: center;
   }
 
+
     .pagination-bar > span {
       grid-column: auto;
       grid-row: auto;
     }
 
-    .pagination-bar label, .pagination-bar > div {
+
+    .pagination-bar label,
+    .pagination-bar > div {
       justify-content: center;
     }
 }
 
+
+/* ========================================================= */
+/* ================= IMAGENES DEL PRODUCTO ================== */
+/* ========================================================= */
+
+/* esta parte maneja las imagenes actuales
+   las imagenes nuevas y sus vistas previas */
+
 .imagenes-producto {
   margin-top: 1rem;
   padding-top: 1rem;
+  /* separa la parte de imagenes del resto del formulario */
   border-top: 1px solid var(--cui-border-color);
 }
 
+
+  /* titulo de la seccion de imagenes */
   .imagenes-producto h3 {
-    margin-bottom: .25rem;
+    margin-bottom: 0.25rem;
     font-size: 1.1rem;
   }
 
+
+  /* explicacion que aparece debajo del titulo */
   .imagenes-producto > p {
     margin-bottom: 1rem;
     color: var(--cui-secondary-color);
-    font-size: .85rem;
+    font-size: 0.85rem;
   }
 
-.imagenes-actuales, .imagenes-preview {
+
+/* ========================= GRID DE IMAGENES ========================= */
+
+/* imagenes guardadas e imagenes nuevas comparten el mismo grid */
+.imagenes-actuales,
+.imagenes-preview {
   display: grid;
+  /* muestra 3 imagenes por fila */
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .8rem;
+  gap: 0.8rem;
 }
 
-.imagen-item, .preview-item {
+
+/* tarjeta que contiene cada imagen */
+.imagen-item,
+.preview-item {
   overflow: hidden;
-  padding: .6rem;
+  padding: 0.6rem;
   border: 1px solid var(--cui-border-color);
-  border-radius: .7rem;
+  border-radius: 0.7rem;
 }
 
-  .imagen-item img, .preview-item img {
+
+  /* imagen dentro de cada tarjeta */
+  .imagen-item img,
+  .preview-item img {
     width: 100%;
     height: 140px;
+    /* llena el espacio sin deformar la imagen */
     object-fit: cover;
-    border-radius: .5rem;
+    border-radius: 0.5rem;
   }
 
+
+/* ========================= IMAGEN PRINCIPAL ========================= */
+
+/* etiqueta que identifica cual imagen es la principal */
 .imagen-principal {
   display: inline-block;
-  margin-top: .5rem;
-  padding: .2rem .5rem;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.5rem;
   color: #167a45;
   background: #dff7e9;
   border-radius: 999px;
-  font-size: .7rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
+
+/* ========================= ACCIONES DE IMAGEN ========================= */
+
+/* contiene acciones como marcar principal o eliminar */
 .imagen-acciones {
   display: flex;
-  gap: .4rem;
-  margin-top: .6rem;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
 }
 
+
+  /* reparte el espacio entre los botones */
   .imagen-acciones .btn {
     flex: 1;
   }
+
+
+/* ========================= SUBIR IMAGENES ========================= */
 
 .subir-imagenes {
   margin-top: 1rem;
 }
 
+
+  /* texto del input para seleccionar imagenes */
   .subir-imagenes label {
     display: block;
-    margin-bottom: .35rem;
+    margin-bottom: 0.35rem;
     font-weight: 700;
   }
 
+
+  /* texto de ayuda debajo del selector */
   .subir-imagenes small {
     display: block;
-    margin-top: .35rem;
+    margin-top: 0.35rem;
     color: var(--cui-secondary-color);
   }
 
+
+/* ========================= PREVISUALIZACIONES ========================= */
+
+/* contiene las imagenes que se escogieron pero aun no se han guardado */
 .previsualizaciones {
   margin-top: 1rem;
 }
 
+
+  /* titulo de las vistas previas */
   .previsualizaciones h4 {
-    margin-bottom: .7rem;
+    margin-bottom: 0.7rem;
     font-size: 1rem;
   }
 
+
+  /* boton que aparece directamente dentro de previsualizaciones */
   .previsualizaciones > .btn {
-    margin-top: .8rem;
+    margin-top: 0.8rem;
   }
 
+
+/* ========================= SIN IMAGENES ========================= */
+
+/* mensaje que aparece cuando el producto todavia no tiene imagenes */
 .sin-imagenes {
-  padding: .8rem;
+  padding: 0.8rem;
   background: var(--cui-tertiary-bg);
-  border-radius: .6rem;
+  border-radius: 0.6rem;
 }
 
+
+/* ========================= IMAGENES EN PANTALLA PEQUEÑA ========================= */
+
 @media (max-width: 760px) {
-  .imagenes-actuales, .imagenes-preview {
+
+  /* las imagenes pasan de 3 columnas a una sola */
+  .imagenes-actuales,
+  .imagenes-preview {
     grid-template-columns: 1fr;
   }
 }

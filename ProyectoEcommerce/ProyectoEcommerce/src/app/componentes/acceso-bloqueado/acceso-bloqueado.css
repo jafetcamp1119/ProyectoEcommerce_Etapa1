@@ -1,1 +1,73 @@
-:host{display:block}.blocked-shell{display:grid;place-items:center;min-height:100vh;padding:1.5rem;background:radial-gradient(circle at top,#dce9ff,transparent 45%),#f5f7fb}.blocked-card{width:min(100%,520px);padding:2.5rem;background:white;border:1px solid #dfe5ef;border-radius:1.25rem;box-shadow:0 1rem 3rem rgba(30,55,90,.14);text-align:center}.lock{display:grid;place-items:center;width:4rem;height:4rem;margin:0 auto 1rem;color:white;background:#c94b5b;border-radius:50%;font-size:2rem;font-weight:800}.eyebrow{color:#c94b5b;font-size:.78rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}.blocked-card h1{margin:.25rem 0 .75rem}.blocked-card p{color:#667085}.countdown{display:flex;align-items:center;flex-direction:column;margin:1.5rem 0;padding:1rem;background:#f1f5fb;border-radius:.8rem}.countdown span{color:#667085;font-size:.85rem}.countdown strong{font-size:2rem}.blocked-card .btn{width:100%}
+:host {
+  display: block
+}
+
+.blocked-shell {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+  background: radial-gradient(circle at top,#dce9ff,transparent 45%),#f5f7fb
+}
+
+.blocked-card {
+  width: min(100%,520px);
+  padding: 2.5rem;
+  background: white;
+  border: 1px solid #dfe5ef;
+  border-radius: 1.25rem;
+  box-shadow: 0 1rem 3rem rgba(30,55,90,.14);
+  text-align: center
+}
+
+.lock {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1rem;
+  color: white;
+  background: #c94b5b;
+  border-radius: 50%;
+  font-size: 2rem;
+  font-weight: 800
+}
+
+.eyebrow {
+  color: #c94b5b;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase
+}
+
+.blocked-card h1 {
+  margin: .25rem 0 .75rem
+}
+
+.blocked-card p {
+  color: #667085
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f1f5fb;
+  border-radius: .8rem
+}
+
+  .countdown span {
+    color: #667085;
+    font-size: .85rem
+  }
+
+  .countdown strong {
+    font-size: 2rem
+  }
+
+.blocked-card .btn {
+  width: 100%
+}

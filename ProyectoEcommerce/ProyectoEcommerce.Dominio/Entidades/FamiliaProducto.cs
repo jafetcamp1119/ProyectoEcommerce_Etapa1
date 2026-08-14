@@ -1,11 +1,12 @@
 namespace ProyectoEcommerce.Dominio.Entidades;
 
-/// <summary>Representa el nivel superior que agrupa categorías del catálogo.</summary>
+// entidad Database First que corresponde a dbo.FamiliasProducto
 public partial class FamiliaProducto
 {
     public int FamiliaId { get; set; }
     public string Nombre { get; set; } = null!;
     public string? Descripcion { get; set; }
+    // columna opcional de hasta 500 caracteres configurada en el contexto
     public string? UrlImagen { get; set; }
     public bool Activo { get; set; }
     public virtual ICollection<Categoria> Categorias { get; set; } = new List<Categoria>();

@@ -4,7 +4,7 @@ import { IImpuesto } from './IImpuesto';
 import { IProductoImagen } from './IProductoImagen';
 import { IDescuentoAplicado } from './IDescuento';
 
-/** Información de producto visible en catálogo y detalle. */
+// producto con los nombres, stock, imagen y descuento que necesita el catalogo
 export interface IProductoCatalogo {
   productoId: number;
   codigo: string;

@@ -1,14 +1,22 @@
-/* Contenedor principal del componente */
+/* :host representa todo el componente del carrito
+   display block hace que el componente se comporte como un bloque normal */
 :host {
   display: block;
 }
 
-/* Página del carrito */
+
+/* ========================= PAGINA GENERAL ========================= */
+
+/* deja un espacio abajo para que el contenido no termine pegado al borde */
 .cart-page {
   padding-bottom: 2rem;
 }
 
-/* Encabezado de la página */
+
+/* ========================= ENCABEZADO ========================= */
+
+/* acomoda el titulo de la pagina y cualquier contenido que tenga al lado
+   flex los pone horizontalmente y space-between los manda hacia los extremos */
 .page-heading {
   display: flex;
   align-items: end;
@@ -17,156 +25,197 @@
   margin-bottom: 1.5rem;
 }
 
+  /* controla el titulo principal del carrito */
   .page-heading h1 {
-    margin: .15rem 0;
+    margin: 0.15rem 0;
+    /* clamp cambia el tamaño dependiendo de la pantalla
+     pero no deja que baje de 1.7rem ni que pase de 2.35rem */
     font-size: clamp(1.7rem, 3vw, 2.35rem);
   }
 
+  /* este es el texto pequeño que puede aparecer debajo del titulo */
   .page-heading p {
     margin: 0;
     color: var(--cui-secondary-color);
   }
 
-/* Texto pequeño utilizado sobre algunos títulos */
+/* texto pequeño que sirve como encabezado encima del titulo
+   por ejemplo CARRITO */
 .eyebrow {
   color: var(--cui-primary);
-  font-size: .76rem;
+  font-size: 0.76rem;
   font-weight: 800;
-  letter-spacing: .12em;
+  /* separa un poco las letras */
+  letter-spacing: 0.12em;
+  /* pone el texto visualmente en mayusculas */
   text-transform: uppercase;
 }
 
-/* Distribución del listado de productos y el resumen */
+
+/* ========================= DISTRIBUCION DEL CARRITO ========================= */
+
+/* divide la pagina en 2 partes
+   a la izquierda van los productos y a la derecha el resumen */
 .cart-layout {
   display: grid;
+  /* la primera columna usa todo el espacio disponible
+     y la segunda queda fija en 320px para el resumen */
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 1.25rem;
+  /* evita que el resumen se estire para tener la misma altura que los productos */
   align-items: start;
 }
 
-/* Lista de productos agregados */
+/* acomoda todos los productos del carrito uno debajo del otro */
 .cart-items {
   display: grid;
-  gap: .8rem;
+  gap: 0.8rem;
 }
 
-/* Tarjeta individual de cada producto */
+
+/* ========================= PRODUCTO DEL CARRITO ========================= */
+
+/* esta es la tarjeta completa de cada producto que esta dentro del carrito */
 .cart-item {
   display: grid;
+  /* divide cada producto en:
+     imagen | informacion | cantidad | total */
   grid-template-columns: 82px minmax(150px, 1fr) auto minmax(135px, auto);
   align-items: center;
   gap: 1rem;
-  padding: .9rem;
+  padding: 0.9rem;
   background: var(--cui-card-bg);
   border: 1px solid var(--cui-border-color);
   border-radius: 1rem;
-  box-shadow: 0 .35rem 1.2rem rgba(32, 56, 85, .08);
+  /* pone una sombra suave para separar la tarjeta del fondo */
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.08);
 }
 
-  /* Reduce la visibilidad cuando un producto no está disponible */
+  /* si el producto ya no esta disponible baja un poco la intensidad de toda la tarjeta */
   .cart-item.unavailable {
-    opacity: .72;
+    opacity: 0.72;
   }
 
-/* Estilo compartido para las iniciales */
+
+/* ========================= IMAGEN DEL PRODUCTO ========================= */
+
+/* estos 2 elementos comparten el mismo estilo
+   item-visual es la imagen o iniciales del producto
+   empty-initials se usa cuando el carrito esta vacio */
 .item-visual,
 .empty-initials {
   display: grid;
+  /* place-items center centra el contenido vertical y horizontalmente al mismo tiempo */
   place-items: center;
   color: white;
+  /* crea el fondo degradado que se usa cuando no hay una imagen */
   background: linear-gradient(135deg, #2f6fed, #31a8a0);
   font-weight: 800;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 
-/* Contenedor de la imagen del producto */
+/* controla especificamente el cuadro donde va la imagen del producto */
 .item-visual {
   width: 82px;
-  height: 82px;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-radius: .75rem;
+  /* aspect-ratio 1 hace que el alto sea igual al ancho y por eso queda cuadrado */
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
   font-size: 1.25rem;
 }
 
-/* Imagen principal mostrada dentro del carrito */
-.item-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Ajusta la imagen sin deformarla */
-  display: block;
-}
 
-/* Información del producto */
+/* ========================= INFORMACION DEL PRODUCTO ========================= */
+
+/* min-width 0 ayuda a que el texto no obligue al grid a hacerse mas grande de lo que debe */
 .item-info {
   min-width: 0;
 }
 
+  /* nombre del producto */
   .item-info h2 {
     margin: 0;
     font-size: 1.05rem;
   }
 
+    /* si el nombre es un enlace se quita el estilo normal azul y subrayado */
     .item-info h2 a {
       color: var(--cui-body-color);
       text-decoration: none;
     }
 
+  /* descripcion o informacion secundaria del producto */
   .item-info p {
-    margin: .3rem 0 0;
+    margin: 0.3rem 0 0;
     color: var(--cui-secondary-color);
   }
 
-  /* Información del precio cuando existe descuento */
+
+  /* ========================= PRECIO Y DESCUENTO ========================= */
+
+  /* acomoda el precio y la etiqueta del descuento en la misma zona */
   .item-info .cart-price {
     display: flex;
     align-items: baseline;
+    /* si no caben en una sola linea wrap permite que bajen a otra */
     flex-wrap: wrap;
-    gap: .3rem .55rem;
+    gap: 0.3rem 0.55rem;
   }
 
+/* precio principal */
 .cart-price strong {
   color: var(--cui-body-color);
 }
 
-/* Etiqueta que muestra el porcentaje de descuento */
+/* etiqueta verde que muestra el descuento */
 .cart-price span {
-  padding: .2rem .42rem;
+  padding: 0.2rem 0.42rem;
+  /* un numero alto como 999px hace que las puntas queden completamente redondas */
   border-radius: 999px;
   background: #d1fadf;
   color: #067647;
-  font-size: .68rem;
+  font-size: 0.68rem;
   font-weight: 800;
 }
 
-/* Advertencia cuando el producto presenta problemas de disponibilidad */
+
+/* ========================= ADVERTENCIAS ========================= */
+
+/* se usa para avisar por ejemplo que un producto ya no esta disponible */
 .status-warning {
   display: inline-block;
-  margin-top: .35rem;
+  margin-top: 0.35rem;
   color: var(--cui-warning);
-  font-size: .75rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
-/* Contenedor de los controles de cantidad */
+
+/* ========================= CANTIDAD ========================= */
+
+/* contiene los botones de cantidad y el boton para eliminar */
 .quantity-actions {
   display: flex;
-  align-items: center;
+  /* pone los controles uno debajo del otro */
   flex-direction: column;
-  gap: .4rem;
+  align-items: center;
+  gap: 0.4rem;
 }
 
-/* Control para aumentar o disminuir la cantidad */
+/* este es el control que tiene
+   boton menos | cantidad | boton mas */
 .quantity-control {
   display: grid;
+  /* crea el espacio para los 2 botones y el input del centro */
   grid-template-columns: 2.15rem 4rem 2.15rem;
+  /* evita que el contenido se salga de las esquinas redondeadas */
   overflow: hidden;
   border: 1px solid var(--cui-border-color);
-  border-radius: .65rem;
+  border-radius: 0.65rem;
 }
 
+  /* estilo de los botones + y - */
   .quantity-control button {
-    padding: .4rem;
+    padding: 0.4rem;
     color: var(--cui-body-color);
     background: var(--cui-tertiary-bg);
     border: 0;
@@ -174,58 +223,76 @@
     font-weight: 800;
   }
 
+    /* cuando el boton esta deshabilitado se ve mas transparente
+   y el cursor muestra que no se puede presionar */
     .quantity-control button:disabled {
       cursor: not-allowed;
-      opacity: .45;
+      opacity: 0.45;
     }
 
+  /* input donde aparece o se escribe directamente la cantidad */
   .quantity-control input {
     min-width: 0;
-    padding: .4rem .2rem;
+    padding: 0.4rem 0.2rem;
     color: var(--cui-body-color);
     background: var(--cui-body-bg);
     border: 0;
+    /* border-inline pone borde a la izquierda y derecha sin tener que escribir los 2 */
     border-inline: 1px solid var(--cui-border-color);
     text-align: center;
   }
 
+    /* quita el espacio que puede dejar el control de numeros de navegadores como Chrome */
     .quantity-control input::-webkit-inner-spin-button {
       margin: 0;
     }
 
-/* Botón para eliminar un producto */
+
+/* ========================= ELIMINAR PRODUCTO ========================= */
+
+/* boton pequeño para quitar un producto completo del carrito */
 .remove-button {
-  padding: .1rem .35rem;
+  padding: 0.1rem 0.35rem;
   color: var(--cui-danger);
   background: transparent;
   border: 0;
-  font-size: .75rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
-/* Total correspondiente a cada producto */
+
+/* ========================= TOTAL DE CADA PRODUCTO ========================= */
+
+/* pone el total de esta linea hacia la derecha
+   por ejemplo el precio final de 3 unidades del mismo producto */
 .line-total {
   display: flex;
+  /* alinea el contenido hacia la derecha */
   align-items: flex-end;
   flex-direction: column;
-  gap: .15rem;
+  gap: 0.15rem;
   text-align: right;
 }
 
+  /* texto pequeño que acompaña al total */
   .line-total small {
     color: var(--cui-secondary-color);
-    font-size: .68rem;
+    font-size: 0.68rem;
   }
 
-/* Panel derecho con el resumen de la compra */
+
+/* ========================= RESUMEN DEL CARRITO ========================= */
+
+/* tarjeta que aparece al lado derecho con subtotal descuentos y total */
 .summary {
   padding: 1.15rem;
   background: var(--cui-card-bg);
   border: 1px solid var(--cui-border-color);
   border-radius: 1rem;
-  box-shadow: 0 .35rem 1.2rem rgba(32, 56, 85, .08);
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.08);
 }
 
+  /* cada fila del resumen pone el nombre a la izquierda y el monto a la derecha */
   .summary div {
     display: flex;
     justify-content: space-between;
@@ -233,41 +300,52 @@
     margin-top: 1rem;
   }
 
+  /* separa visualmente el total final del resto de montos */
   .summary .total {
     padding-top: 1rem;
     border-top: 1px solid var(--cui-border-color);
   }
 
+  /* texto adicional que aparece dentro del resumen */
   .summary p {
     margin: 1rem 0 0;
     color: var(--cui-secondary-color);
-    font-size: .78rem;
+    font-size: 0.78rem;
+    /* line-height aumenta el espacio entre las lineas para que sea mas facil leer */
     line-height: 1.5;
   }
 
-/* Botón para continuar con la compra */
+
+/* ========================= BOTON DE CHECKOUT ========================= */
+
+/* hace que el boton de continuar con la compra ocupe todo el ancho del resumen */
 .checkout-button {
   width: 100%;
   margin-top: 1rem;
 }
 
-/* Estado utilizado cuando el carrito está vacío */
+
+/* ========================= ESTADOS VACIOS O ESPECIALES ========================= */
+
+/* esta tarjeta se usa para mostrar estados como carrito vacio
+   centra todo el contenido para que aparezca en medio */
 .state-card {
   display: flex;
   align-items: center;
-  flex-direction: column;
   justify-content: center;
+  flex-direction: column;
   min-height: 300px;
   padding: 2.5rem;
   color: var(--cui-secondary-color);
   background: var(--cui-card-bg);
+  /* dashed hace que el borde salga como pequeñas lineas separadas */
   border: 1px dashed var(--cui-border-color);
   border-radius: 1rem;
   text-align: center;
 }
 
   .state-card h2 {
-    margin: .8rem 0 .2rem;
+    margin: 0.8rem 0 0.2rem;
     color: var(--cui-body-color);
   }
 
@@ -275,7 +353,7 @@
     margin: 0 0 1rem;
   }
 
-/* Iniciales mostradas cuando el carrito está vacío */
+/* cuadro con iniciales que aparece cuando no hay productos que mostrar */
 .empty-initials {
   width: 72px;
   height: 72px;
@@ -283,17 +361,23 @@
   font-size: 1.7rem;
 }
 
-/* Ajustes para pantallas medianas */
+
+/* ========================= PANTALLAS MEDIANAS ========================= */
+
+/* cuando la pantalla baja de 1050px se acomoda la tarjeta para ocupar menos espacio */
 @media (max-width: 1050px) {
+
   .cart-item {
+    /* ahora queda imagen | informacion | cantidad */
     grid-template-columns: 72px minmax(0, 1fr) auto;
   }
 
   .item-visual {
     width: 72px;
-    height: 72px;
   }
 
+  /* el total baja a una nueva fila y empieza desde la segunda columna
+     2 / -1 significa desde la columna 2 hasta la ultima */
   .line-total {
     grid-column: 2 / -1;
     flex-direction: row;
@@ -301,39 +385,54 @@
   }
 }
 
-/* El resumen pasa debajo del carrito en pantallas pequeñas */
+
+/* ========================= TABLETS ========================= */
+
+/* cuando ya no caben bien productos y resumen uno al lado del otro
+   se pone todo en una sola columna */
 @media (max-width: 860px) {
+
   .cart-layout {
     grid-template-columns: 1fr;
   }
 }
 
-/* Ajustes para celulares */
+
+/* ========================= CELULARES ========================= */
+
+/* estos cambios se aplican cuando la pantalla es muy pequeña */
 @media (max-width: 560px) {
+
+  /* el encabezado deja de estar horizontal y se pone uno debajo del otro */
   .page-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
+  /* cada producto ahora usa solamente 2 columnas
+     imagen a la izquierda e informacion a la derecha */
   .cart-item {
     grid-template-columns: 62px 1fr;
   }
 
   .item-visual {
     width: 62px;
-    height: 62px;
   }
 
+  /* cantidad y total bajan debajo de la informacion
+     grid-column 2 hace que se mantengan del lado derecho de la imagen */
   .quantity-actions,
   .line-total {
     grid-column: 2;
     align-items: stretch;
   }
 
+  /* el campo del centro puede crecer dependiendo del espacio disponible */
   .quantity-control {
     grid-template-columns: 2.4rem minmax(3.5rem, 1fr) 2.4rem;
   }
 
+  /* en celular el total vuelve a mostrarse horizontalmente */
   .line-total {
     flex-direction: row;
   }

@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Datos requeridos para registrar una cuenta de Cliente.</summary>
 public class TRegistroUsuario
 {
     private string _nombre = string.Empty;

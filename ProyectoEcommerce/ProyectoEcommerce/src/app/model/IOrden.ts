@@ -1,4 +1,4 @@
-/** Modelo básico utilizado por las operaciones administrativas heredadas de órdenes. */
+// forma basica que conservan las operaciones administrativas originales de ordenes
 export interface IOrden {
   ordenId: number;
   usuarioId: number;

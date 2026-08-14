@@ -18,15 +18,18 @@ public class DescuentoController : ControllerBase
         _descuentoLN = descuentoLN;
     }
 
+    // lista descuentos activos e inactivos para la pantalla administrativa
     [Authorize(Roles = "Administrador")]
     [HttpGet("Listar")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Listar()
     {
         var resultado = await _descuentoLN.ListarAsync();
+        // el ternario devuelve 200 si no hay error y 400 cuando la LN mando un mensaje
         return string.IsNullOrEmpty(resultado.Error) ? Ok(resultado) : BadRequest(resultado);
     }
 
+    // trae un descuento por ID o responde 404 si no existe
     [Authorize(Roles = "Administrador")]
     [HttpGet("Obtener/{descuentoId:int}")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -36,6 +39,7 @@ public class DescuentoController : ControllerBase
         return string.IsNullOrEmpty(resultado.Error) ? Ok(resultado) : NotFound(resultado);
     }
 
+    // junta familias, categorias y productos para llenar los select del formulario
     [Authorize(Roles = "Administrador")]
     [HttpGet("Catalogos")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -45,6 +49,7 @@ public class DescuentoController : ControllerBase
         return string.IsNullOrEmpty(resultado.Error) ? Ok(resultado) : BadRequest(resultado);
     }
 
+    // recibe un descuento nuevo y pasa tambien el ID del Administrador para la bitacora
     [Authorize(Roles = "Administrador")]
     [HttpPost("Insertar")]
     public async Task<IActionResult> Insertar([FromBody] TDescuento datos)
@@ -54,6 +59,7 @@ public class DescuentoController : ControllerBase
         return string.IsNullOrEmpty(resultado.Error) ? Ok(resultado) : BadRequest(resultado);
     }
 
+    // recibe los cambios de un descuento existente y deja que la LN haga las validaciones
     [Authorize(Roles = "Administrador")]
     [HttpPut("Modificar")]
     public async Task<IActionResult> Modificar([FromBody] TDescuento datos)
@@ -63,6 +69,7 @@ public class DescuentoController : ControllerBase
         return string.IsNullOrEmpty(resultado.Error) ? Ok(resultado) : BadRequest(resultado);
     }
 
+    // cambia solamente el estado logico para no borrar el historial del descuento
     [Authorize(Roles = "Administrador")]
     [HttpPut("Estado/{descuentoId:int}")]
     public async Task<IActionResult> Estado(int descuentoId, [FromBody] TCambioEstadoDescuento datos)
@@ -71,7 +78,7 @@ public class DescuentoController : ControllerBase
         return string.IsNullOrEmpty(resultado.Error) ? Ok(resultado) : BadRequest(resultado);
     }
 
-    /// <summary>Devuelve el precio efectivo ya resuelto; no delega la selección a Angular.</summary>
+    // devuelve el mejor descuento ya calculado para que Angular no tenga que decidir cual gana
     [HttpGet("AplicadoProducto/{productoId:int}")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> AplicadoProducto(int productoId)
@@ -80,6 +87,7 @@ public class DescuentoController : ControllerBase
         return string.IsNullOrEmpty(resultado.Error) ? Ok(resultado) : NotFound(resultado);
     }
 
+    // agarra del JWT el ID que se usa para registrar quien hizo el cambio
     private int UsuarioIdActual() =>
         int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 }

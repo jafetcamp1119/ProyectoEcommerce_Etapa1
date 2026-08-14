@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { IProductoImagen } from '../../model/IProductoImagen';
 
-/** Presenta las imágenes disponibles del producto y controla la selección del carrusel. */
+// muestra las imagenes del producto, escoge la principal y mueve sus miniaturas
 @Component({
   selector: 'app-producto-carrusel',
   imports: [],
@@ -19,6 +19,7 @@ export class ProductoCarrusel implements OnChanges {
   inicio = 0;
   rotas = new Set<number>();
 
+  // slice toma solamente las miniaturas que caben desde la posicion actual
   get visibles(): IProductoImagen[] {
     return this.ordenadas.slice(this.inicio, this.inicio + this.limiteVisible);
   }
@@ -28,16 +29,20 @@ export class ProductoCarrusel implements OnChanges {
   get puedeSiguiente(): boolean { return this.inicio + this.limiteVisible < this.ordenadas.length; }
   get mostrarControles(): boolean { return this.ordenadas.length > this.limiteVisible; }
 
+  // corre cuando llegan imagenes nuevas y vuelve a ordenar y escoger la principal
   ngOnChanges(): void {
     const principal = this.imagenPrincipal?.activo === false ? null : this.imagenPrincipal;
+    // Map usa imagenId como llave para quitar duplicados
     const unicas = new Map<number, IProductoImagen>();
     if (principal) unicas.set(principal.imagenId, principal);
+    // filter deja imagenes activas y el for las agrega al mapa
     for (const imagen of this.imagenes.filter(x => x.activo)) unicas.set(imagen.imagenId, imagen);
     this.ordenadas = [...unicas.values()].sort((a, b) =>
       Number(b.esPrincipal) - Number(a.esPrincipal) || a.orden - b.orden || a.imagenId - b.imagenId
     );
 
     const idAnterior = this.seleccionada?.imagenId;
+    // intenta conservar la anterior, luego usa principal, primera marcada o primera de la lista
     this.seleccionada = this.ordenadas.find(x => x.imagenId === idAnterior)
       ?? this.ordenadas.find(x => x.imagenId === principal?.imagenId)
       ?? this.ordenadas.find(x => x.esPrincipal)
@@ -47,16 +52,21 @@ export class ProductoCarrusel implements OnChanges {
     this.rotas.clear();
   }
 
+  // muestra como grande la miniatura que se acaba de escoger
   seleccionar(imagen: IProductoImagen): void { this.seleccionada = imagen; }
 
+  // mueve una posicion hacia atras sin bajar de cero
   anterior(): void { this.inicio = Math.max(0, this.inicio - 1); }
 
+  // mueve una posicion sin pasar el final de la lista
   siguiente(): void {
     this.inicio = Math.min(Math.max(0, this.ordenadas.length - this.limiteVisible), this.inicio + 1);
   }
 
+  // guarda el ID que fallo para mostrar placeholder en vez de una imagen rota
   marcarRota(imagenId: number): void { this.rotas.add(imagenId); }
 
+  // forma hasta dos iniciales a partir del texto alternativo
   iniciales(): string {
     const palabras = this.textoAlternativo
       .trim()

@@ -3,20 +3,20 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN
 {
-    /// <summary>Define el mantenimiento de porcentajes de impuesto.</summary>
+    // acciones disponibles para mantener los impuestos que usan los productos
     public interface IImpuestoLN
     {
-        /// <summary>Crea un impuesto validado.</summary>
+        // crea un impuesto despues de revisar porcentaje y fechas
         Task<Respuesta<TImpuesto>> InsertarAsync(TImpuesto datos);
-        /// <summary>Actualiza un impuesto existente.</summary>
+        // guarda los cambios de un impuesto existente
         Task<Respuesta<TImpuesto>> ModificarAsync(TImpuesto datos);
-        /// <summary>Desactiva lógicamente un impuesto.</summary>
+        // desactiva sin borrar los productos que ya lo usan
         Task<Respuesta<bool>> EliminarAsync(TImpuesto datos);
-        /// <summary>Busca impuestos por nombre.</summary>
+        // busca impuestos cuyo nombre contiene el texto recibido
         Task<Respuesta<IEnumerable<TImpuesto>>> BuscarAsync(TImpuesto datos);
-        /// <summary>Obtiene un impuesto específico.</summary>
+        // trae un impuesto por su ID
         Task<Respuesta<TImpuesto>> ObtenerAsync(TImpuesto datos);
-        /// <summary>Lista los impuestos configurados.</summary>
+        // lista todos los impuestos para la pantalla administrativa
         Task<Respuesta<IEnumerable<TImpuesto>>> ListarAsync();
     }
 }

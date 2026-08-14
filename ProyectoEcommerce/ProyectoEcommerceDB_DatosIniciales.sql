@@ -14,6 +14,7 @@ IF OBJECT_ID(N'dbo.FamiliasProducto', N'U') IS NULL
     THROW 50100, 'Faltan tablas base. Ejecute primero el script de creacion y la ampliacion importante.', 1;
 GO
 
+-- la variable de tabla guarda la lista esperada sin usar IDs identity fijos
 DECLARE @Familias TABLE (Nombre NVARCHAR(80), Descripcion NVARCHAR(250));
 INSERT @Familias (Nombre, Descripcion) VALUES
 (N'Alimentos y bebidas', N'Productos alimenticios, ingredientes y bebidas de consumo diario.'),
@@ -26,11 +27,13 @@ UPDATE dbo.FamiliasProducto
 SET Nombre = N'Electr' + NCHAR(243) + N'nica'
 WHERE Nombre LIKE N'Electr%nica';
 
+-- inserta solamente nombres que todavia no existen para poder repetir el script
 INSERT dbo.FamiliasProducto (Nombre, Descripcion, Activo)
 SELECT f.Nombre, f.Descripcion, 1
 FROM @Familias f
 WHERE NOT EXISTS (SELECT 1 FROM dbo.FamiliasProducto x WHERE x.Nombre = f.Nombre);
 
+-- si ya existian actualiza descripcion y las deja activas con los datos definitivos
 UPDATE x
 SET x.Nombre = f.Nombre,
     x.Descripcion = f.Descripcion,
@@ -39,6 +42,7 @@ FROM dbo.FamiliasProducto x
 INNER JOIN @Familias f ON f.Nombre = x.Nombre;
 GO
 
+-- cada categoria se relaciona por el nombre de familia y SQL busca su ID real mas adelante
 DECLARE @Categorias TABLE
 (
     Familia NVARCHAR(80),
@@ -79,6 +83,7 @@ INSERT @Categorias (Familia, Nombre, Descripcion) VALUES
 (N'Cuidado personal', N'Cuidado dental', N'Productos de higiene bucal.'),
 (N'Cuidado personal', N'Higiene femenina', N'Productos de higiene femenina.');
 
+-- estos UPDATE corrigen textos de una ejecucion anterior que pudo guardar caracteres sin tilde
 UPDATE c SET Nombre = N'L' + NCHAR(225) + N'cteos y huevos'
 FROM dbo.Categorias c INNER JOIN dbo.FamiliasProducto f ON f.FamiliaId = c.FamiliaId
 WHERE f.Nombre = N'Alimentos y bebidas' AND c.Nombre LIKE N'L%cteos y huevos';
@@ -104,6 +109,7 @@ UPDATE c SET Nombre = N'Electrodom' + NCHAR(233) + N'sticos peque' + NCHAR(241) 
 FROM dbo.Categorias c INNER JOIN dbo.FamiliasProducto f ON f.FamiliaId = c.FamiliaId
 WHERE f.Nombre = N'Electr' + NCHAR(243) + N'nica' AND c.Nombre LIKE N'Electrodom%sticos peque%os';
 
+-- une por nombre para tomar FamiliaId y evita duplicar la misma categoria dentro de una familia
 INSERT dbo.Categorias (FamiliaId, Nombre, Descripcion, Activo)
 SELECT f.FamiliaId, c.Nombre, c.Descripcion, 1
 FROM @Categorias c
@@ -124,6 +130,7 @@ INNER JOIN dbo.FamiliasProducto f ON f.FamiliaId = x.FamiliaId
 INNER JOIN @Categorias c ON c.Familia = f.Nombre AND c.Nombre = x.Nombre;
 GO
 
+-- agrega los dos impuestos basicos solamente cuando no existen
 IF NOT EXISTS (SELECT 1 FROM dbo.Impuestos WHERE Nombre = N'IVA 13%')
     INSERT dbo.Impuestos (Nombre, Porcentaje, FechaInicio, FechaFin, Activo)
     VALUES (N'IVA 13%', 13.00, CONVERT(DATE, GETDATE()), NULL, 1);

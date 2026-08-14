@@ -1,6 +1,6 @@
 import { ICarritoActual } from './ICarrito';
 
-/** Datos del Cliente utilizados para preparar la entrega. */
+// datos del Cliente que se muestran y confirman antes de comprar
 export interface ICheckoutCliente {
   nombreCompleto: string;
   correo: string;
@@ -9,6 +9,7 @@ export interface ICheckoutCliente {
 }
 
 export interface ICheckoutPreparacion {
+  // la API manda Cliente y carrito juntos para que el checkout sea consistente
   cliente: ICheckoutCliente;
   carrito: ICarritoActual;
 }

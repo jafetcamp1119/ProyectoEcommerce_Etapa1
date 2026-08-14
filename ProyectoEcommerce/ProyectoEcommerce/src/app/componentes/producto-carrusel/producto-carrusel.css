@@ -1,18 +1,220 @@
-:host { display: block; }
-.carousel-shell { --surface: #101820; --surface-soft: #192733; --line: #314556; --text: #f5f7fa; --muted: #9eacb9; }
-.main-image { overflow: hidden; aspect-ratio: 4 / 3; background: #0a1015; border: 1px solid var(--line); border-radius: 1rem; }
-.main-image > img { width: 100%; height: 100%; object-fit: contain; }
-.placeholder { display: flex; align-items: center; flex-direction: column; justify-content: center; width: 100%; height: 100%; min-height: 280px; padding: 2rem; gap: 1rem; color: #52606d; background: linear-gradient(145deg, #eef4f7, #dfe9ee); text-align: center; }
-.placeholder-initials { display: grid; place-items: center; width: 5.5rem; height: 5.5rem; color: #fff; background: linear-gradient(135deg, #3f718c, #284b63); border-radius: 1.4rem; box-shadow: 0 .75rem 1.8rem rgb(40 75 99 / 22%); font-size: 1.85rem; font-weight: 800; letter-spacing: .04em; }
-.placeholder strong { max-width: 24rem; color: #23313d; font-size: 1.05rem; }
-.thumb-row { display: flex; align-items: stretch; gap: .55rem; margin-top: .75rem; }
-.thumbs { display: grid; flex: 1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .55rem; min-width: 0; }
-.thumb { overflow: hidden; min-width: 0; aspect-ratio: 4 / 3; padding: 0; color: var(--muted); background: var(--surface-soft); border: 2px solid transparent; border-radius: .65rem; }
-.thumb.selected { border-color: #4aa3ff; box-shadow: 0 0 0 2px rgb(74 163 255 / 15%); }
-.thumb:focus-visible { outline: 3px solid #82c3ff; outline-offset: 2px; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; }
-.thumb span { display: grid; place-items: center; height: 100%; font-size: 1.5rem; }
-.arrow { flex: 0 0 2.4rem; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: .65rem; font-size: 1.65rem; }
-.arrow:disabled { cursor: not-allowed; opacity: .32; }
-.counter { margin: .55rem 0 0; color: var(--muted); font-size: .75rem; text-align: center; }
-@media (max-width: 520px) { .thumb-row { gap: .35rem; } .thumbs { gap: .35rem; } .arrow { flex-basis: 2rem; } .placeholder { min-height: 210px; } }
+/* este carrusel mantiene una imagen principal
+   y acomoda debajo las miniaturas las flechas y el contador */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= CONTENEDOR GENERAL ========================= */
+
+.carousel-shell {
+  /* variables que se reutilizan dentro del carrusel */
+  --surface: #101820;
+  --surface-soft: #192733;
+  --line: #314556;
+  --text: #f5f7fa;
+  --muted: #9eacb9;
+}
+
+
+/* ========================= IMAGEN PRINCIPAL ========================= */
+
+.main-image {
+  /* evita que cualquier parte de la imagen se salga del contenedor */
+  overflow: hidden;
+  /* mantiene siempre una proporcion de 4 por 3 */
+  aspect-ratio: 4 / 3;
+  background: #0a1015;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+}
+
+
+  /* imagen que se muestra actualmente como principal */
+  .main-image > img {
+    width: 100%;
+    height: 100%;
+    /* muestra la imagen completa sin recortarla */
+    object-fit: contain;
+  }
+
+
+/* ========================= SIN IMAGEN ========================= */
+
+/* aparece cuando el producto no tiene una imagen disponible */
+.placeholder {
+  display: flex;
+  align-items: center;
+  /* pone las iniciales y el texto uno debajo del otro */
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  padding: 2rem;
+  gap: 1rem;
+  color: #52606d;
+  background: linear-gradient( 145deg, #eef4f7, #dfe9ee );
+  text-align: center;
+}
+
+
+/* bloque donde aparecen las iniciales del producto */
+.placeholder-initials {
+  display: grid;
+  /* centra las letras horizontal y verticalmente */
+  place-items: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  color: #fff;
+  background: linear-gradient( 135deg, #3f718c, #284b63 );
+  border-radius: 1.4rem;
+  box-shadow: 0 0.75rem 1.8rem rgb(40 75 99 / 22%);
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+
+/* texto del placeholder */
+.placeholder strong {
+  max-width: 24rem;
+  color: #23313d;
+  font-size: 1.05rem;
+}
+
+
+/* ========================= MINIATURAS Y FLECHAS ========================= */
+
+/* acomoda flecha izquierda miniaturas y flecha derecha */
+.thumb-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+
+/* contenedor de las miniaturas */
+.thumbs {
+  display: grid;
+  /* usa todo el espacio que quede entre las flechas */
+  flex: 1;
+  /* siempre intenta acomodar 3 miniaturas */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  /* evita que el contenido obligue al grid a crecer */
+  min-width: 0;
+}
+
+
+/* ========================= MINIATURA ========================= */
+
+.thumb {
+  overflow: hidden;
+  min-width: 0;
+  /* mantiene la misma proporcion de la imagen principal */
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  color: var(--muted);
+  background: var(--surface-soft);
+  /* empieza transparente y cambia cuando queda seleccionada */
+  border: 2px solid transparent;
+  border-radius: 0.65rem;
+}
+
+
+  /* miniatura que corresponde a la imagen principal actual */
+  .thumb.selected {
+    border-color: #4aa3ff;
+    /* agrega un pequeño brillo alrededor */
+    box-shadow: 0 0 0 2px rgb(74 163 255 / 15%);
+  }
+
+
+  /* marca la miniatura cuando se navega usando teclado */
+  .thumb:focus-visible {
+    outline: 3px solid #82c3ff;
+    outline-offset: 2px;
+  }
+
+
+  /* imagen dentro de la miniatura */
+  .thumb img {
+    width: 100%;
+    height: 100%;
+    /* llena completamente el espacio aunque tenga que recortar un poco */
+    object-fit: cover;
+  }
+
+
+  /* contenido que puede aparecer si una miniatura no tiene imagen */
+  .thumb span {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    font-size: 1.5rem;
+  }
+
+
+/* ========================= FLECHAS ========================= */
+
+/* botones para moverse entre las imagenes */
+.arrow {
+  /* mantiene un ancho fijo dentro del flex */
+  flex: 0 0 2.4rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  font-size: 1.65rem;
+}
+
+
+  /* apariencia cuando una flecha esta deshabilitada */
+  .arrow:disabled {
+    /* muestra que el boton no se puede usar */
+    cursor: not-allowed;
+    opacity: 0.32;
+  }
+
+
+/* ========================= CONTADOR ========================= */
+
+/* muestra por ejemplo 1 / 3 */
+.counter {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+
+/* ========================= PANTALLAS PEQUEÑAS ========================= */
+
+/* reduce espacios y tamaños cuando la pantalla baja de 520px */
+@media (max-width: 520px) {
+
+  .thumb-row {
+    gap: 0.35rem;
+  }
+
+
+  .thumbs {
+    gap: 0.35rem;
+  }
+
+
+  /* reduce un poco el ancho de las flechas */
+  .arrow {
+    flex-basis: 2rem;
+  }
+
+
+  /* el placeholder necesita menos altura en celular */
+  .placeholder {
+    min-height: 210px;
+  }
+}

@@ -1,8 +1,10 @@
 import { ICategoria } from './ICategoria';
 import { IFamiliaProducto } from './IFamiliaProducto';
 
+// limita el tipo a los cuatro valores que tambien acepta la API
 export type TipoDescuento = 'FAMILIA' | 'CATEGORIA' | 'PRODUCTO' | 'PROMOCIONAL';
 
+// descuento administrativo con un solo destino segun su tipo
 export interface IDescuento {
   descuentoId: number;
   nombre: string;

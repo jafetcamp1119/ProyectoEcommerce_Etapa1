@@ -7,9 +7,8 @@ using ProyectoEcommerce.Recursos;
 
 namespace ProyectoEcommerce.API.Controllers;
 
-/// <summary>
-/// Expone el catálogo para Clientes y las operaciones de mantenimiento reservadas al Administrador.
-/// </summary>
+// este controller comparte las consultas del catalogo y el mantenimiento de productos
+// cada metodo marca si puede entrar cualquier usuario autenticado o solo el Administrador
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
@@ -22,11 +21,12 @@ public class ProductoController : ControllerBase
         _productoLN = productoLN;
     }
 
-    /// <summary>Obtiene productos activos aplicando el alcance global, de familia o de categoría solicitado.</summary>
+    // recibe filtros por query string y devuelve una pagina de productos activos
     [HttpGet("Catalogo")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Catalogo([FromQuery] TFiltroProductos filtro)
     {
+        // para el Cliente obliga a navegar Familia -> Categoria o a escribir una busqueda global
         if (User.IsInRole("Cliente"))
         {
             if (filtro.CategoriaId.HasValue && !filtro.FamiliaId.HasValue)
@@ -39,7 +39,7 @@ public class ProductoController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Obtiene el catálogo administrativo, incluidos filtros y estados de mantenimiento.</summary>
+    // trae productos activos e inactivos para la tabla administrativa
     [Authorize(Roles = "Administrador")]
     [HttpGet("Administracion")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -50,7 +50,7 @@ public class ProductoController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Obtiene el detalle visible de un producto activo.</summary>
+    // trae el detalle publico de un producto activo o responde 404 si no esta disponible
     [HttpGet("Detalle/{id:int}")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Detalle(int id)
@@ -62,6 +62,7 @@ public class ProductoController : ControllerBase
         return Ok(resultado);
     }
 
+    // trae todos los datos del producto aunque este inactivo para poder editarlo
     [Authorize(Roles = "Administrador")]
     [HttpGet("DetalleAdministracion/{id:int}")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -74,7 +75,7 @@ public class ProductoController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Devuelve familias, categorías e impuestos activos usados por las pantallas de producto.</summary>
+    // devuelve las listas que llenan los select de familia, categoria e impuesto
     [HttpGet("Catalogos")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Catalogos()
@@ -84,7 +85,7 @@ public class ProductoController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Crea un producto y registra al Administrador responsable en la bitácora.</summary>
+    // crea un producto y toma el ID del Administrador del JWT para la bitacora
     [Authorize(Roles = "Administrador")]
     [HttpPost("Insertar")]
     [HttpPost("Crear")]
@@ -92,12 +93,13 @@ public class ProductoController : ControllerBase
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
         var resultado = await _productoLN.InsertarAsync(producto, UsuarioIdActual());
+        // un codigo repetido devuelve 409 porque choca con otro producto existente
         if (resultado.Error == Mensajes.CodigoProductoDuplicado) return Conflict(resultado);
         if (!string.IsNullOrEmpty(resultado.Error)) return BadRequest(resultado);
         return Ok(resultado);
     }
 
-    /// <summary>Modifica un producto existente después de validar categoría, impuesto y código.</summary>
+    // actualiza despues de revisar categoria, impuesto, cantidades y codigo unico
     [Authorize(Roles = "Administrador")]
     [HttpPut("Modificar")]
     public async Task<IActionResult> Modificar([FromBody] TProducto producto)
@@ -110,7 +112,8 @@ public class ProductoController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Activa o desactiva lógicamente un producto; no elimina su información histórica.</summary>
+    // cambia Activo sin borrar el producto ni sus imagenes o ventas anteriores
+    // la ruta vieja de eliminar se conserva pero por dentro tambien hace una desactivacion logica
     [Authorize(Roles = "Administrador")]
     [HttpPut("CambiarEstado/{id:int}")]
     public async Task<IActionResult> CambiarEstado(int id, [FromBody] TCambioEstadoProducto cambio)
@@ -131,7 +134,7 @@ public class ProductoController : ControllerBase
         return Ok(resultado);
     }
 
-    // El Administrador se identifica por el JWT para registrar cambios sin confiar en datos enviados por Angular.
+    // el Administrador sale de los Claims del JWT y no de un ID que Angular pueda cambiar
     private int UsuarioIdActual() =>
         int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 }

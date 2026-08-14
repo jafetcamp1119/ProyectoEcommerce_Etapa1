@@ -1,43 +1,156 @@
+<!-- esta pagina muestra el segundo nivel del catalogo
+     primero enseña la familia seleccionada y despues sus categorias -->
 <section class="catalog-page">
-  <nav class="catalog-breadcrumb" aria-label="Ruta del catálogo">
-    <a routerLink="/productos">Productos</a>
-    <span aria-hidden="true">›</span>
-    <span>{{ familia?.nombre || 'Familia' }}</span>
+
+
+  <!-- ========================= RUTA DEL CATALOGO ========================= -->
+  <!-- breadcrumb muestra por donde va la persona dentro del catalogo
+       por ejemplo Productos > Alimentos y bebidas -->
+  <nav class="catalog-breadcrumb"
+       aria-label="Ruta del catálogo">
+
+    <!-- vuelve al primer nivel donde aparecen todas las familias -->
+    <a routerLink="/productos">
+      Productos
+    </a>
+
+    <!-- este simbolo solamente separa visualmente una parte de la ruta de la otra -->
+    <span aria-hidden="true">
+      ›
+    </span>
+
+    <!-- muestra el nombre de la familia actual
+         si todavia no existe usa Familia como texto temporal -->
+    <span>
+      {{ familia?.nombre || 'Familia' }}
+    </span>
+
   </nav>
 
+
+  <!-- ========================= ENCABEZADO ========================= -->
+
   <header class="page-heading">
+
     <div>
-      <span class="eyebrow">LessPrice · Catálogo</span>
-      <h1>{{ familia?.nombre || 'Categorías' }}</h1>
-      <p>Selecciona una categoría o busca un producto dentro de esta familia.</p>
+
+      <span class="eyebrow">
+        LessPrice · Catálogo
+      </span>
+
+      <!-- ?. evita error mientras familia todavia no se haya cargado
+           || usa Categorías si no hay nombre disponible -->
+      <h1>
+        {{ familia?.nombre || 'Categorías' }}
+      </h1>
+
+      <p>
+        Selecciona una categoría o busca un producto dentro de esta familia.
+      </p>
+
     </div>
-    <a class="btn btn-outline-primary" routerLink="/productos">Volver a familias</a>
+
+    <!-- vuelve a la pantalla donde se muestran todas las familias -->
+    <a class="btn btn-outline-primary"
+       routerLink="/productos">
+      Volver a familias
+    </a>
+
   </header>
 
-  <!-- Búsqueda limitada a la familia seleccionada -->
-  <form class="catalog-search" [formGroup]="busqueda" (ngSubmit)="buscarProductos()">
-    <label for="buscar-producto-familia">Buscar por nombre o código en {{ familia?.nombre || 'esta familia' }}</label>
-    <input id="buscar-producto-familia" class="form-control" formControlName="texto" placeholder="Ej. Baguette" maxlength="120">
-    <button class="btn btn-primary" type="submit" [disabled]="busqueda.invalid">Buscar</button>
+
+  <!-- ========================= BUSCADOR ========================= -->
+  <!-- este buscador solamente busca productos que pertenezcan a la familia actual
+       [formGroup] conecta el formulario con busqueda en TypeScript
+       ngSubmit llama buscarProductos cuando se envia -->
+  <form class="catalog-search"
+        [formGroup]="busqueda"
+        (ngSubmit)="buscarProductos()">
+
+    <!-- el texto cambia para mostrar en cual familia se esta buscando -->
+    <label for="buscar-producto-familia">
+      Buscar por nombre o código en
+      {{ familia?.nombre || 'esta familia' }}
+    </label>
+
+    <!-- formControlName conecta este input con el campo texto del formulario -->
+    <input id="buscar-producto-familia"
+           class="form-control"
+           formControlName="texto"
+           placeholder="Ej. Baguette"
+           maxlength="120">
+
+    <!-- no deja buscar mientras el formulario tenga algun error -->
+    <button class="btn btn-primary"
+            type="submit"
+            [disabled]="busqueda.invalid">
+      Buscar
+    </button>
+
   </form>
 
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
 
-  @if (cargando) {
-    <div class="state-card" role="status">Cargando categorías…</div>
-  } @else if (!error && !categorias.length) {
-    <div class="state-card">No hay categorías disponibles en esta familia.</div>
-  } @else if (familia) {
-    <!-- Categorías activas que pertenecen a la familia -->
-    <div class="navigation-grid">
-      @for (categoria of categorias; track categoria.categoriaId) {
-        <app-catalog-navigation-card
-          [titulo]="categoria.nombre"
-          [descripcion]="categoria.descripcion"
-          [imagen]="categoria.urlImagen"
-          textoBoton="Ver productos"
-          [ruta]="rutaProductos(categoria.categoriaId)" />
-      }
-    </div>
+  <!-- ========================= MENSAJE DE ERROR ========================= -->
+  <!-- si ocurre un error al cargar la familia o las categorias se muestra aqui -->
+  @if (error) {
+
+  <div class="alert alert-danger"
+       role="alert">
+    {{ error }}
+  </div>
+
   }
+
+
+  <!-- ========================= ESTADOS DE CARGA ========================= -->
+  <!-- mientras espera la respuesta de la API muestra este estado -->
+  @if (cargando) {
+
+  <div class="state-card"
+       role="status">
+    Cargando categorías…
+  </div>
+
+  }
+
+  <!-- si no hubo error pero la familia no tiene categorias muestra este mensaje -->
+  @else if (!error && !categorias.length) {
+
+  <div class="state-card">
+    No hay categorías disponibles en esta familia.
+  </div>
+
+  }
+
+
+  <!-- ========================= CATEGORIAS ========================= -->
+  <!-- solamente muestra las tarjetas cuando la familia ya existe -->
+  @else if (familia) {
+
+  <!-- aqui se acomodan todas las categorias activas de esta familia -->
+  <div class="navigation-grid">
+
+    <!-- @for recorre las categorias recibidas de la API
+         track usa categoriaId para que Angular identifique cada tarjeta -->
+    @for (categoria of categorias; track categoria.categoriaId) {
+
+    <!-- este componente reutilizable arma la tarjeta de cada categoria
+
+         titulo manda el nombre
+         descripcion manda el texto de la categoria
+         imagen manda la URL de su imagen
+         textoBoton define lo que dice el boton
+         ruta manda hacia los productos de esa categoria -->
+    <app-catalog-navigation-card [titulo]="categoria.nombre"
+                                 [descripcion]="categoria.descripcion"
+                                 [imagen]="categoria.urlImagen"
+                                 textoBoton="Ver productos"
+                                 [ruta]="rutaProductos(categoria.categoriaId)" />
+
+    }
+
+  </div>
+
+  }
+
 </section>

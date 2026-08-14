@@ -7,19 +7,19 @@ import { IRespuesta } from '../model/IAuth';
 
 const baseUrl = environment.baseUrl;
 
-/**
- * Proporciona consultas y mantenimiento de familias, incluida la lista activa del catálogo.
- */
+// junta las llamadas de familias administrativas y la lista activa del Cliente
 @Injectable({ providedIn: 'root' })
 export class FamiliaProductoService {
   private http = inject(HttpClient);
 
+  // trae todas las familias para mantenimiento, incluida UrlImagen
   listar(): Observable<IRespuesta<IFamiliaProducto[]>> {
     return this.http.get<IRespuesta<IFamiliaProducto[]>>(
       `${baseUrl}/FamiliaProducto/Listar`
     );
   }
 
+  // trae solamente familias activas para las tarjetas del Cliente
   listarCliente(): Observable<IRespuesta<IFamiliaProducto[]>> {
     return this.http.get<IRespuesta<IFamiliaProducto[]>>(
       `${baseUrl}/FamiliaProducto/Cliente`
@@ -39,6 +39,7 @@ export class FamiliaProductoService {
     );
   }
 
+  // guarda primero los datos de la familia y devuelve su ID
   insertar(datos: IFamiliaProducto): Observable<IRespuesta<IFamiliaProducto>> {
     return this.http.post<IRespuesta<IFamiliaProducto>>(
       `${baseUrl}/FamiliaProducto/Insertar`,
@@ -53,7 +54,7 @@ export class FamiliaProductoService {
     );
   }
 
-  // Sube o cambia la imagen de una familia.
+  // sube o cambia la imagen despues de tener el ID de la familia
   subirImagen(
     familiaId: number,
     archivo: File
@@ -61,7 +62,7 @@ export class FamiliaProductoService {
 
     const formData = new FormData();
 
-    // "archivo" debe coincidir con el nombre usado en el controlador.
+    // "archivo" debe coincidir con el nombre que recibe el controller
     formData.append('archivo', archivo);
 
     return this.http.post<IRespuesta<IFamiliaProducto>>(

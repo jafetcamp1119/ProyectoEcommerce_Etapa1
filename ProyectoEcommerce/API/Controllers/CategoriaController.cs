@@ -5,17 +5,15 @@ using ProyectoEcommerce.Dominio.InterfazLN;
 
 namespace ProyectoEcommerce.API.Controllers
 {
-    /// <summary>
-    /// Gestiona categorías y expone al Cliente las categorías activas de una familia válida.
-    /// </summary>
+    // recibe el mantenimiento de categorias y la consulta que usa el catalogo del Cliente
+    // cada categoria sigue ligada a su familia durante todo el flujo
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoriaController : ControllerBase
     {
         private ICategoriaLN _categoriaLN { get; }
-        // Permite conocer la ubicación del proyecto
-        // para guardar las imágenes de las categorías.
+        // permite encontrar wwwroot para guardar las imagenes de categorias
         private readonly IWebHostEnvironment _environment;
 
         public CategoriaController(
@@ -26,7 +24,7 @@ namespace ProyectoEcommerce.API.Controllers
             _environment = environment;
         }
 
-        /// <summary>Lista categorías para la administración.</summary>
+        // lista todas las categorias para administracion
         [HttpGet("Listar")]
         [Authorize(Roles = "Administrador")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -37,7 +35,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Lista categorías administrativas pertenecientes a la familia indicada.</summary>
+        // recibe una familia y trae sus categorias activas e inactivas para administracion
         [HttpGet("ListarPorFamilia/{familiaId:int}")]
         [Authorize(Roles = "Administrador")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -48,7 +46,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Lista categorías activas de una familia activa para el catálogo del Cliente.</summary>
+        // para el Cliente solo devuelve categorias activas de una familia activa
         [HttpGet("Cliente/{familiaId:int}")]
         [Authorize(Roles = "Cliente")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -59,6 +57,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        // trae una categoria por ID o devuelve 404
         [HttpGet("Obtener/{id}")]
         [Authorize(Roles = "Administrador")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -69,6 +68,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        // busca categorias usando el nombre del query string
         [HttpGet("Buscar")]
         [Authorize(Roles = "Administrador")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -79,7 +79,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Crea una categoría vinculada a una familia existente.</summary>
+        // crea una categoria despues de comprobar que la familia exista
         [HttpPost("Insertar")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Insertar([FromBody] TCategoria categoria)
@@ -90,7 +90,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Actualiza una categoría manteniendo la relación real con su familia.</summary>
+        // guarda los cambios de la categoria, incluida su UrlImagen opcional
         [HttpPut("Modificar")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Modificar([FromBody] TCategoria categoria)
@@ -102,7 +102,7 @@ namespace ProyectoEcommerce.API.Controllers
         }
 
 
-        // Permite al administrador subir o cambiar la imagen de una categoría.
+        // recibe una imagen, la guarda en wwwroot y actualiza UrlImagen por medio de la LN
         [Authorize(Roles = "Administrador")]
         [HttpPost("SubirImagen/{categoriaId:int}")]
         [RequestSizeLimit(5_000_000)]
@@ -110,7 +110,7 @@ namespace ProyectoEcommerce.API.Controllers
             int categoriaId,
             IFormFile archivo)
         {
-            // Verifica que el ID sea válido.
+            // primero revisa el ID, que haya archivo y que no supere el limite
             if (categoriaId <= 0)
                 return BadRequest("Categoría inválida.");
 
@@ -118,11 +118,11 @@ namespace ProyectoEcommerce.API.Controllers
             if (archivo == null || archivo.Length == 0)
                 return BadRequest("Debe seleccionar una imagen.");
 
-            // Cada imagen puede pesar como máximo 5 MB.
+            // el limite evita subir archivos demasiado pesados
             if (archivo.Length > 5 * 1024 * 1024)
                 return BadRequest("La imagen supera los 5 MB.");
 
-            // Extensiones permitidas.
+            // estos son los mismos formatos que permite escoger Angular
             var extensionesPermitidas = new[]
             {
         ".jpg",
@@ -135,12 +135,12 @@ namespace ProyectoEcommerce.API.Controllers
                 Path.GetExtension(archivo.FileName)
                     .ToLowerInvariant();
 
-            // Verifica que el archivo sea una imagen permitida.
+            // Contains compara la extension normalizada con la lista permitida
             if (!extensionesPermitidas.Contains(extension))
                 return BadRequest(
                     "El archivo seleccionado no es una imagen permitida.");
 
-            // Busca la categoría para comprobar que exista.
+            // no crea carpetas hasta confirmar que la categoria existe
             var respuestaCategoria =
                 await _categoriaLN.ObtenerAsync(
                     new TCategoria
@@ -151,7 +151,7 @@ namespace ProyectoEcommerce.API.Controllers
             if (respuestaCategoria.Data == null)
                 return NotFound("La categoría no existe.");
 
-            // Obtiene la ubicación de wwwroot.
+            // usa WebRootPath y si viene vacio arma wwwroot desde la raiz del proyecto
             var webRoot = _environment.WebRootPath;
 
             if (string.IsNullOrWhiteSpace(webRoot))
@@ -161,15 +161,16 @@ namespace ProyectoEcommerce.API.Controllers
                     "wwwroot");
             }
 
-            // Crea una carpeta específica para la categoría.
+            // separa los archivos por categoria para que sus rutas sean faciles de reconocer
             var carpetaCategoria = Path.Combine(
                 webRoot,
                 "categorias",
                 categoriaId.ToString());
 
+            // se puede llamar aunque la carpeta ya exista
             Directory.CreateDirectory(carpetaCategoria);
 
-            // Genera un nombre único para la imagen.
+            // el Guid evita que una imagen nueva sobrescriba otra por tener el mismo nombre
             var nombreArchivo =
                 $"{Guid.NewGuid():N}{extension}";
 
@@ -177,7 +178,7 @@ namespace ProyectoEcommerce.API.Controllers
                 carpetaCategoria,
                 nombreArchivo);
 
-            // Guarda físicamente la imagen.
+            // copia el archivo recibido a su ruta dentro de wwwroot
             await using (var stream =
                 new FileStream(
                     rutaFisica,
@@ -186,20 +187,19 @@ namespace ProyectoEcommerce.API.Controllers
                 await archivo.CopyToAsync(stream);
             }
 
-            // Construye la URL que utilizará Angular.
+            // esta URL completa es la que despues llega a [src] en Angular
             var urlImagen =
                 $"{Request.Scheme}://{Request.Host}" +
                 $"/categorias/{categoriaId}/{nombreArchivo}";
 
-            // Guarda la URL en la categoría.
+            // usa ModificarAsync para que la URL pase por las mismas reglas que cualquier cambio
             var categoria = respuestaCategoria.Data;
             categoria.UrlImagen = urlImagen;
 
             var resultado =
                 await _categoriaLN.ModificarAsync(categoria);
 
-            // Si falla la base de datos,
-            // elimina también el archivo físico.
+            // si la BD no pudo guardar la URL tambien borra el archivo recien creado
             if (!string.IsNullOrEmpty(resultado.Error))
             {
                 if (System.IO.File.Exists(rutaFisica))
@@ -211,7 +211,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Desactiva lógicamente una categoría.</summary>
+        // cambia Activo a false sin borrar productos ni relaciones
         [HttpDelete("Eliminar/{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Eliminar(int id)

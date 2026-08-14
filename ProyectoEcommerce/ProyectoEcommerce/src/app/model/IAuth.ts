@@ -1,4 +1,4 @@
-/** Contrato genérico de las respuestas enviadas por la API. */
+// caja comun que usa la API para mandar datos o un mensaje de error
 export interface IRespuesta<T> {
   success: boolean;
   data: T | null;
@@ -17,6 +17,11 @@ export interface IRegistroUsuario {
   telefono: string;
   contrasena: string;
   confirmarContrasena: string;
+}
+
+export interface IEstadoConfiguracionInicial {
+  requiereConfiguracionInicial: boolean;
+  correoAdministradorInicial: string;
 }
 
 /** Datos no sensibles del usuario que Angular conserva durante la sesión de la pestaña. */

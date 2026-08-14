@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Credenciales recibidas únicamente para validar el inicio de sesión.</summary>
 public class TLoginUsuario
 {
     private string _correo = string.Empty;

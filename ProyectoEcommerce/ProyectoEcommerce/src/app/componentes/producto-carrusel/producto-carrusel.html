@@ -1,28 +1,151 @@
-<section class="carousel-shell" aria-label="Galería de imágenes del producto">
+<!-- este bloque muestra una imagen grande
+     y debajo las miniaturas visibles del carrusel
+     @if y @for crean solamente lo que hace falta segun el estado actual -->
+
+<section class="carousel-shell"
+         aria-label="Galería de imágenes del producto">
+
+
+  <!-- ========================= IMAGEN PRINCIPAL ========================= -->
+
   <div class="main-image">
-    @if (seleccionada && !rotas.has(seleccionada.imagenId)) {
-      <img [src]="seleccionada.urlImagen" [alt]="seleccionada.textoAlternativo || textoAlternativo" (error)="marcarRota(seleccionada.imagenId)">
-    } @else {
-      <div class="placeholder" role="img" [attr.aria-label]="textoAlternativo">
-        <span class="placeholder-initials" aria-hidden="true">{{ iniciales() }}</span>
-        <strong>{{ textoAlternativo }}</strong>
-      </div>
+
+    <!-- si existe una imagen seleccionada
+         y no esta marcada como rota la muestra -->
+    @if (
+    seleccionada &&
+    !rotas.has(seleccionada.imagenId)
+    ) {
+
+    <img [src]="seleccionada.urlImagen"
+         [alt]="seleccionada.textoAlternativo || textoAlternativo"
+         (error)="marcarRota(seleccionada.imagenId)">
+
     }
+
+
+    <!-- si no hay imagen seleccionada
+         o la imagen fallo muestra un placeholder -->
+    @else {
+
+    <div class="placeholder"
+         role="img"
+         [attr.aria-label]="textoAlternativo">
+
+
+      <!-- muestra unas iniciales decorativas -->
+      <span class="placeholder-initials"
+            aria-hidden="true">
+        {{ iniciales() }}
+      </span>
+
+
+      <!-- texto que identifica el producto -->
+      <strong>
+        {{ textoAlternativo }}
+      </strong>
+
+    </div>
+
+    }
+
   </div>
 
+
+  <!-- ========================= MINIATURAS ========================= -->
+  <!-- solamente muestra esta parte si hay imagenes ordenadas -->
   @if (ordenadas.length) {
-    <div class="thumb-row">
-      @if (mostrarControles) { <button class="arrow" type="button" aria-label="Imágenes anteriores" [disabled]="!puedeAnterior" (click)="anterior()">‹</button> }
-      <div class="thumbs">
-        @for (imagen of visibles; track imagen.imagenId) {
-          <button class="thumb" type="button" [class.selected]="seleccionada?.imagenId === imagen.imagenId" [attr.aria-pressed]="seleccionada?.imagenId === imagen.imagenId" [attr.aria-label]="'Mostrar ' + (imagen.textoAlternativo || textoAlternativo)" (click)="seleccionar(imagen)">
-            @if (!rotas.has(imagen.imagenId)) { <img [src]="imagen.urlImagen" [alt]="imagen.textoAlternativo || textoAlternativo" (error)="marcarRota(imagen.imagenId)"> }
-            @else { <span aria-hidden="true">◇</span> }
+
+  <div class="thumb-row">
+
+
+    <!-- ========================= FLECHA ANTERIOR ========================= -->
+    <!-- esta flecha solamente aparece si hacen falta controles -->
+    @if (mostrarControles) {
+
+    <button class="arrow"
+            type="button"
+            aria-label="Imágenes anteriores"
+            [disabled]="!puedeAnterior"
+            (click)="anterior()">
+      ‹
+    </button>
+
+    }
+
+
+    <!-- ========================= LISTA DE MINIATURAS ========================= -->
+
+    <div class="thumbs">
+
+      <!-- recorre solamente las imagenes que deben verse en este momento -->
+      @for (
+      imagen of visibles;
+      track imagen.imagenId
+      ) {
+
+      <!-- marca visualmente cual miniatura corresponde a la imagen seleccionada -->
+      <!-- aria-pressed indica accesiblemente si esta miniatura esta seleccionada -->
+      <!-- arma una descripcion accesible para el boton -->
+      <!-- al hacer click esta imagen pasa a ser la seleccionada -->
+      <button class="thumb"
+              type="button"
+              [class.selected]="seleccionada?.imagenId === imagen.imagenId"
+              [attr.aria-pressed]="seleccionada?.imagenId === imagen.imagenId"
+              [attr.aria-label]="'Mostrar ' + (imagen.textoAlternativo || textoAlternativo)"
+              (click)="seleccionar(imagen)">
+
+
+            <!-- si la imagen no ha fallado muestra la miniatura -->
+            @if (!rotas.has(imagen.imagenId)) {
+
+              <img
+                [src]="imagen.urlImagen"
+                [alt]="imagen.textoAlternativo || textoAlternativo"
+                (error)="marcarRota(imagen.imagenId)">
+
+            }
+
+
+            <!-- si la imagen fallo muestra un simbolo en vez de seguir intentando -->
+            @else {
+
+              <span aria-hidden="true">
+                ◇
+              </span>
+
+            }
+
           </button>
-        }
-      </div>
-      @if (mostrarControles) { <button class="arrow" type="button" aria-label="Imágenes siguientes" [disabled]="!puedeSiguiente" (click)="siguiente()">›</button> }
+
+      }
+
     </div>
-    <p class="counter">{{ inicio + 1 }}–{{ inicio + visibles.length }} de {{ ordenadas.length }}</p>
+
+
+    <!-- ========================= FLECHA SIGUIENTE ========================= -->
+    @if (mostrarControles) {
+
+    <button class="arrow"
+            type="button"
+            aria-label="Imágenes siguientes"
+            [disabled]="!puedeSiguiente"
+            (click)="siguiente()">
+      ›
+    </button>
+
+    }
+
+  </div>
+
+
+  <!-- ========================= CONTADOR ========================= -->
+  <!-- muestra el rango visible y la cantidad total
+       por ejemplo 1–3 de 5 -->
+  <p class="counter">
+    {{ inicio + 1 }}–{{ inicio + visibles.length }} de {{ ordenadas.length }}
+  </p>
+
   }
+
 </section>

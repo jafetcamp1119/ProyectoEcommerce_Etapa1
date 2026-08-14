@@ -1,22 +1,527 @@
-:host { display: block; }
-.checkout-page { max-width: 1040px; margin: 0 auto; padding-bottom: 2rem; }
-.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
-.page-heading h1, .checkout-card h2, .completed-card h1 { margin: .15rem 0; }
-.page-heading p { margin: 0; color: var(--cui-secondary-color); }
-.eyebrow { color: var(--cui-primary); font-size: .76rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; margin: 0 0 1.2rem; padding: 0; list-style: none; }
-.steps li { display: flex; align-items: center; gap: .55rem; padding: .7rem; color: var(--cui-secondary-color); background: var(--cui-card-bg); border: 1px solid var(--cui-border-color); border-radius: .8rem; font-size: .82rem; font-weight: 700; }
-.steps span { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border: 1px solid currentColor; border-radius: 50%; }
-.steps li.active, .steps li.done { color: var(--cui-primary); border-color: color-mix(in srgb, var(--cui-primary) 55%, var(--cui-border-color)); }
-.checkout-card, .completed-card, .state-card { padding: clamp(1rem, 3vw, 1.6rem); background: var(--cui-card-bg); border: 1px solid var(--cui-border-color); border-radius: 1rem; box-shadow: 0 .4rem 1.4rem rgba(32,56,85,.09); }
-.checkout-card header { margin-bottom: 1.2rem; }.checkout-card footer { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.25rem; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }.form-grid .full { grid-column: 1 / -1; }.form-grid label { display: block; margin-bottom: .35rem; font-size: .8rem; font-weight: 700; }.form-grid small, .email-confirmation small, .form-error { color: var(--cui-danger); }
-.email-confirmation { display: grid; gap: .4rem; margin-top: 1rem; padding: 1rem; background: var(--cui-tertiary-bg); border-radius: .8rem; }.email-confirmation label { display: flex; align-items: center; gap: .45rem; margin-top: .3rem; }.email-confirmation input { accent-color: var(--cui-primary); }
-.payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }.payment-option { display: flex; align-items: flex-start; flex-direction: column; min-height: 150px; padding: 1.2rem; color: var(--cui-body-color); background: var(--cui-tertiary-bg); border: 2px solid var(--cui-border-color); border-radius: 1rem; text-align: left; }.payment-option strong { font-size: 1.25rem; }.payment-option span { margin-top: .55rem; }.payment-option small { margin-top: auto; color: var(--cui-secondary-color); }.payment-option.selected { border-color: var(--cui-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cui-primary) 15%, transparent); }
-.academic-note { margin: 1rem 0 0; padding: .8rem; color: var(--cui-secondary-color); background: color-mix(in srgb, var(--cui-info) 10%, transparent); border-radius: .7rem; }
-.delivery-summary { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }.delivery-summary div, .totals div { min-width: 0; }.delivery-summary dt, .totals dt { color: var(--cui-secondary-color); font-size: .7rem; font-weight: 800; text-transform: uppercase; }.delivery-summary dd, .totals dd { margin: .2rem 0 0; overflow-wrap: anywhere; }
-.order-items { display: grid; gap: .5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--cui-border-color); }.order-items article { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem; background: var(--cui-tertiary-bg); border-radius: .7rem; }.order-items article div { display: flex; flex-direction: column; }.order-items span { color: var(--cui-secondary-color); font-size: .76rem; }
-.totals { width: min(100%, 390px); margin: 1rem 0 0 auto; }.totals div { display: flex; justify-content: space-between; padding: .4rem 0; }.totals dd { margin: 0; }.totals .grand-total { margin-top: .35rem; padding-top: .8rem; border-top: 1px solid var(--cui-border-color); font-size: 1.15rem; font-weight: 800; }
-.completed-card { display: flex; align-items: center; flex-direction: column; max-width: 700px; margin: 2rem auto; text-align: center; }.completed-icon { display: grid; place-items: center; width: 4rem; height: 4rem; margin-bottom: 1rem; color: #fff; background: var(--cui-success); border-radius: 50%; font-size: 2rem; }.completed-card dl { width: min(100%, 530px); margin: 1.2rem 0; text-align: left; }.completed-card dl div { display: grid; grid-template-columns: 1fr 1.5fr; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid var(--cui-border-color); }.completed-card dt { color: var(--cui-secondary-color); }.completed-card dd { margin: 0; overflow-wrap: anywhere; }.completed-card .warning { color: var(--cui-warning); }.completed-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; }
-.state-card { min-height: 240px; text-align: center; }.state-card h2 { margin-bottom: 1rem; }
-@media (max-width: 680px) { .page-heading { align-items: stretch; flex-direction: column; }.steps { grid-template-columns: 1fr; }.form-grid, .payment-grid, .delivery-summary { grid-template-columns: 1fr; }.form-grid .full { grid-column: auto; }.order-items article { align-items: flex-start; flex-direction: column; }.completed-card dl div { grid-template-columns: 1fr; gap: .2rem; } }
+/* esta pagina organiza todo el proceso del checkout
+   incluye los pasos datos de entrega forma de pago resumen y compra completada */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= PAGINA GENERAL ========================= */
+
+/* limita el ancho del checkout para que no se estire demasiado en pantallas grandes */
+.checkout-page {
+  max-width: 1040px;
+  /* auto a los lados centra toda la pagina */
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+
+
+/* acomoda el titulo y cualquier accion que aparezca al lado */
+.page-heading {
+  display: flex;
+  align-items: end;
+  /* separa el contenido hacia los 2 extremos */
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+
+  /* estos titulos comparten el mismo margen */
+  .page-heading h1,
+  .checkout-card h2,
+  .completed-card h1 {
+    margin: 0.15rem 0;
+  }
+
+
+  /* texto que aparece debajo del titulo principal */
+  .page-heading p {
+    margin: 0;
+    color: var(--cui-secondary-color);
+  }
+
+
+/* texto pequeño que aparece encima de algunos titulos */
+.eyebrow {
+  color: var(--cui-primary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  /* separa un poco las letras */
+  letter-spacing: 0.12em;
+  /* muestra el texto visualmente en mayusculas */
+  text-transform: uppercase;
+}
+
+
+/* ========================= PASOS DEL CHECKOUT ========================= */
+
+/* lista que muestra los 3 pasos principales del proceso de compra */
+.steps {
+  display: grid;
+  /* crea 3 columnas del mismo tamaño */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+  margin: 0 0 1.2rem;
+  padding: 0;
+  /* quita los puntos normales de una lista */
+  list-style: none;
+}
+
+
+  /* cada li representa uno de los pasos del checkout */
+  .steps li {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem;
+    color: var(--cui-secondary-color);
+    background: var(--cui-card-bg);
+    border: 1px solid var(--cui-border-color);
+    border-radius: 0.8rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+
+  /* circulo donde aparece el numero de cada paso */
+  .steps span {
+    display: grid;
+    /* centra el numero tanto horizontal como verticalmente */
+    place-items: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    /* currentColor usa el mismo color que tenga actualmente el texto */
+    border: 1px solid currentColor;
+    /* 50% convierte el cuadro en un circulo */
+    border-radius: 50%;
+  }
+
+
+  /* active marca el paso actual
+   done marca uno que ya se termino */
+  .steps li.active,
+  .steps li.done {
+    color: var(--cui-primary);
+    /* color-mix mezcla el color principal con el color normal del borde */
+    border-color: color-mix( in srgb, var(--cui-primary) 55%, var(--cui-border-color) );
+  }
+
+
+/* ========================= TARJETAS PRINCIPALES ========================= */
+
+/* estas 3 tarjetas comparten el mismo diseño general */
+.checkout-card,
+.completed-card,
+.state-card {
+  /* clamp hace que el espacio interno se adapte al tamaño de la pantalla
+     sin bajar de 1rem ni subir de 1.6rem */
+  padding: clamp(1rem, 3vw, 1.6rem);
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+  box-shadow: 0 0.4rem 1.4rem rgba(32, 56, 85, 0.09);
+}
+
+
+  /* separa el encabezado interno del contenido de la tarjeta */
+  .checkout-card header {
+    margin-bottom: 1.2rem;
+  }
+
+
+  /* acomoda los botones que aparecen abajo de cada paso */
+  .checkout-card footer {
+    display: flex;
+    /* manda los botones hacia la derecha */
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+  }
+
+
+/* ========================= FORMULARIO ========================= */
+
+/* acomoda los campos de datos en 2 columnas */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+
+  /* full sirve para campos que necesitan ocupar las 2 columnas */
+  .form-grid .full {
+    /* 1 / -1 significa desde la primera columna hasta la ultima */
+    grid-column: 1 / -1;
+  }
+
+
+  /* texto que aparece encima de cada input */
+  .form-grid label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+
+  /* todos estos textos usan el color de error */
+  .form-grid small,
+  .email-confirmation small,
+  .form-error {
+    color: var(--cui-danger);
+  }
+
+
+/* ========================= CONFIRMACION DE CORREO ========================= */
+
+/* bloque donde la persona confirma el correo para recibir informacion de la compra */
+.email-confirmation {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--cui-tertiary-bg);
+  border-radius: 0.8rem;
+}
+
+
+  /* acomoda el checkbox junto con su texto */
+  .email-confirmation label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.3rem;
+  }
+
+
+  /* cambia el color propio del checkbox cuando esta marcado */
+  .email-confirmation input {
+    accent-color: var(--cui-primary);
+  }
+
+
+/* ========================= FORMAS DE PAGO ========================= */
+
+/* pone las opciones de pago en 2 columnas */
+.payment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+
+/* cada opcion de pago funciona como una tarjeta seleccionable */
+.payment-option {
+  display: flex;
+  /* acomoda titulo descripcion y texto uno debajo del otro */
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 150px;
+  padding: 1.2rem;
+  color: var(--cui-body-color);
+  background: var(--cui-tertiary-bg);
+  border: 2px solid var(--cui-border-color);
+  border-radius: 1rem;
+  text-align: left;
+}
+
+
+  /* nombre de la forma de pago */
+  .payment-option strong {
+    font-size: 1.25rem;
+  }
+
+
+  /* descripcion que aparece debajo del nombre */
+  .payment-option span {
+    margin-top: 0.55rem;
+  }
+
+
+  /* texto pequeño que queda hasta abajo de la tarjeta */
+  .payment-option small {
+    /* auto agarra el espacio sobrante y empuja este texto hacia abajo */
+    margin-top: auto;
+    color: var(--cui-secondary-color);
+  }
+
+
+  /* cambia el borde y agrega un brillo cuando esta opcion fue seleccionada */
+  .payment-option.selected {
+    border-color: var(--cui-primary);
+    /* color-mix usa una version muy suave del color principal
+     para crear el borde exterior */
+    box-shadow: 0 0 0 3px color-mix( in srgb, var(--cui-primary) 15%, transparent );
+  }
+
+
+/* ========================= NOTA INFORMATIVA ========================= */
+
+/* bloque adicional para mostrar una nota dentro del checkout */
+.academic-note {
+  margin: 1rem 0 0;
+  padding: 0.8rem;
+  color: var(--cui-secondary-color);
+  /* mezcla un poco del color info con transparente para crear un fondo suave */
+  background: color-mix( in srgb, var(--cui-info) 10%, transparent );
+  border-radius: 0.7rem;
+}
+
+
+/* ========================= RESUMEN DE ENTREGA ========================= */
+
+/* acomoda los datos de entrega en 2 columnas */
+.delivery-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+
+  /* evita que contenido muy largo obligue a las columnas a crecer */
+  .delivery-summary div,
+  .totals div {
+    min-width: 0;
+  }
+
+
+  /* nombres pequeños de cada dato
+   por ejemplo Correo Direccion o Telefono */
+  .delivery-summary dt,
+  .totals dt {
+    color: var(--cui-secondary-color);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+
+  /* valor que corresponde a cada dato */
+  .delivery-summary dd,
+  .totals dd {
+    margin: 0.2rem 0 0;
+    /* anywhere permite cortar textos largos si no caben
+     por ejemplo un correo o una direccion muy larga */
+    overflow-wrap: anywhere;
+  }
+
+
+/* ========================= PRODUCTOS DE LA ORDEN ========================= */
+
+/* contiene la lista de productos que se van a comprar */
+.order-items {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cui-border-color);
+}
+
+
+  /* cada article representa un producto de la orden */
+  .order-items article {
+    display: flex;
+    align-items: center;
+    /* deja la informacion a un lado y el monto al otro */
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem;
+    background: var(--cui-tertiary-bg);
+    border-radius: 0.7rem;
+  }
+
+
+    /* acomoda nombre cantidad y demas informacion del producto en columna */
+    .order-items article div {
+      display: flex;
+      flex-direction: column;
+    }
+
+
+  /* informacion secundaria del producto */
+  .order-items span {
+    color: var(--cui-secondary-color);
+    font-size: 0.76rem;
+  }
+
+
+/* ========================= TOTALES ========================= */
+
+/* contiene subtotal impuestos descuentos y total final */
+.totals {
+  /* min escoge el valor mas pequeño entre 100% y 390px
+     asi nunca se sale de la pantalla pero tampoco se hace demasiado ancho */
+  width: min(100%, 390px);
+  /* auto a la izquierda empuja este bloque hacia la derecha */
+  margin: 1rem 0 0 auto;
+}
+
+
+  /* cada fila deja el nombre del monto a un lado y el valor al otro */
+  .totals div {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+  }
+
+
+  /* quita el margen que normalmente traen los dd */
+  .totals dd {
+    margin: 0;
+  }
+
+
+  /* separa y resalta el monto final de la compra */
+  .totals .grand-total {
+    margin-top: 0.35rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--cui-border-color);
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+
+/* ========================= COMPRA COMPLETADA ========================= */
+
+/* tarjeta que aparece cuando la orden ya fue confirmada */
+.completed-card {
+  display: flex;
+  /* pone todo el contenido uno debajo del otro */
+  flex-direction: column;
+  align-items: center;
+  max-width: 700px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+
+/* circulo verde que muestra el icono de compra completada */
+.completed-icon {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  color: #fff;
+  background: var(--cui-success);
+  border-radius: 50%;
+  font-size: 2rem;
+}
+
+
+/* lista con los datos finales de la compra */
+.completed-card dl {
+  /* usa todo el espacio disponible pero nunca pasa de 530px */
+  width: min(100%, 530px);
+  margin: 1.2rem 0;
+  text-align: left;
+}
+
+
+  /* cada fila tiene el nombre del dato y su valor */
+  .completed-card dl div {
+    display: grid;
+    /* el valor tiene un poco mas de espacio que el nombre */
+    grid-template-columns: 1fr 1.5fr;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--cui-border-color);
+  }
+
+
+/* nombre del dato de la compra */
+.completed-card dt {
+  color: var(--cui-secondary-color);
+}
+
+
+/* valor del dato */
+.completed-card dd {
+  margin: 0;
+  /* evita que textos largos se salgan de la tarjeta */
+  overflow-wrap: anywhere;
+}
+
+
+/* resalta alguna advertencia que aparezca despues de completar la compra */
+.completed-card .warning {
+  color: var(--cui-warning);
+}
+
+
+/* acomoda los botones finales como volver comprar o ver pedidos */
+.completed-actions {
+  display: flex;
+  /* permite bajar botones a otra linea si no caben */
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+
+/* ========================= ESTADOS ========================= */
+
+/* tarjeta usada para mostrar estados como carga o algun mensaje especial */
+.state-card {
+  min-height: 240px;
+  text-align: center;
+}
+
+
+  /* separa el titulo del resto del contenido */
+  .state-card h2 {
+    margin-bottom: 1rem;
+  }
+
+
+/* ========================= PANTALLAS PEQUEÑAS ========================= */
+
+/* cuando la pantalla baja de 680px cambia el checkout para verlo mejor en celular */
+@media (max-width: 680px) {
+
+  /* el encabezado deja de estar horizontal */
+  .page-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  /* los 3 pasos dejan de mostrarse uno al lado del otro */
+  .steps {
+    grid-template-columns: 1fr;
+  }
+
+
+  /* formularios pago y entrega pasan todos a una sola columna */
+  .form-grid,
+  .payment-grid,
+  .delivery-summary {
+    grid-template-columns: 1fr;
+  }
+
+
+    /* full ya no necesita atravesar 2 columnas porque solo queda una */
+    .form-grid .full {
+      grid-column: auto;
+    }
+
+
+  /* cada producto deja de estar horizontal
+     y pasa a mostrar su informacion una debajo de la otra */
+  .order-items article {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+
+  /* los datos de la compra completada tambien pasan a una sola columna */
+  .completed-card dl div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}

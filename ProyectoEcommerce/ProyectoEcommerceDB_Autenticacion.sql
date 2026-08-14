@@ -12,6 +12,7 @@ IF OBJECT_ID(N'dbo.Usuarios', N'U') IS NULL
     THROW 50001, 'No existe dbo.Usuarios. Ejecute primero ProyectoEcommerceDB_Etapa1.sql.', 1;
 GO
 
+-- este bloque acomoda una BD vieja que todavia llamaba NombreCompleto a la columna
 IF COL_LENGTH(N'dbo.Usuarios', N'Nombre') IS NULL
    AND COL_LENGTH(N'dbo.Usuarios', N'NombreCompleto') IS NOT NULL
 BEGIN
@@ -19,6 +20,7 @@ BEGIN
 END;
 GO
 
+-- si tampoco existe con el nombre viejo la crea, llena los registros y luego la vuelve obligatoria
 IF COL_LENGTH(N'dbo.Usuarios', N'Nombre') IS NULL
 BEGIN
     ALTER TABLE dbo.Usuarios ADD Nombre NVARCHAR(120) NULL;
@@ -35,6 +37,7 @@ BEGIN
 END;
 GO
 
+-- PasswordHash queda nullable durante la migracion porque usuarios anteriores pueden no tener contraseña
 IF COL_LENGTH(N'dbo.Usuarios', N'PasswordHash') IS NULL
 BEGIN
     ALTER TABLE dbo.Usuarios ADD PasswordHash NVARCHAR(500) NULL;
@@ -50,6 +53,7 @@ ALTER TABLE dbo.Usuarios
 ALTER COLUMN Telefono NVARCHAR(30) NOT NULL;
 GO
 
+-- antes de normalizar revisa que dos correos no vayan a quedar iguales
 IF EXISTS
 (
     SELECT LOWER(LTRIM(RTRIM(Correo)))
@@ -62,10 +66,12 @@ BEGIN
 END;
 GO
 
+-- deja todos los correos sin espacios y en minusculas
 UPDATE dbo.Usuarios
 SET Correo = LOWER(LTRIM(RTRIM(Correo)));
 GO
 
+-- quita las reglas anteriores para volverlas a crear sobre la columna ya normalizada
 IF EXISTS
 (
     SELECT 1
@@ -90,6 +96,7 @@ BEGIN
 END;
 GO
 
+-- usa una comparacion sin diferencia entre mayusculas y minusculas y vuelve el correo obligatorio
 ALTER TABLE dbo.Usuarios
 ALTER COLUMN Correo NVARCHAR(120) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL;
 GO
@@ -98,6 +105,7 @@ ALTER TABLE dbo.Usuarios
 ADD CONSTRAINT UQ_Usuarios_Correo UNIQUE (Correo);
 GO
 
+-- esta regla evita que futuros INSERT guarden otra vez espacios o mayusculas
 ALTER TABLE dbo.Usuarios WITH CHECK
 ADD CONSTRAINT CK_Usuarios_CorreoNormalizado
     CHECK (Correo = LOWER(LTRIM(RTRIM(Correo))));

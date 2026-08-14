@@ -1,47 +1,445 @@
+<!-- esta pagina muestra el detalle completo de una orden
+     incluye los datos de la compra los productos los totales y la factura -->
 <section class="order-detail-page">
-  <a class="back-link" routerLink="/ordenes">← Volver a órdenes</a>
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
-  @if (cargando) {
-    <div class="state-card" role="status">Cargando orden…</div>
-  } @else if (!orden) {
-    <div class="state-card"><h2>Orden no disponible.</h2><a class="btn btn-primary" routerLink="/ordenes">Ver órdenes</a></div>
-  } @else {
-    <header class="detail-heading">
-      <div><span class="eyebrow">LessPrice · Orden</span><h1>#{{ orden.numeroOrden }}</h1><p>{{ orden.fechaOrden | date:'dd/MM/yyyy HH:mm' }}</p></div>
-      <div class="heading-actions"><span class="status" [attr.data-status]="orden.estado">{{ orden.estado }}</span>@if (orden.facturaDisponible) { <button class="btn btn-primary" type="button" [disabled]="descargando" (click)="descargarFactura()">{{ descargando ? 'Descargando…' : 'Descargar factura' }}</button> }</div>
-    </header>
 
-    <!-- Datos históricos y documento relacionado con la orden -->
-    <section class="information-card">
-      <h2>Datos de la compra</h2>
-      <dl>
-        <div><dt>Cliente</dt><dd>{{ orden.cliente }}</dd></div>
-        <div><dt>Correo utilizado</dt><dd>{{ orden.correo }}</dd></div>
-        <div class="full"><dt>Dirección de entrega</dt><dd>{{ orden.direccionEnvio }}</dd></div>
-        <div><dt>Método de pago</dt><dd>{{ etiquetaMetodo(orden.metodoPago) }}</dd></div>
-        <div><dt>Factura</dt><dd>{{ orden.numeroFactura || 'No disponible' }}@if (orden.numeroFactura) { <small>{{ orden.correoEnviado ? 'Enviada por correo' : 'Envío de correo pendiente' }}</small> }</dd></div>
-      </dl>
-    </section>
 
-    <!-- Productos e importes conservados al momento de la compra -->
-    <section class="products-card">
-      <h2>Productos</h2>
-      <div class="table-scroll">
-        <table>
-          <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Impuesto</th><th>Descuento</th><th>Total</th></tr></thead>
-          <tbody>
-            @for (producto of orden.productos; track producto.productoId) {
-              <tr><td><a [routerLink]="['/productos', producto.productoId]">{{ producto.nombre }}</a></td><td>{{ producto.cantidad }}</td><td>{{ producto.precioUnitario | currency:'CRC':'symbol':'1.2-2' }}</td><td>{{ producto.porcentajeImpuesto }}%<small>{{ producto.impuestos | currency:'CRC':'symbol':'1.2-2' }}</small></td><td>{{ producto.porcentajeDescuento }}%<small>{{ producto.descuentos | currency:'CRC':'symbol':'1.2-2' }}</small></td><td><strong>{{ producto.totalLinea | currency:'CRC':'symbol':'1.2-2' }}</strong></td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      <dl class="totals">
-        <div><dt>Subtotal antes de impuestos</dt><dd>{{ orden.subtotal | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
-        <div><dt>Impuesto incluido</dt><dd>{{ orden.impuestos | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
-        <div><dt>Descuentos</dt><dd>{{ orden.descuentos | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
-        <div class="grand-total"><dt>Total</dt><dd>{{ orden.total | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
-      </dl>
-    </section>
+  <!-- ========================= VOLVER ========================= -->
+  <!-- regresa a la lista de ordenes -->
+  <a class="back-link"
+     routerLink="/ordenes">
+    ← Volver a órdenes
+  </a>
+
+
+  <!-- ========================= ERROR ========================= -->
+  <!-- muestra cualquier error que ocurra al cargar o descargar -->
+  @if (error) {
+
+  <div class="alert alert-danger"
+       role="alert">
+    {{ error }}
+  </div>
+
   }
+
+
+  <!-- ========================= ESTADO DE CARGA ========================= -->
+  <!-- mientras la API esta trayendo la informacion de la orden -->
+  @if (cargando) {
+
+  <div class="state-card"
+       role="status">
+    Cargando orden…
+  </div>
+
+  }
+
+
+  <!-- ========================= ORDEN NO DISPONIBLE ========================= -->
+  <!-- si termino de cargar pero no existe una orden para mostrar -->
+  @else if (!orden) {
+
+  <div class="state-card">
+
+    <h2>
+      Orden no disponible.
+    </h2>
+
+    <a class="btn btn-primary"
+       routerLink="/ordenes">
+      Ver órdenes
+    </a>
+
+  </div>
+
+  }
+
+
+  <!-- ========================= DETALLE DE LA ORDEN ========================= -->
+  @else {
+
+
+  <!-- ========================= ENCABEZADO ========================= -->
+
+  <header class="detail-heading">
+
+    <div>
+
+      <span class="eyebrow">
+        LessPrice · Orden
+      </span>
+
+      <h1>
+        #{{ orden.numeroOrden }}
+      </h1>
+
+      <!-- date acomoda la fecha al formato dia mes año hora -->
+      <p>
+        {{ orden.fechaOrden | date:'dd/MM/yyyy HH:mm' }}
+      </p>
+
+    </div>
+
+
+    <!-- ========================= ESTADO Y FACTURA ========================= -->
+
+    <div class="heading-actions">
+
+      <!-- data-status guarda el estado dentro del atributo HTML
+           el CSS lo usa para cambiar el color de la etiqueta -->
+      <span class="status"
+            [attr.data-status]="orden.estado">
+        {{ orden.estado }}
+      </span>
+
+
+      <!-- el boton solamente aparece si la orden tiene factura disponible -->
+      @if (orden.facturaDisponible) {
+
+      <!-- se bloquea mientras la factura se esta descargando -->
+      <button class="btn btn-primary"
+              type="button"
+              [disabled]="descargando"
+              (click)="descargarFactura()">
+
+        <!-- cambia el texto mientras espera el archivo -->
+        {{ descargando ? 'Descargando…' : 'Descargar factura' }}
+
+      </button>
+
+      }
+
+    </div>
+
+  </header>
+
+
+  <!-- ========================= DATOS DE LA COMPRA ========================= -->
+  <!-- aqui se muestran los datos historicos guardados con la orden -->
+  <section class="information-card">
+
+    <h2>
+      Datos de la compra
+    </h2>
+
+    <!-- dl acomoda cada nombre de dato con su valor -->
+    <dl>
+
+
+      <!-- ========================= CLIENTE ========================= -->
+
+      <div>
+
+        <dt>
+          Cliente
+        </dt>
+
+        <dd>
+          {{ orden.cliente }}
+        </dd>
+
+      </div>
+
+
+      <!-- ========================= CORREO ========================= -->
+
+      <div>
+
+        <dt>
+          Correo utilizado
+        </dt>
+
+        <dd>
+          {{ orden.correo }}
+        </dd>
+
+      </div>
+
+
+      <!-- ========================= DIRECCION ========================= -->
+      <!-- full hace que este dato ocupe todo el ancho disponible -->
+      <div class="full">
+
+        <dt>
+          Dirección de entrega
+        </dt>
+
+        <dd>
+          {{ orden.direccionEnvio }}
+        </dd>
+
+      </div>
+
+
+      <!-- ========================= METODO DE PAGO ========================= -->
+
+      <div>
+
+        <dt>
+          Método de pago
+        </dt>
+
+        <!-- etiquetaMetodo convierte el codigo interno
+             al texto que se quiere mostrar -->
+        <dd>
+          {{ etiquetaMetodo(orden.metodoPago) }}
+        </dd>
+
+      </div>
+
+
+      <!-- ========================= FACTURA ========================= -->
+
+      <div>
+
+        <dt>
+          Factura
+        </dt>
+
+        <dd>
+
+          <!-- si no existe numero de factura muestra No disponible -->
+          {{ orden.numeroFactura || 'No disponible' }}
+
+
+          <!-- si existe numero de factura muestra tambien el estado del correo -->
+          @if (orden.numeroFactura) {
+
+          <small>
+            {{
+ orden.correoEnviado
+                  ? 'Enviada por correo'
+                  : 'Envío de correo pendiente'
+            }}
+          </small>
+
+          }
+
+        </dd>
+
+      </div>
+
+    </dl>
+
+  </section>
+
+
+  <!-- ========================= PRODUCTOS ========================= -->
+  <!-- estos datos representan los valores guardados al momento de la compra -->
+  <section class="products-card">
+
+    <h2>
+      Productos
+    </h2>
+
+
+    <!-- table-scroll permite mover horizontalmente la tabla si no cabe -->
+    <div class="table-scroll">
+
+      <table>
+
+
+        <!-- ========================= ENCABEZADOS ========================= -->
+
+        <thead>
+
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio unitario</th>
+            <th>Impuesto</th>
+            <th>Descuento</th>
+            <th>Total</th>
+          </tr>
+
+        </thead>
+
+
+        <!-- ========================= FILAS ========================= -->
+
+        <tbody>
+
+          <!-- recorre todos los productos guardados dentro de la orden
+               track usa productoId para identificar cada fila -->
+          @for (
+          producto of orden.productos;
+          track producto.productoId
+          ) {
+
+          <tr>
+
+
+            <!-- ========================= PRODUCTO ========================= -->
+
+            <td>
+
+              <!-- abre el detalle del producto usando su id -->
+              <a [routerLink]="[
+                      '/productos',
+                      producto.productoId
+                    ]">
+                {{ producto.nombre }}
+              </a>
+
+            </td>
+
+
+            <!-- ========================= CANTIDAD ========================= -->
+
+            <td>
+              {{ producto.cantidad }}
+            </td>
+
+
+            <!-- ========================= PRECIO UNITARIO ========================= -->
+
+            <td>
+
+              <!-- currency muestra el monto usando colones -->
+              {{
+ producto.precioUnitario
+                    | currency:'CRC':'symbol':'1.2-2'
+              }}
+
+            </td>
+
+
+            <!-- ========================= IMPUESTO ========================= -->
+
+            <td>
+
+              <!-- muestra primero el porcentaje -->
+              {{ producto.porcentajeImpuesto }}%
+
+              <!-- y abajo el monto correspondiente -->
+              <small>
+                {{
+ producto.impuestos
+                      | currency:'CRC':'symbol':'1.2-2'
+                }}
+              </small>
+
+            </td>
+
+
+            <!-- ========================= DESCUENTO ========================= -->
+
+            <td>
+
+              <!-- muestra primero el porcentaje de descuento -->
+              {{ producto.porcentajeDescuento }}%
+
+              <!-- y abajo el monto descontado -->
+              <small>
+                {{
+ producto.descuentos
+                      | currency:'CRC':'symbol':'1.2-2'
+                }}
+              </small>
+
+            </td>
+
+
+            <!-- ========================= TOTAL DE LA LINEA ========================= -->
+
+            <td>
+
+              <strong>
+                {{
+ producto.totalLinea
+                      | currency:'CRC':'symbol':'1.2-2'
+                }}
+              </strong>
+
+            </td>
+
+          </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <!-- ========================= TOTALES ========================= -->
+    <!-- resume los montos finales guardados para la orden -->
+    <dl class="totals">
+
+
+      <!-- subtotal antes de separar impuestos -->
+      <div>
+
+        <dt>
+          Subtotal antes de impuestos
+        </dt>
+
+        <dd>
+          {{
+ orden.subtotal
+              | currency:'CRC':'symbol':'1.2-2'
+          }}
+        </dd>
+
+      </div>
+
+
+      <!-- monto de impuesto que ya forma parte de los precios -->
+      <div>
+
+        <dt>
+          Impuesto incluido
+        </dt>
+
+        <dd>
+          {{
+ orden.impuestos
+              | currency:'CRC':'symbol':'1.2-2'
+          }}
+        </dd>
+
+      </div>
+
+
+      <!-- descuentos aplicados a la orden -->
+      <div>
+
+        <dt>
+          Descuentos
+        </dt>
+
+        <dd>
+          {{
+ orden.descuentos
+              | currency:'CRC':'symbol':'1.2-2'
+          }}
+        </dd>
+
+      </div>
+
+
+      <!-- total final pagado -->
+      <div class="grand-total">
+
+        <dt>
+          Total
+        </dt>
+
+        <dd>
+          {{
+ orden.total
+              | currency:'CRC':'symbol':'1.2-2'
+          }}
+        </dd>
+
+      </div>
+
+    </dl>
+
+  </section>
+
+  }
+
 </section>

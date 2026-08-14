@@ -1,115 +1,199 @@
+/* :host representa el componente completo de Angular
+   display block hace que el componente se comporte como un bloque normal
+   min-height 100vh hace que como minimo ocupe toda la altura de la pantalla */
 :host {
   display: block;
   min-height: 100vh;
 }
 
+/* este es el contenedor principal de toda la pantalla de login y registro
+   usa flex para poder poner la tarjeta justo en el centro */
 .auth-shell {
+  /* centra la tarjeta verticalmente */
   align-items: center;
-  background:
-    radial-gradient(circle at 12% 15%, rgba(50, 31, 219, 0.2), transparent 34%),
-    radial-gradient(circle at 88% 82%, rgba(51, 153, 255, 0.16), transparent 32%),
-    var(--cui-body-bg);
+  /* aqui se hace el fondo de la pantalla
+     los radial-gradient crean esas manchas suaves de color del fondo
+     var(--cui-body-bg) usa el color de fondo que ya tenga configurado el tema */
+  background: radial-gradient(circle at 12% 15%, rgba(50, 31, 219, 0.2),
+  transparent 34%), radial-gradient(circle at 88% 82%, rgba(51, 153, 255, 0.16), transparent 32%), var(--cui-body-bg);
+  /* flex permite acomodar la tarjeta facilmente dentro de la pantalla */
   display: flex;
+  /* centra la tarjeta horizontalmente */
   justify-content: center;
+  /* 100vh significa toda la altura visible de la pantalla */
   min-height: 100vh;
+  /* deja espacio alrededor para que la tarjeta no quede pegada a los bordes */
   padding: 2rem 1rem;
 }
 
+/* esta es la tarjeta donde va todo el formulario */
 .auth-card {
+  /* usa el fondo de las tarjetas del tema
+     y si no existe usa el fondo general de la pagina */
   background: var(--cui-card-bg, var(--cui-body-bg));
+  /* pone una linea suave alrededor de la tarjeta */
   border: 1px solid var(--cui-border-color);
+  /* redondea las esquinas */
   border-radius: 1.25rem;
+  /* agrega la sombra para que la tarjeta se vea separada del fondo */
   box-shadow: 0 1.5rem 4rem rgba(8, 10, 24, 0.16);
+  /* evita que la tarjeta se haga demasiado grande aunque haya espacio */
   max-width: 620px;
+  /* clamp cambia el espacio interno dependiendo del tamaño de la pantalla
+     pero nunca baja de 1.5rem ni pasa de 2.75rem */
   padding: clamp(1.5rem, 4vw, 2.75rem);
+  /* hace que use todo el ancho disponible hasta llegar al max-width */
   width: 100%;
 }
 
+/* aqui se acomoda el logo junto con el nombre de LessPrice */
 .auth-brand {
+  /* los alinea verticalmente para que logo y texto queden parejos */
   align-items: center;
+  /* flex hace que el logo y el texto queden uno al lado del otro */
   display: flex;
+  /* deja espacio entre el logo y el texto */
   gap: 1rem;
 }
 
-.auth-brand img {
-  border-radius: 0.8rem;
-}
+  /* modifica solamente la imagen que esta dentro de auth-brand */
+  .auth-brand img {
+    /* redondea un poco las esquinas del logo */
+    border-radius: 0.8rem;
+  }
 
+/* este es el texto pequeño que aparece arriba del titulo
+   por ejemplo LESSPRICE */
 .auth-eyebrow {
+  /* usa el color principal configurado en el tema */
   color: var(--cui-primary);
+  /* hace que ocupe su propia linea */
   display: block;
+  /* tamaño pequeño porque funciona mas como una etiqueta */
   font-size: 0.75rem;
+  /* lo pone en negrita */
   font-weight: 700;
+  /* separa un poco las letras para que se vea mas como un encabezado */
   letter-spacing: 0.08em;
+  /* convierte el texto visualmente a mayusculas */
   text-transform: uppercase;
 }
 
+/* cambia el titulo principal de esta pantalla */
 h1 {
+  /* clamp hace que el titulo cambie de tamaño dependiendo de la pantalla
+     pero sin hacerse demasiado pequeño o demasiado grande */
   font-size: clamp(1.65rem, 4vw, 2.15rem);
+  /* deja muy poco espacio arriba y ninguno a los lados */
   margin: 0.1rem 0 0;
 }
 
+/* texto que aparece debajo del titulo explicando que debe hacer la persona */
 .auth-intro {
+  /* usa un color secundario para que no llame mas la atencion que el titulo */
   color: var(--cui-secondary-color);
+  /* deja espacio arriba y abajo antes de empezar el formulario */
   margin: 1rem 0 1.5rem;
 }
 
+/* aqui se acomodan campos como nombre y apellidos uno al lado del otro */
 .auth-grid {
+  /* grid sirve para dividir esta parte del formulario en columnas */
   display: grid;
+  /* deja espacio entre los campos */
   gap: 1rem;
+  /* crea 2 columnas del mismo tamaño
+     minmax(0, 1fr) evita que algun campo fuerce la columna a hacerse mas grande */
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* cada auth-field contiene normalmente un label y su input */
 .auth-field {
+  /* deja espacio antes del siguiente campo */
   margin-bottom: 1rem;
 }
 
-.auth-field label {
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-}
+  /* modifica los nombres de los campos como Correo o Contraseña */
+  .auth-field label {
+    /* los pone un poco mas gruesos para que se diferencien del contenido */
+    font-weight: 600;
+    /* deja un espacio pequeño entre el nombre y el input */
+    margin-bottom: 0.4rem;
+  }
 
-.auth-field .form-control {
-  min-height: 46px;
-}
+  /* modifica los inputs que estan dentro de cada campo */
+  .auth-field .form-control {
+    /* hace que todos los inputs tengan por lo menos esta altura
+     para que se vean parejos */
+    min-height: 46px;
+  }
 
+/* este estilo se usa cuando aparece un mensaje de error debajo de un campo */
 .field-error {
+  /* usa el color de error del tema */
   color: var(--cui-danger);
+  /* hace que el error quede en una linea propia debajo del input */
   display: block;
+  /* lo deja un poco mas pequeño que el texto normal */
   font-size: 0.82rem;
+  /* separa el mensaje del input para que no quede pegado */
   margin-top: 0.3rem;
 }
 
+/* este es el boton principal para iniciar sesion o crear la cuenta */
 .auth-submit {
+  /* mantiene la misma altura visual que los inputs */
   min-height: 46px;
+  /* hace que el boton ocupe todo el ancho de la tarjeta */
   width: 100%;
 }
 
+/* esta parte contiene el texto para cambiar entre login y registro
+   por ejemplo "Ya tienes una cuenta? Iniciar sesion" */
 .auth-switch {
+  /* usa un color secundario porque no es la accion principal */
   color: var(--cui-secondary-color);
+  /* deja espacio arriba para separarlo del boton principal */
   margin: 1.25rem 0 0;
+  /* centra todo el texto */
   text-align: center;
 }
 
-.auth-switch button {
-  background: none;
-  border: 0;
-  color: var(--cui-primary);
-  font-weight: 700;
-  padding: 0.15rem 0.25rem;
-}
+  /* este es el boton que aparece dentro de auth-switch */
+  .auth-switch button {
+    /* quita el fondo normal de un boton para que parezca mas un enlace */
+    background: none;
+    /* quita el borde normal del boton */
+    border: 0;
+    /* usa el color principal para que se note que se puede presionar */
+    color: var(--cui-primary);
+    /* lo pone en negrita */
+    font-weight: 700;
+    /* agrega un pequeño espacio para que sea mas facil de presionar */
+    padding: 0.15rem 0.25rem;
+  }
 
-.auth-switch button:hover,
-.auth-switch button:focus-visible {
-  text-decoration: underline;
-}
+    /* esto se aplica cuando se pasa el mouse encima del boton
+   o cuando se selecciona usando el teclado */
+    .auth-switch button:hover,
+    .auth-switch button:focus-visible {
+      /* pone una linea debajo para que se vea como enlace */
+      text-decoration: underline;
+    }
 
+/* esto cambia el diseño cuando la pantalla es pequeña
+   por ejemplo cuando se abre desde un celular */
 @media (max-width: 575.98px) {
+
+  /* en celular ya no pone los campos en 2 columnas
+     ahora todos quedan uno debajo del otro */
   .auth-grid {
     grid-template-columns: 1fr;
+    /* se quita el espacio del grid porque cada campo ya tiene su propio margen */
     gap: 0;
   }
 
+  /* reduce un poco el redondeado de la tarjeta en pantallas pequeñas */
   .auth-card {
     border-radius: 1rem;
   }

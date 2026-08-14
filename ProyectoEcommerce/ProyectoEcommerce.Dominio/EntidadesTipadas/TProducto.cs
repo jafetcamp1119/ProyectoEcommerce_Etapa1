@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Modelo administrativo completo de un producto.</summary>
 public class TProducto
 {
     public int ProductoId { get; set; }

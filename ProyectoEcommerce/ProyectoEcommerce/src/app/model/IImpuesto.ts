@@ -1,4 +1,4 @@
-/** Configuración de impuesto utilizada por productos y formularios administrativos. */
+// impuesto que usan los productos y el formulario administrativo
 export interface IImpuesto {
   impuestoId: number;
   nombre: string;

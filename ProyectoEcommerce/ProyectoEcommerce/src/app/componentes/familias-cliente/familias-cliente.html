@@ -1,37 +1,125 @@
+<!-- esta pagina muestra el primer nivel del catalogo para el Cliente
+     aqui aparecen todas las familias disponibles y tambien una busqueda general -->
 <section class="catalog-page">
+
+
+  <!-- ========================= ENCABEZADO ========================= -->
+
   <header class="page-heading">
+
     <div>
-      <span class="eyebrow">LessPrice · Catálogo</span>
-      <h1>Familias de producto</h1>
-      <p>Selecciona la sección de LessPrice que quieres explorar.</p>
+
+      <span class="eyebrow">
+        LessPrice · Catálogo
+      </span>
+
+      <h1>
+        Familias de producto
+      </h1>
+
+      <p>
+        Selecciona la sección de LessPrice que quieres explorar.
+      </p>
+
     </div>
+
   </header>
 
-  <!-- Búsqueda global sin obligar al Cliente a recorrer la taxonomía -->
-  <form class="catalog-search" [formGroup]="busqueda" (ngSubmit)="buscarProductos()">
-    <label for="buscar-producto-global">Buscar por nombre o código en todo el catálogo</label>
-    <input id="buscar-producto-global" class="form-control" formControlName="texto" placeholder="Ej. Baguette" maxlength="120">
-    <button class="btn btn-primary" type="submit" [disabled]="busqueda.invalid">Buscar</button>
+
+  <!-- ========================= BUSCADOR GLOBAL ========================= -->
+  <!-- este buscador permite buscar productos en todo el catalogo
+       sin tener que entrar primero a una familia o categoria
+       [formGroup] conecta el formulario con busqueda en TypeScript
+       ngSubmit llama buscarProductos cuando se envia -->
+  <form class="catalog-search"
+        [formGroup]="busqueda"
+        (ngSubmit)="buscarProductos()">
+
+    <label for="buscar-producto-global">
+      Buscar por nombre o código en todo el catálogo
+    </label>
+
+
+    <!-- formControlName conecta este input con el campo texto del formulario -->
+    <input id="buscar-producto-global"
+           class="form-control"
+           formControlName="texto"
+           placeholder="Ej. Baguette"
+           maxlength="120">
+
+
+    <!-- no permite buscar mientras el formulario tenga algun error -->
+    <button class="btn btn-primary"
+            type="submit"
+            [disabled]="busqueda.invalid">
+      Buscar
+    </button>
+
   </form>
 
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
 
-  @if (cargando) {
-    <div class="state-card" role="status">Cargando familias…</div>
-  } @else if (!familias.length) {
-    <div class="state-card">No hay familias disponibles en este momento.</div>
-  } @else {
-    <!-- Primer nivel de navegación del catálogo -->
-    <div class="navigation-grid">
-      @for (familia of familias; track familia.familiaId) {
-        <app-catalog-navigation-card
-          [titulo]="familia.nombre"
-          [descripcion]="familia.descripcion"
-          textoBoton="Ver categorías"
-          [imagen]="familia.urlImagen"
-          [ruta]="['/productos/familia', familia.familiaId]" />
-          
-      }
-    </div>
+  <!-- ========================= MENSAJE DE ERROR ========================= -->
+  <!-- si ocurre algun problema al cargar las familias se muestra aqui -->
+  @if (error) {
+
+  <div class="alert alert-danger"
+       role="alert">
+    {{ error }}
+  </div>
+
   }
+
+
+  <!-- ========================= ESTADOS DE CARGA ========================= -->
+  <!-- mientras espera la respuesta de la API muestra este estado -->
+  @if (cargando) {
+
+  <div class="state-card"
+       role="status">
+    Cargando familias…
+  </div>
+
+  }
+
+
+  <!-- si ya termino de cargar pero no hay familias disponibles muestra este mensaje -->
+  @else if (!familias.length) {
+
+  <div class="state-card">
+    No hay familias disponibles en este momento.
+  </div>
+
+  }
+
+
+  <!-- ========================= FAMILIAS ========================= -->
+  @else {
+
+  <!-- este es el primer nivel de navegacion del catalogo
+       aqui se acomodan todas las tarjetas de familias -->
+  <div class="navigation-grid">
+
+    <!-- @for recorre todas las familias disponibles
+         track usa familiaId para que Angular identifique cada tarjeta -->
+    @for (familia of familias; track familia.familiaId) {
+
+    <!-- componente reutilizable que arma la tarjeta de cada familia
+
+         titulo manda el nombre de la familia
+         descripcion manda su descripcion
+         imagen manda la URL de la imagen
+         textoBoton define el texto que aparece en el boton
+         ruta manda a las categorias de esa familia -->
+    <app-catalog-navigation-card [titulo]="familia.nombre"
+                                 [descripcion]="familia.descripcion"
+                                 textoBoton="Ver categorías"
+                                 [imagen]="familia.urlImagen"
+                                 [ruta]="['/productos/familia', familia.familiaId]" />
+
+    }
+
+  </div>
+
+  }
+
 </section>

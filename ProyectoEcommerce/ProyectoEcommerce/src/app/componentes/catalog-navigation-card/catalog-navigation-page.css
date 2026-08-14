@@ -1,19 +1,170 @@
-:host { display: block; }
-.catalog-page { padding-bottom: 2rem; }
-.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
-.page-heading h1 { margin: .15rem 0; font-size: clamp(1.7rem, 3vw, 2.35rem); }
-.page-heading p { margin: 0; color: var(--cui-secondary-color); }
-.eyebrow { color: var(--cui-primary); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.catalog-search { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: .7rem; margin-bottom: 1.35rem; padding: 1rem; background: var(--cui-card-bg); border: 1px solid var(--cui-border-color); border-radius: 1rem; box-shadow: 0 .3rem 1rem rgba(32, 56, 85, .08); }
-.catalog-search label { grid-column: 1 / -1; color: var(--cui-secondary-color); font-size: .77rem; font-weight: 700; }
-.catalog-search .btn { min-width: 105px; }
-.navigation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(285px, 1fr)); gap: 1.1rem; align-items: stretch; }
-.catalog-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-bottom: 1rem; color: var(--cui-secondary-color); font-size: .88rem; }
-.catalog-breadcrumb a { color: var(--cui-primary); font-weight: 650; text-decoration: none; }
-.catalog-breadcrumb a:hover { text-decoration: underline; }
-.state-card { padding: 2.5rem; text-align: center; color: var(--cui-secondary-color); background: var(--cui-card-bg); border: 1px dashed var(--cui-border-color); border-radius: 1rem; }
+/* este diseño se comparte en las paginas de familias y categorias del Cliente
+   mantiene el mismo estilo para que la navegacion se vea pareja en las 2 pantallas */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= PAGINA GENERAL ========================= */
+
+/* deja un espacio abajo para que el contenido no quede pegado al final de la pantalla */
+.catalog-page {
+  padding-bottom: 2rem;
+}
+
+
+/* ========================= ENCABEZADO ========================= */
+
+/* acomoda el titulo y cualquier boton o contenido que tenga al lado */
+.page-heading {
+  display: flex;
+  /* alinea el contenido hacia la parte de abajo para que se vea parejo */
+  align-items: end;
+  /* deja un elemento a la izquierda y otro a la derecha */
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+  /* titulo principal de la pagina */
+  .page-heading h1 {
+    margin: 0.15rem 0;
+    /* clamp cambia el tamaño segun la pantalla
+     pero no deja que sea menor a 1.7rem ni mayor a 2.35rem */
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+  }
+
+  /* texto que aparece debajo del titulo */
+  .page-heading p {
+    margin: 0;
+    color: var(--cui-secondary-color);
+  }
+
+/* texto pequeño que aparece arriba del titulo
+   por ejemplo FAMILIAS o CATEGORIAS */
+.eyebrow {
+  color: var(--cui-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  /* separa un poco las letras */
+  letter-spacing: 0.12em;
+  /* pone el texto visualmente en mayusculas */
+  text-transform: uppercase;
+}
+
+
+/* ========================= BUSCADOR ========================= */
+
+/* esta tarjeta guarda el campo de busqueda y el boton */
+.catalog-search {
+  display: grid;
+  /* la primera columna puede crecer y la segunda usa solo el espacio que necesite
+     minmax evita que el buscador se haga demasiado pequeño */
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 0.7rem;
+  margin-bottom: 1.35rem;
+  padding: 1rem;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+  /* agrega una sombra suave para separar el buscador del fondo */
+  box-shadow: 0 0.3rem 1rem rgba(32, 56, 85, 0.08);
+}
+
+  /* el label ocupa todo el ancho del grid y queda arriba del input y el boton */
+  .catalog-search label {
+    /* 1 / -1 significa desde la primera columna hasta la ultima */
+    grid-column: 1 / -1;
+    color: var(--cui-secondary-color);
+    font-size: 0.77rem;
+    font-weight: 700;
+  }
+
+  /* evita que el boton del buscador quede demasiado pequeño */
+  .catalog-search .btn {
+    min-width: 105px;
+  }
+
+
+/* ========================= TARJETAS ========================= */
+
+/* aqui se acomodan todas las tarjetas de familias o categorias */
+.navigation-grid {
+  display: grid;
+  /* auto-fit crea automaticamente la cantidad de columnas que quepan
+     cada tarjeta puede medir minimo 285px y despues crecer para usar el espacio disponible */
+  grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+  gap: 1.1rem;
+  /* hace que las tarjetas de una misma fila puedan mantener una altura pareja */
+  align-items: stretch;
+}
+
+
+/* ========================= RUTA DE NAVEGACION ========================= */
+
+/* muestra por donde va la persona dentro del catalogo
+   por ejemplo Productos > Alimentos > Panaderia */
+.catalog-breadcrumb {
+  display: flex;
+  /* si la ruta no cabe en una sola linea permite que continue abajo */
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  color: var(--cui-secondary-color);
+  font-size: 0.88rem;
+}
+
+  /* enlaces que permiten volver a una parte anterior de la ruta */
+  .catalog-breadcrumb a {
+    color: var(--cui-primary);
+    font-weight: 650;
+    /* quita el subrayado normal de los enlaces */
+    text-decoration: none;
+  }
+
+    /* cuando se pasa el mouse por el enlace lo subraya para que se note que se puede presionar */
+    .catalog-breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+
+/* ========================= ESTADOS VACIOS O ESPECIALES ========================= */
+
+/* esta tarjeta se usa para mensajes como que no hay resultados o no hay categorias */
+.state-card {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--cui-secondary-color);
+  background: var(--cui-card-bg);
+  /* dashed hace que el borde salga como pequeñas lineas separadas */
+  border: 1px dashed var(--cui-border-color);
+  border-radius: 1rem;
+}
+
+
+/* ========================= PANTALLAS PEQUEÑAS ========================= */
+
+/* cuando la pantalla baja de 720px se cambia la distribucion
+   para que sea mas facil verla desde celular o una ventana pequeña */
 @media (max-width: 720px) {
-  .page-heading { align-items: stretch; flex-direction: column; }
-  .catalog-search { grid-template-columns: 1fr; }
-  .catalog-search label { grid-column: auto; }
+
+  /* el encabezado deja de estar horizontal y pasa a mostrarse uno debajo del otro */
+  .page-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  /* el buscador deja de tener input y boton en 2 columnas
+     ahora todo queda en una sola columna */
+  .catalog-search {
+    grid-template-columns: 1fr;
+  }
+
+    /* ya no necesita ocupar todas las columnas porque ahora solo existe una */
+    .catalog-search label {
+      grid-column: auto;
+    }
 }

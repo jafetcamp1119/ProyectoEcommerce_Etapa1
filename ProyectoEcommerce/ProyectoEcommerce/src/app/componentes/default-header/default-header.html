@@ -1,64 +1,187 @@
+<!-- este encabezado se comparte dentro del dashboard
+     aqui se controla el menu lateral el usuario actual el carrito el cierre de sesion
+     y tambien el selector del tema de la aplicacion -->
+
 <ng-container>
-  <c-container [fluid]="true" class="border-bottom px-4">
+
+  <!-- ========================= CONTENEDOR DEL ENCABEZADO ========================= -->
+  <!-- fluid true hace que el contenedor ocupe todo el ancho disponible -->
+  <c-container [fluid]="true"
+               class="border-bottom px-4">
+
+
+    <!-- ========================= BOTON DEL MENU LATERAL ========================= -->
+    <!-- este boton abre o cierra el sidebar
+         sidebarId() indica cual menu lateral debe controlar -->
     <button [cSidebarToggle]="sidebarId()"
             cHeaderToggler
             class="btn"
             toggle="visible"
             style="margin-inline-start: -14px;"
             aria-label="Toggle sidebar navigation">
-      <svg cIcon name="cilMenu" size="lg"></svg>
+
+      <!-- icono del menu -->
+      <svg cIcon
+           name="cilMenu"
+           size="lg">
+      </svg>
+
     </button>
 
 
+    <!-- ========================= PARTE DERECHA DEL ENCABEZADO ========================= -->
+    <!-- ms-auto empuja esta parte hacia la derecha -->
     <c-header-nav class="ms-auto ms-md-0">
+
+
+      <!-- ========================= USUARIO ACTUAL ========================= -->
+      <!-- usuarioActual intenta sacar el usuario que tiene la sesion abierta
+           as usuario guarda temporalmente ese resultado para usarlo dentro del bloque -->
       @if (autenticacion.usuarioActual(); as usuario) {
-        <span class="d-none d-md-flex align-items-center me-2 text-body-secondary">
-          {{ usuario.nombre }} {{ usuario.apellidos }}
-        </span>
+
+      <!-- en pantallas pequeñas se oculta el nombre para ahorrar espacio -->
+      <span class="d-none d-md-flex align-items-center me-2 text-body-secondary">
+        {{ usuario.nombre }} {{ usuario.apellidos }}
+      </span>
+
       }
+
+
+      <!-- ========================= CARRITO ========================= -->
+      <!-- el acceso al carrito solamente aparece cuando el usuario tiene rol Cliente -->
       @if (autenticacion.esCliente()) {
-        <a class="cart-link btn btn-outline-primary d-flex align-items-center gap-2 me-2" routerLink="/carrito" [attr.aria-label]="'Carrito, ' + carrito.cantidadTotal() + ' unidades'">
-          <svg cIcon name="cilBasket" size="lg"></svg>
-          <span class="d-none d-sm-inline">Carrito</span>
-          <span class="cart-count">{{ carrito.cantidadTotal() }}</span>
-        </a>
+
+      <!-- routerLink manda a la pantalla del carrito
+           aria-label tambien incluye la cantidad actual para ayudar con accesibilidad -->
+      <a class="cart-link btn btn-outline-primary d-flex align-items-center gap-2 me-2"
+         routerLink="/carrito"
+         [attr.aria-label]="'Carrito, ' + carrito.cantidadTotal() + ' unidades'">
+
+        <svg cIcon
+             name="cilBasket"
+             size="lg">
+        </svg>
+
+        <!-- el texto Carrito se oculta en pantallas muy pequeñas -->
+        <span class="d-none d-sm-inline">
+          Carrito
+        </span>
+
+        <!-- cantidadTotal() trae la cantidad que debe mostrar el contador -->
+        <span class="cart-count">
+          {{ carrito.cantidadTotal() }}
+        </span>
+
+      </a>
+
       }
-      <button
-        type="button"
-        class="btn btn-outline-secondary d-flex align-items-center gap-2 me-2"
-        (click)="cerrarSesion()">
-        <svg cIcon name="cilAccountLogout" size="lg"></svg>
-        <span class="d-none d-sm-inline">Cerrar sesión</span>
+
+
+      <!-- ========================= CERRAR SESION ========================= -->
+      <!-- llama cerrarSesion cuando la persona quiere salir de su cuenta -->
+      <button type="button"
+              class="btn btn-outline-secondary d-flex align-items-center gap-2 me-2"
+              (click)="cerrarSesion()">
+
+        <svg cIcon
+             name="cilAccountLogout"
+             size="lg">
+        </svg>
+
+        <!-- el texto se oculta en pantallas pequeñas pero el icono se mantiene -->
+        <span class="d-none d-sm-inline">
+          Cerrar sesión
+        </span>
+
       </button>
+
+
+      <!-- ========================= SEPARADOR ========================= -->
+      <!-- vr crea una linea vertical para separar visualmente las opciones -->
       <div class="nav-item py-1">
-        <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+
+        <div class="vr h-100 mx-2 text-body text-opacity-75">
+        </div>
+
       </div>
+
+
+      <!-- ========================= SELECTOR DE TEMA ========================= -->
+      <!-- ngTemplateOutlet coloca aqui el contenido del template themeDropdown
+           sin tener que repetir todo el HTML del selector de tema -->
       <ng-container *ngTemplateOutlet="themeDropdown" />
+
+
+      <!-- otro separador visual despues del selector de tema -->
       <div class="nav-item py-1">
-        <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+
+        <div class="vr h-100 mx-2 text-body text-opacity-75">
+        </div>
+
       </div>
+
     </c-header-nav>
 
   </c-container>
+
 </ng-container>
+
+
+<!-- ========================= TEMPLATE DEL TEMA ========================= -->
+<!-- este template guarda el menu para cambiar entre los diferentes modos de color
+     no se muestra directamente hasta que ngTemplateOutlet lo utiliza -->
 <ng-template #themeDropdown>
-  <c-dropdown alignment="end" variant="nav-item">
-    <button [caret]="false" cDropdownToggle aria-label="Open theme picker">
-      <svg cIcon [name]="icons()" size="lg"></svg>
+
+  <!-- alignment end acomoda el menu desplegable hacia el final del boton -->
+  <c-dropdown alignment="end"
+              variant="nav-item">
+
+
+    <!-- ========================= BOTON DEL TEMA ========================= -->
+    <!-- caret false quita la flecha normal del dropdown
+         icons() devuelve el icono correspondiente al tema actual -->
+    <button [caret]="false"
+            cDropdownToggle
+            aria-label="Open theme picker">
+
+      <svg cIcon
+           [name]="icons()"
+           size="lg">
+      </svg>
+
     </button>
+
+
+    <!-- ========================= OPCIONES DEL TEMA ========================= -->
+
     <div cDropdownMenu>
+
+      <!-- recorre todos los modos disponibles
+           track usa el nombre para identificar cada opcion -->
       @for (mode of colorModes; track mode.name) {
+
+      <!-- cuando se presiona una opcion guarda ese modo en colorMode
+           active marca visualmente el modo que ya esta seleccionado -->
       <button (click)="colorMode.set(mode.name)"
-              [active]="colorMode()===mode.name"
+              [active]="colorMode() === mode.name"
               cDropdownItem
               class="d-flex align-items-center">
-        <svg cIcon class="me-2" [name]="mode.icon" size="lg"></svg>
+
+        <!-- cada modo puede tener su propio icono -->
+        <svg cIcon
+             class="me-2"
+             [name]="mode.icon"
+             size="lg">
+        </svg>
+
         {{ mode.text }}
+
       </button>
+
       }
+
     </div>
+
   </c-dropdown>
+
 </ng-template>
-
-
-

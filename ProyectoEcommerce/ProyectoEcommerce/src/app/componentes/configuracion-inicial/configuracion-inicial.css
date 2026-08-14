@@ -1,0 +1,5 @@
+/* distingue el correo reservado de los campos que la persona si puede editar */
+.form-control[readonly] {
+  background-color: var(--cui-secondary-bg);
+  cursor: not-allowed;
+}

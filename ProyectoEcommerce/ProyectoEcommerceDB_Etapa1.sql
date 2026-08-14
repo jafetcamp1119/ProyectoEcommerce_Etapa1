@@ -10,6 +10,7 @@
 USE [master];
 GO
 
+-- crea la base solamente si todavia no existe
 IF DB_ID(N'ProyectoEcommerceDB') IS NULL
 BEGIN
     EXEC(N'CREATE DATABASE [ProyectoEcommerceDB]');
@@ -31,6 +32,7 @@ GO
    base existente use ProyectoEcommerceDB_AmpliacionImportante.sql.
    ========================================================= */
 
+-- si encuentra parte del esquema se detiene para no mezclar una instalacion nueva con datos existentes
 IF OBJECT_ID(N'dbo.Usuarios', N'U') IS NOT NULL
    OR OBJECT_ID(N'dbo.FamiliasProducto', N'U') IS NOT NULL
 BEGIN
@@ -77,6 +79,9 @@ CREATE TABLE dbo.FamiliasProducto
     FamiliaId INT IDENTITY(1,1) NOT NULL,
     Nombre NVARCHAR(80) NOT NULL,
     Descripcion NVARCHAR(250) NULL,
+    -- aqui se guarda la ruta de la imagen de la familia
+    -- queda en null cuando la familia usa el placeholder de LessPrice
+    UrlImagen NVARCHAR(500) NULL,
     Activo BIT NOT NULL
         CONSTRAINT DF_FamiliasProducto_Activo DEFAULT (1),
 
@@ -98,6 +103,9 @@ CREATE TABLE dbo.Categorias
     FamiliaId INT NOT NULL,
     Nombre NVARCHAR(80) NOT NULL,
     Descripcion NVARCHAR(250) NULL,
+    -- aqui se guarda la ruta de la imagen de la categoria
+    -- no es obligatoria porque la tarjeta puede mostrar sus iniciales
+    UrlImagen NVARCHAR(500) NULL,
     Activo BIT NOT NULL
         CONSTRAINT DF_Categorias_Activo DEFAULT (1),
 
@@ -258,6 +266,7 @@ GO
    Indices para las llaves foraneas y busquedas basicas.
    ========================================================= */
 
+-- estos indices ayudan a buscar relaciones y ordenar sin recorrer toda la tabla
 CREATE INDEX IX_Categorias_FamiliaId
     ON dbo.Categorias (FamiliaId);
 

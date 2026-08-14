@@ -1,6 +1,5 @@
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Modelo utilizado para consultar y mantener impuestos.</summary>
 public class TImpuesto
 {
     public int ImpuestoId { get; set; }

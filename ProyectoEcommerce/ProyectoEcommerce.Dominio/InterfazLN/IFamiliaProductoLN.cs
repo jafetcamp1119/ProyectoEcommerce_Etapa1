@@ -3,22 +3,22 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN
 {
-    /// <summary>Define el mantenimiento y las consultas de familias de producto.</summary>
+    // acciones que usa la API para mantener familias y mostrar el primer nivel del catalogo
     public interface IFamiliaProductoLN
     {
-        /// <summary>Crea una familia después de validar duplicados.</summary>
+        // crea una familia si el nombre todavia no esta usado
         Task<Respuesta<TFamiliaProducto>> InsertarAsync(TFamiliaProducto datos);
-        /// <summary>Actualiza una familia existente.</summary>
+        // guarda cambios de la familia, incluida su UrlImagen opcional
         Task<Respuesta<TFamiliaProducto>> ModificarAsync(TFamiliaProducto datos);
-        /// <summary>Desactiva lógicamente una familia.</summary>
+        // desactiva la familia sin borrar sus categorias
         Task<Respuesta<bool>> EliminarAsync(TFamiliaProducto datos);
-        /// <summary>Busca familias por nombre.</summary>
+        // busca coincidencias por nombre
         Task<Respuesta<IEnumerable<TFamiliaProducto>>> BuscarAsync(TFamiliaProducto datos);
-        /// <summary>Obtiene una familia específica.</summary>
+        // trae una familia especifica por su ID
         Task<Respuesta<TFamiliaProducto>> ObtenerAsync(TFamiliaProducto datos);
-        /// <summary>Lista familias para administración.</summary>
+        // lista activas e inactivas para administracion
         Task<Respuesta<IEnumerable<TFamiliaProducto>>> ListarAsync();
-        /// <summary>Lista familias activas para la navegación del Cliente.</summary>
+        // manda al Cliente solamente las familias que puede navegar
         Task<Respuesta<IEnumerable<TFamiliaProducto>>> ListarClienteAsync();
     }
 }

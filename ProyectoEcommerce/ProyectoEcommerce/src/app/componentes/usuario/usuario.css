@@ -1,1 +1,215 @@
-:host{display:block}.users-page{padding-bottom:2rem}.page-heading{margin-bottom:1.4rem}.page-heading h1{margin:.15rem 0;font-size:clamp(1.7rem,3vw,2.35rem)}.page-heading p{margin:0;color:var(--cui-secondary-color)}.eyebrow{color:var(--cui-primary);font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.filters,.table-card{border:0;box-shadow:0 .35rem 1.2rem rgba(32,56,85,.09)}.filters{margin-bottom:1rem}.filter-grid{display:grid;grid-template-columns:2fr 1fr 1fr auto;align-items:end;gap:.8rem}.filter-actions,.role-editor,.table-footer{display:flex;align-items:center;gap:.45rem}.table-card{overflow:hidden}.table thead th{padding:1rem;color:var(--cui-secondary-color);font-size:.76rem;text-transform:uppercase}.table td{padding:.9rem 1rem}.table td small{display:block;color:var(--cui-secondary-color)}.role-editor .form-select{min-width:140px}.inactive{opacity:.65}.empty{padding:2.4rem!important;text-align:center;color:var(--cui-secondary-color)}.table-footer{flex-wrap:wrap;justify-content:space-between;padding:.8rem 1rem;border-top:1px solid var(--cui-border-color);color:var(--cui-secondary-color);font-size:.88rem}.table-footer label,.table-footer div{display:flex;align-items:center;gap:.5rem}.table-footer .form-select{width:auto}@media(max-width:900px){.filter-grid{grid-template-columns:1fr 1fr}.filter-actions{grid-column:1/-1;justify-content:end}}@media(max-width:620px){.filter-grid{grid-template-columns:1fr}.filter-actions{grid-column:auto}.table-footer{align-items:stretch;flex-direction:column}}
+/* esta pagina acomoda el mantenimiento de usuarios
+   incluye encabezado filtros tabla editor de rol y paginacion */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= PAGINA GENERAL ========================= */
+
+.users-page {
+  /* deja espacio al final de la pagina */
+  padding-bottom: 2rem;
+}
+
+
+/* ========================= ENCABEZADO ========================= */
+
+.page-heading {
+  margin-bottom: 1.4rem;
+}
+
+
+  /* titulo principal */
+  .page-heading h1 {
+    margin: 0.15rem 0;
+    /* adapta el tamaño del titulo segun la pantalla */
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+  }
+
+
+  /* descripcion debajo del titulo */
+  .page-heading p {
+    margin: 0;
+    color: var(--cui-secondary-color);
+  }
+
+
+/* texto pequeño que aparece encima del titulo */
+.eyebrow {
+  color: var(--cui-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+
+/* ========================= TARJETAS ========================= */
+
+/* filtros y tabla comparten la misma sombra */
+.filters,
+.table-card {
+  border: 0;
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.09);
+}
+
+
+/* separa los filtros de la tabla */
+.filters {
+  margin-bottom: 1rem;
+}
+
+
+/* ========================= FILTROS ========================= */
+
+/* acomoda los campos principales y los botones */
+.filter-grid {
+  display: grid;
+  /* el primer campo recibe mas espacio
+     los siguientes dos usan el mismo tamaño
+     y las acciones usan solamente lo necesario */
+  grid-template-columns: 2fr 1fr 1fr auto;
+  align-items: end;
+  gap: 0.8rem;
+}
+
+
+/* ========================= CONTENEDORES FLEX ========================= */
+
+/* estas partes comparten una distribucion horizontal */
+.filter-actions,
+.role-editor,
+.table-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+
+/* ========================= TABLA ========================= */
+
+/* oculta cualquier contenido que se salga de los bordes */
+.table-card {
+  overflow: hidden;
+}
+
+
+/* encabezados de las columnas */
+.table thead th {
+  padding: 1rem;
+  color: var(--cui-secondary-color);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+
+/* celdas normales */
+.table td {
+  padding: 0.9rem 1rem;
+}
+
+
+  /* texto secundario dentro de una celda */
+  .table td small {
+    display: block;
+    color: var(--cui-secondary-color);
+  }
+
+
+/* ========================= EDITOR DE ROL ========================= */
+
+/* evita que el selector de rol quede demasiado pequeño */
+.role-editor .form-select {
+  min-width: 140px;
+}
+
+
+/* ========================= USUARIO INACTIVO ========================= */
+
+/* baja la intensidad visual de los usuarios inactivos */
+.inactive {
+  opacity: 0.65;
+}
+
+
+/* ========================= TABLA VACIA ========================= */
+
+/* mensaje que aparece cuando no hay usuarios para mostrar */
+.empty {
+  padding: 2.4rem !important;
+  text-align: center;
+  color: var(--cui-secondary-color);
+}
+
+
+/* ========================= PIE DE TABLA ========================= */
+
+/* acomoda cantidad de registros paginacion y controles */
+.table-footer {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  border-top: 1px solid var(--cui-border-color);
+  color: var(--cui-secondary-color);
+  font-size: 0.88rem;
+}
+
+
+  /* acomoda el texto con sus controles */
+  .table-footer label,
+  .table-footer div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+
+  /* deja que el select use solamente el ancho que necesita */
+  .table-footer .form-select {
+    width: auto;
+  }
+
+
+/* ========================= PANTALLAS MEDIANAS ========================= */
+
+/* al bajar de 900px los filtros pasan a 2 columnas */
+@media (max-width: 900px) {
+
+  .filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+
+  /* las acciones ocupan todo el ancho de la fila */
+  .filter-actions {
+    grid-column: 1 / -1;
+    justify-content: end;
+  }
+}
+
+
+/* ========================= CELULARES ========================= */
+
+/* al bajar de 620px todo pasa a una sola columna */
+@media (max-width: 620px) {
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  /* ya no necesita ocupar varias columnas */
+  .filter-actions {
+    grid-column: auto;
+  }
+
+
+  /* los controles del pie quedan uno debajo del otro */
+  .table-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

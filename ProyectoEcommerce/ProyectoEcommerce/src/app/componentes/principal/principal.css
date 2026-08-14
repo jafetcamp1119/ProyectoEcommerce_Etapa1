@@ -1,1 +1,260 @@
-:host { display: block; }.home-page { padding-bottom: 2rem; }.welcome-card { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: clamp(1.4rem,3vw,2.25rem); margin-bottom: 1.3rem; color: white; background: radial-gradient(circle at 90% 10%,rgba(255,255,255,.2),transparent 34%),linear-gradient(135deg,#173d7a,#2f6fed 60%,#2b9da3); border-radius: 1.2rem; box-shadow: 0 .8rem 2rem rgba(34,80,150,.24); }.welcome-card h1 { margin: .2rem 0; font-size: clamp(1.8rem,3.2vw,2.7rem); }.welcome-card p { margin: 0; color: rgba(255,255,255,.78); }.eyebrow { display: block; color: #80e1dc; font-size: .78rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }.role-pill { padding: .55rem .85rem; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; font-weight: 600; }.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.3rem; }.stat-card { position: relative; overflow: hidden; min-height: 165px; padding: 1.2rem; color: inherit; background: var(--cui-card-bg); border: 1px solid var(--cui-border-color); border-top: 4px solid; border-radius: 1rem; box-shadow: 0 .35rem 1rem rgba(32,56,85,.08); text-decoration: none; transition: transform .2s ease,box-shadow .2s ease; }.stat-card:hover { transform: translateY(-3px); box-shadow: 0 .65rem 1.5rem rgba(32,56,85,.14); }.stat-card::after { position: absolute; right: -20px; bottom: -35px; width: 95px; height: 95px; content: ''; background: currentColor; border-radius: 50%; opacity: .07; }.stat-card strong { display: block; margin: .5rem 0; font-size: 2.35rem; }.stat-card small { color: var(--cui-secondary-color); }.stat-label { font-size: .8rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }.blue { color: #2f6fed; }.teal { color: #1f988f; }.amber { color: #b9700e; }.violet { color: #7256bf; }.quick-card { border: 0; box-shadow: 0 .35rem 1.2rem rgba(32,56,85,.08); }.quick-card h2 { margin: .2rem 0 1rem; }.quick-card nav { display: grid; grid-template-columns: repeat(3,1fr); gap: .8rem; }.quick-link { display: flex; flex-direction: column; gap: .25rem; padding: 1rem; color: inherit; background: var(--cui-tertiary-bg); border-radius: .75rem; text-decoration: none; }.quick-link span { color: var(--cui-secondary-color); font-size: .9rem; }.quick-link:hover strong { color: var(--cui-primary); }@media(max-width:980px){.stats-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.welcome-card{align-items:flex-start;flex-direction:column}.stats-grid,.quick-card nav{grid-template-columns:1fr}}
+/* esta pagina acomoda la pantalla principal
+   incluye bienvenida estadisticas y accesos rapidos */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= PAGINA GENERAL ========================= */
+
+.home-page {
+  /* deja espacio abajo para que el contenido no termine pegado al borde */
+  padding-bottom: 2rem;
+}
+
+
+/* ========================= TARJETA DE BIENVENIDA ========================= */
+
+/* tarjeta grande que aparece al inicio de la pantalla */
+.welcome-card {
+  display: flex;
+  align-items: center;
+  /* separa el texto y la informacion del rol hacia los extremos */
+  justify-content: space-between;
+  gap: 1rem;
+  /* clamp adapta el espacio interno segun el tamaño de la pantalla */
+  padding: clamp(1.4rem, 3vw, 2.25rem);
+  margin-bottom: 1.3rem;
+  color: white;
+  /* combina un degradado circular con otro degradado de fondo */
+  background: radial-gradient( circle at 90% 10%, rgba(255, 255, 255, 0.2), transparent 34% ), linear-gradient( 135deg, #173d7a, #2f6fed 60%, #2b9da3 );
+  border-radius: 1.2rem;
+  /* agrega una sombra para resaltar la tarjeta */
+  box-shadow: 0 0.8rem 2rem rgba(34, 80, 150, 0.24);
+}
+
+
+  /* titulo principal de bienvenida */
+  .welcome-card h1 {
+    margin: 0.2rem 0;
+    /* el tamaño se adapta sin bajar ni pasar de estos limites */
+    font-size: clamp(1.8rem, 3.2vw, 2.7rem);
+  }
+
+
+  /* texto que aparece debajo del titulo */
+  .welcome-card p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+
+/* texto pequeño que aparece encima del titulo */
+.eyebrow {
+  display: block;
+  color: #80e1dc;
+  font-size: 0.78rem;
+  font-weight: 800;
+  /* separa un poco las letras */
+  letter-spacing: 0.13em;
+  /* pone el texto visualmente en mayusculas */
+  text-transform: uppercase;
+}
+
+
+/* etiqueta que muestra el rol actual */
+.role-pill {
+  padding: 0.55rem 0.85rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  /* deja la etiqueta completamente redondeada */
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+
+/* ========================= ESTADISTICAS ========================= */
+
+/* acomoda las tarjetas de estadisticas en 4 columnas */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.3rem;
+}
+
+
+/* ========================= TARJETA DE ESTADISTICA ========================= */
+
+.stat-card {
+  /* relative permite posicionar el circulo decorativo dentro de la tarjeta */
+  position: relative;
+  /* oculta cualquier parte decorativa que se salga de la tarjeta */
+  overflow: hidden;
+  min-height: 165px;
+  padding: 1.2rem;
+  /* inherit usa el color que venga del elemento o clase correspondiente */
+  color: inherit;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  /* la parte de arriba usa el color actual de la tarjeta */
+  border-top: 4px solid;
+  border-radius: 1rem;
+  box-shadow: 0 0.35rem 1rem rgba(32, 56, 85, 0.08);
+  text-decoration: none;
+  /* suaviza el movimiento y la sombra cuando pasa el mouse */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+  /* efecto cuando se pasa el mouse sobre una estadistica */
+  .stat-card:hover {
+    /* mueve la tarjeta un poco hacia arriba */
+    transform: translateY(-3px);
+    box-shadow: 0 0.65rem 1.5rem rgba(32, 56, 85, 0.14);
+  }
+
+
+  /* crea un circulo decorativo dentro de cada tarjeta */
+  .stat-card::after {
+    position: absolute;
+    right: -20px;
+    bottom: -35px;
+    width: 95px;
+    height: 95px;
+    /* content es necesario para crear el pseudo-elemento */
+    content: '';
+    /* currentColor usa el mismo color que tenga la tarjeta */
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.07;
+  }
+
+
+  /* numero principal de cada estadistica */
+  .stat-card strong {
+    display: block;
+    margin: 0.5rem 0;
+    font-size: 2.35rem;
+  }
+
+
+  /* texto secundario de la estadistica */
+  .stat-card small {
+    color: var(--cui-secondary-color);
+  }
+
+
+/* nombre de cada estadistica */
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+
+/* ========================= COLORES DE ESTADISTICAS ========================= */
+
+/* estos colores cambian el color principal de cada tarjeta
+   y tambien afectan elementos que usan currentColor */
+
+.blue {
+  color: #2f6fed;
+}
+
+.teal {
+  color: #1f988f;
+}
+
+.amber {
+  color: #b9700e;
+}
+
+.violet {
+  color: #7256bf;
+}
+
+
+/* ========================= ACCESOS RAPIDOS ========================= */
+
+/* tarjeta que contiene los enlaces rapidos */
+.quick-card {
+  border: 0;
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.08);
+}
+
+
+  /* titulo de la seccion de accesos rapidos */
+  .quick-card h2 {
+    margin: 0.2rem 0 1rem;
+  }
+
+
+  /* acomoda los accesos rapidos en 3 columnas */
+  .quick-card nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+  }
+
+
+/* ========================= ENLACE RAPIDO ========================= */
+
+.quick-link {
+  display: flex;
+  /* pone el titulo y la descripcion uno debajo del otro */
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  color: inherit;
+  background: var(--cui-tertiary-bg);
+  border-radius: 0.75rem;
+  text-decoration: none;
+}
+
+
+  /* descripcion pequeña de cada acceso */
+  .quick-link span {
+    color: var(--cui-secondary-color);
+    font-size: 0.9rem;
+  }
+
+
+  /* cambia el color del titulo cuando se pasa el mouse por el enlace */
+  .quick-link:hover strong {
+    color: var(--cui-primary);
+  }
+
+
+/* ========================= PANTALLAS MEDIANAS ========================= */
+
+/* al bajar de 980px las estadisticas pasan de 4 columnas a 2 */
+@media (max-width: 980px) {
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* ========================= PANTALLAS PEQUEÑAS ========================= */
+
+/* al bajar de 620px la pantalla se acomoda para celular */
+@media (max-width: 620px) {
+
+  /* la tarjeta de bienvenida deja de estar horizontal */
+  .welcome-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+
+  /* las estadisticas y accesos rapidos pasan a una sola columna */
+  .stats-grid,
+  .quick-card nav {
+    grid-template-columns: 1fr;
+  }
+}

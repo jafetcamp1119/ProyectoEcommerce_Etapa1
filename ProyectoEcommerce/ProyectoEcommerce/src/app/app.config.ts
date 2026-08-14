@@ -13,13 +13,17 @@ import { IconSetService } from '@coreui/icons-angular';
 import { routes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
 
-/** Configuración global de HTTP, routing, animaciones e iconos de la aplicación Angular. */
+// aqui se registran las piezas globales que Angular necesita antes de mostrar la app
 export const appConfig: ApplicationConfig = {
   providers: [
+    // escucha errores globales del navegador y actualiza vistas sin depender de zone.js
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    // Todas las llamadas HTTP pasan por el interceptor encargado del JWT.
+
+    // todas las llamadas HTTP pasan por el interceptor que agrega el JWT
     provideHttpClient(withInterceptors([authInterceptor])),
+
+    // estas opciones cargan las rutas, restauran el scroll y usan # en la URL
     provideRouter(
       routes,
       withRouterConfig({ onSameUrlNavigation: 'reload' }),
@@ -28,6 +32,7 @@ export const appConfig: ApplicationConfig = {
       withViewTransitions(),
       withHashLocation()
     ),
+    // deja disponibles los iconos de CoreUI y las animaciones usadas por los componentes
     IconSetService,
     provideAnimationsAsync()
   ]

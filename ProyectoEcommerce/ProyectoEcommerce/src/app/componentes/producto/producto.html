@@ -1,185 +1,1445 @@
+<!-- esta plantilla cambia entre familias del Cliente
+     listado de productos y mantenimiento del Administrador
+     los @if evitan crear bloques que no pertenecen al modo actual -->
+<!-- ========================= FAMILIAS DEL CLIENTE ========================= -->
+<!-- si corresponde mostrar el primer nivel del catalogo
+     carga directamente el componente de familias -->
 @if (mostrarFamiliasCliente) {
-  <app-familias-cliente />
-} @else {
+
+<app-familias-cliente />
+
+}
+
+@else {
+
+<!-- ========================= PAGINA DE PRODUCTOS ========================= -->
+
 <section class="products-page">
+
+
+  <!-- ========================= RUTA DEL CATALOGO ========================= -->
+  <!-- esta ruta solamente aparece para el Cliente
+       sirve para mostrar por donde va navegando dentro del catalogo -->
   @if (esCliente) {
-    <nav class="catalog-breadcrumb" aria-label="Ruta del catálogo">
-      <a routerLink="/productos">Productos</a>
-      @if (familiaRutaId) {
-        <span aria-hidden="true">›</span>
-        <a [routerLink]="['/productos/familia', familiaRutaId]">{{ familiaSeleccionadaNombre }}</a>
-      }
-      <span aria-hidden="true">›</span>
-      <span>{{ categoriaRutaId ? categoriaSeleccionadaNombre : 'Resultados' }}</span>
-    </nav>
+
+  <nav class="catalog-breadcrumb"
+       aria-label="Ruta del catálogo">
+
+
+    <!-- regresa al primer nivel del catalogo -->
+    <a routerLink="/productos">
+      Productos
+    </a>
+
+
+    <!-- si existe una familia en la ruta la agrega al breadcrumb -->
+    @if (familiaRutaId) {
+
+    <span aria-hidden="true">
+      ›
+    </span>
+
+    <!-- abre las categorias de la familia actual -->
+    <a [routerLink]="[
+              '/productos/familia',
+              familiaRutaId
+            ]">
+      {{ familiaSeleccionadaNombre }}
+    </a>
+
+    }
+
+
+    <span aria-hidden="true">
+      ›
+    </span>
+
+
+    <!-- si estamos dentro de una categoria muestra su nombre
+         si no muestra que estamos viendo resultados -->
+    <span>
+      {{ categoriaRutaId ? categoriaSeleccionadaNombre : 'Resultados' }}
+    </span>
+
+  </nav>
+
   }
+
+
+  <!-- ========================= ENCABEZADO ========================= -->
+
   <header class="page-heading">
+
     <div>
-      <span class="eyebrow">{{ esAdmin ? 'LessPrice · Administración' : 'LessPrice · Catálogo' }}</span>
-      <h1>{{ esCliente ? tituloCliente : 'Productos' }}</h1>
-      <p>{{ esAdmin ? 'Gestiona el catálogo, inventario y estado de cada producto.' : descripcionCliente }}</p>
+
+
+      <!-- cambia el texto dependiendo del rol -->
+      <span class="eyebrow">
+        {{
+ esAdmin
+            ? 'LessPrice · Administración'
+            : 'LessPrice · Catálogo'
+        }}
+      </span>
+
+
+      <!-- el Cliente recibe un titulo preparado por el componente
+           el Admin simplemente ve Productos -->
+      <h1>
+        {{ esCliente ? tituloCliente : 'Productos' }}
+      </h1>
+
+
+      <p>
+        {{
+ esAdmin
+            ? 'Gestiona el catálogo, inventario y estado de cada producto.'
+            : descripcionCliente
+        }}
+      </p>
+
     </div>
-    @if (esAdmin) { <button class="btn btn-primary" type="button" (click)="nuevo()">Nuevo producto</button> }
-    @if (esCliente) { <a class="btn btn-outline-primary" [routerLink]="rutaRegresoCliente">{{ textoRegresoCliente }}</a> }
+
+
+    <!-- el boton para crear productos solamente aparece al Administrador -->
+    @if (esAdmin) {
+
+    <button class="btn btn-primary"
+            type="button"
+            (click)="nuevo()">
+      Nuevo producto
+    </button>
+
+    }
+
+
+    <!-- el Cliente recibe un boton para regresar al nivel anterior -->
+    @if (esCliente) {
+
+    <a class="btn btn-outline-primary"
+       [routerLink]="rutaRegresoCliente">
+      {{ textoRegresoCliente }}
+    </a>
+
+    }
+
   </header>
 
-  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
 
-  <!-- Búsqueda y filtros; familia y categoría son de solo lectura para el Cliente -->
-  <form class="filters" [formGroup]="filtros" (ngSubmit)="buscar()">
-    <div class="field field-search"><label for="producto-texto">Nombre o código</label><input id="producto-texto" class="form-control" formControlName="texto" placeholder="Buscar productos"></div>
+  <!-- ========================= MENSAJES ========================= -->
+  <!-- mensaje de operacion correcta -->
+  @if (mensaje) {
+
+  <div class="alert alert-success"
+       role="status">
+    {{ mensaje }}
+  </div>
+
+  }
+
+
+  <!-- mensaje de error -->
+  @if (error) {
+
+  <div class="alert alert-danger"
+       role="alert">
+    {{ error }}
+  </div>
+
+  }
+
+
+  <!-- ========================= FILTROS ========================= -->
+  <!-- [formGroup] conecta estos filtros con Angular
+       ngSubmit llama buscar cuando se aplica la busqueda -->
+  <form class="filters"
+        [formGroup]="filtros"
+        (ngSubmit)="buscar()">
+
+
+    <!-- ========================= BUSQUEDA ========================= -->
+
+    <div class="field field-search">
+
+      <label for="producto-texto">
+        Nombre o código
+      </label>
+
+      <input id="producto-texto"
+             class="form-control"
+             formControlName="texto"
+             placeholder="Buscar productos">
+
+    </div>
+
+
+    <!-- ========================= FILTROS DEL ADMIN ========================= -->
+    <!-- el Administrador puede escoger cualquier familia y categoria -->
     @if (esAdmin) {
-      <div class="field"><label for="producto-familia">Familia</label><select id="producto-familia" class="form-select" formControlName="familiaId" (change)="cambiarFamilia()"><option value="">Todas</option>@for (familia of familias; track familia.familiaId) { <option [value]="familia.familiaId">{{ familia.nombre }}</option> }</select></div>
-      <div class="field"><label for="producto-categoria">Categoría</label><select id="producto-categoria" class="form-select" formControlName="categoriaId"><option value="">Todas</option>@for (categoria of categoriasFiltradas; track categoria.categoriaId) { <option [value]="categoria.categoriaId">{{ categoria.nombre }}</option> }</select></div>
-    } @else {
-      <div class="field"><label for="producto-familia-info">Familia</label><input id="producto-familia-info" class="form-control" [value]="familiaSeleccionadaNombre || 'Todas las familias'" readonly aria-readonly="true"></div>
-      <div class="field"><label for="producto-categoria-info">Categoría</label><input id="producto-categoria-info" class="form-control" [value]="categoriaSeleccionadaNombre || 'Todas las categorías'" readonly aria-readonly="true"></div>
+
+
+    <!-- ========================= FAMILIA ========================= -->
+
+    <div class="field">
+
+      <label for="producto-familia">
+        Familia
+      </label>
+
+      <!-- cambiarFamilia actualiza las categorias disponibles -->
+      <select id="producto-familia"
+              class="form-select"
+              formControlName="familiaId"
+              (change)="cambiarFamilia()">
+
+        <option value="">
+          Todas
+        </option>
+
+        <!-- llena el select con las familias disponibles -->
+        @for (
+        familia of familias;
+        track familia.familiaId
+        ) {
+
+        <option [value]="familia.familiaId">
+          {{ familia.nombre }}
+        </option>
+
+        }
+
+      </select>
+
+    </div>
+
+
+    <!-- ========================= CATEGORIA ========================= -->
+
+    <div class="field">
+
+      <label for="producto-categoria">
+        Categoría
+      </label>
+
+      <select id="producto-categoria"
+              class="form-select"
+              formControlName="categoriaId">
+
+        <option value="">
+          Todas
+        </option>
+
+        <!-- categoriasFiltradas depende de la familia escogida -->
+        @for (
+        categoria of categoriasFiltradas;
+        track categoria.categoriaId
+        ) {
+
+        <option [value]="categoria.categoriaId">
+          {{ categoria.nombre }}
+        </option>
+
+        }
+
+      </select>
+
+    </div>
+
     }
-    <div class="field field-price"><label for="producto-precio-min">Precio mínimo</label><input id="producto-precio-min" class="form-control" type="number" min="0" step="0.01" formControlName="precioMinimo"></div>
-    <div class="field field-price"><label for="producto-precio-max">Precio máximo</label><input id="producto-precio-max" class="form-control" type="number" min="0" step="0.01" formControlName="precioMaximo"></div>
-    <div class="field"><label for="producto-disponibilidad">Disponibilidad</label><select id="producto-disponibilidad" class="form-select" formControlName="disponibilidad"><option value="">Todas</option><option value="disponible">Disponible</option><option value="bajo">Stock bajo</option><option value="agotado">Agotado</option></select></div>
-    @if (esAdmin) { <div class="field"><label for="producto-estado">Estado</label><select id="producto-estado" class="form-select" formControlName="estado"><option value="">Todos</option><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></div> }
-    <div class="field"><label for="producto-orden">Ordenar</label><select id="producto-orden" class="form-select" formControlName="orden"><option value="nombre_asc">Nombre A–Z</option><option value="nombre_desc">Nombre Z–A</option><option value="precio_asc">Menor precio</option><option value="precio_desc">Mayor precio</option>@if (esAdmin) { <option value="fecha_desc">Más recientes</option><option value="fecha_asc">Más antiguos</option> }</select></div>
-    <div class="filter-actions"><button class="btn btn-outline-secondary" type="button" (click)="limpiarFiltros()">Limpiar</button><button class="btn btn-primary" type="submit" [disabled]="filtros.invalid">Aplicar filtros</button></div>
+
+
+    <!-- ========================= INFORMACION DEL CLIENTE ========================= -->
+    <!-- para el Cliente la familia y categoria se muestran
+         solamente como informacion y no se pueden modificar desde aqui -->
+    @else {
+
+
+    <!-- ========================= FAMILIA ACTUAL ========================= -->
+
+    <div class="field">
+
+      <label for="producto-familia-info">
+        Familia
+      </label>
+
+      <!-- readonly evita que el Cliente cambie el valor -->
+      <input id="producto-familia-info"
+             class="form-control"
+             [value]="familiaSeleccionadaNombre || 'Todas las familias'"
+             readonly
+             aria-readonly="true">
+
+    </div>
+
+
+    <!-- ========================= CATEGORIA ACTUAL ========================= -->
+
+    <div class="field">
+
+      <label for="producto-categoria-info">
+        Categoría
+      </label>
+
+      <input id="producto-categoria-info"
+             class="form-control"
+             [value]="categoriaSeleccionadaNombre || 'Todas las categorías'"
+             readonly
+             aria-readonly="true">
+
+    </div>
+
+    }
+
+
+    <!-- ========================= PRECIO MINIMO ========================= -->
+
+    <div class="field field-price">
+
+      <label for="producto-precio-min">
+        Precio mínimo
+      </label>
+
+      <input id="producto-precio-min"
+             class="form-control"
+             type="number"
+             min="0"
+             step="0.01"
+             formControlName="precioMinimo">
+
+    </div>
+
+
+    <!-- ========================= PRECIO MAXIMO ========================= -->
+
+    <div class="field field-price">
+
+      <label for="producto-precio-max">
+        Precio máximo
+      </label>
+
+      <input id="producto-precio-max"
+             class="form-control"
+             type="number"
+             min="0"
+             step="0.01"
+             formControlName="precioMaximo">
+
+    </div>
+
+
+    <!-- ========================= DISPONIBILIDAD ========================= -->
+
+    <div class="field">
+
+      <label for="producto-disponibilidad">
+        Disponibilidad
+      </label>
+
+      <select id="producto-disponibilidad"
+              class="form-select"
+              formControlName="disponibilidad">
+
+        <option value="">
+          Todas
+        </option>
+
+        <option value="disponible">
+          Disponible
+        </option>
+
+        <option value="bajo">
+          Stock bajo
+        </option>
+
+        <option value="agotado">
+          Agotado
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- ========================= ESTADO ========================= -->
+    <!-- este filtro solamente existe para el Administrador -->
+    @if (esAdmin) {
+
+    <div class="field">
+
+      <label for="producto-estado">
+        Estado
+      </label>
+
+      <select id="producto-estado"
+              class="form-select"
+              formControlName="estado">
+
+        <option value="">
+          Todos
+        </option>
+
+        <option value="activo">
+          Activo
+        </option>
+
+        <option value="inactivo">
+          Inactivo
+        </option>
+
+      </select>
+
+    </div>
+
+    }
+
+
+    <!-- ========================= ORDEN ========================= -->
+
+    <div class="field">
+
+      <label for="producto-orden">
+        Ordenar
+      </label>
+
+      <select id="producto-orden"
+              class="form-select"
+              formControlName="orden">
+
+        <option value="nombre_asc">
+          Nombre A–Z
+        </option>
+
+        <option value="nombre_desc">
+          Nombre Z–A
+        </option>
+
+        <option value="precio_asc">
+          Menor precio
+        </option>
+
+        <option value="precio_desc">
+          Mayor precio
+        </option>
+
+
+        <!-- estas opciones solamente tienen sentido para administracion -->
+        @if (esAdmin) {
+
+        <option value="fecha_desc">
+          Más recientes
+        </option>
+
+        <option value="fecha_asc">
+          Más antiguos
+        </option>
+
+        }
+
+      </select>
+
+    </div>
+
+
+    <!-- ========================= BOTONES DE FILTRO ========================= -->
+
+    <div class="filter-actions">
+
+      <!-- devuelve los filtros a sus valores iniciales -->
+      <button class="btn btn-outline-secondary"
+              type="button"
+              (click)="limpiarFiltros()">
+        Limpiar
+      </button>
+
+
+      <!-- aplica la busqueda
+           se bloquea si el formulario de filtros tiene errores -->
+      <button class="btn btn-primary"
+              type="submit"
+              [disabled]="filtros.invalid">
+        Aplicar filtros
+      </button>
+
+    </div>
+
   </form>
 
-  <!-- Formulario disponible únicamente en la vista administrativa -->
+
+  <!-- ========================================================= -->
+  <!-- ================= FORMULARIO DEL ADMIN =================== -->
+  <!-- ========================================================= -->
+  <!-- este formulario solamente existe para el Administrador
+       y aparece cuando mostrarFormulario es true -->
   @if (esAdmin && mostrarFormulario) {
-  <form id="formulario-producto" class="product-form" [formGroup]="formulario" (ngSubmit)="guardar()">
-    <header><div><span class="eyebrow">{{ editandoId ? 'Edición' : 'Registro' }}</span><h2>{{ editandoId ? 'Editar producto' : 'Crear producto' }}</h2></div><button class="close-form" type="button" aria-label="Cerrar formulario" (click)="cancelarFormulario()">×</button></header>
+
+  <form id="formulario-producto"
+        class="product-form"
+        [formGroup]="formulario"
+        (ngSubmit)="guardar()">
+
+
+    <!-- ========================= TITULO ========================= -->
+
+    <header>
+
+      <div>
+
+        <!-- cambia entre Edicion y Registro -->
+        <span class="eyebrow">
+          {{ editandoId ? 'Edición' : 'Registro' }}
+        </span>
+
+        <h2>
+          {{ editandoId ? 'Editar producto' : 'Crear producto' }}
+        </h2>
+
+      </div>
+
+
+      <!-- cierra el formulario sin guardar -->
+      <button class="close-form"
+              type="button"
+              aria-label="Cerrar formulario"
+              (click)="cancelarFormulario()">
+        ×
+      </button>
+
+    </header>
+
+
+    <!-- ========================= CAMPOS ========================= -->
+
     <div class="form-grid">
-      <div class="field"><label for="producto-codigo">Código *</label><input id="producto-codigo" class="form-control" formControlName="codigo" maxlength="50">@if (formulario.controls.codigo.touched && formulario.controls.codigo.invalid) { <small>El código es obligatorio (máximo 50 caracteres).</small> }</div>
-      <div class="field field-wide"><label for="producto-nombre">Nombre *</label><input id="producto-nombre" class="form-control" formControlName="nombre" maxlength="120">@if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) { <small>El nombre es obligatorio (máximo 120 caracteres).</small> }</div>
-      <div class="field field-full"><label for="producto-descripcion">Descripción</label><textarea id="producto-descripcion" class="form-control" rows="3" formControlName="descripcion" maxlength="500"></textarea></div>
-      <div class="field field-wide"><label for="producto-categoria-form">Categoría *</label><select id="producto-categoria-form" class="form-select" formControlName="categoriaId"><option [ngValue]="0">Selecciona una categoría</option>@for (categoria of categorias; track categoria.categoriaId) { <option [ngValue]="categoria.categoriaId">{{ nombreFamilia(categoria.familiaId) }} · {{ categoria.nombre }}</option> }</select></div>
-      <div class="field"><label for="producto-impuesto">Impuesto *</label><select id="producto-impuesto" class="form-select" formControlName="impuestoId"><option [ngValue]="0">Selecciona</option>@for (impuesto of impuestos; track impuesto.impuestoId) { <option [ngValue]="impuesto.impuestoId">{{ impuesto.nombre }} ({{ impuesto.porcentaje }}%)</option> }</select></div>
-      <div class="field"><label for="producto-precio">Precio final (impuesto incluido) *</label><input id="producto-precio" class="form-control" type="number" min="0" step="0.01" formControlName="precioVenta"></div>
-      <div class="field"><label for="producto-costo">Costo *</label><input id="producto-costo" class="form-control" type="number" min="0" step="0.01" formControlName="costo"></div>
-      <div class="field"><label for="producto-stock">Stock *</label><input id="producto-stock" class="form-control" type="number" min="0" step="1" formControlName="stock"></div>
-      <div class="field"><label for="producto-stock-minimo">Stock mínimo *</label><input id="producto-stock-minimo" class="form-control" type="number" min="0" step="1" formControlName="stockMinimo"></div>
-      <label class="active-check"><input type="checkbox" formControlName="activo"> Producto activo</label>
-    </div>
-    @if (formulario.touched && formulario.invalid) { <p class="form-error" role="alert">Completa correctamente todos los campos obligatorios.</p> }
 
-    @if (esAdmin) {
-    <div class="imagenes-producto">
-      <h3>Imágenes del producto</h3>
-      <p>Puedes agregar hasta 3 imágenes por producto. Una de ellas será utilizada como imagen principal.</p>
 
-      @if (imagenesProducto.length > 0) {
-      <div class="imagenes-actuales">
-        @for (imagen of imagenesProducto; track imagen.imagenId) {
-        <div class="imagen-item">
-          <img [src]="imagen.urlImagen" [alt]="imagen.textoAlternativo || 'Imagen del producto'">
+      <!-- ========================= CODIGO ========================= -->
 
-          @if (imagen.esPrincipal) {
-          <span class="imagen-principal">Principal</span>
+      <div class="field">
+
+        <label for="producto-codigo">
+          Código *
+        </label>
+
+        <input id="producto-codigo"
+               class="form-control"
+               formControlName="codigo"
+               maxlength="50">
+
+        @if (
+        formulario.controls.codigo.touched &&
+        formulario.controls.codigo.invalid
+        ) {
+
+        <small>
+          El código es obligatorio (máximo 50 caracteres).
+        </small>
+
+        }
+
+      </div>
+
+
+      <!-- ========================= NOMBRE ========================= -->
+
+      <div class="field field-wide">
+
+        <label for="producto-nombre">
+          Nombre *
+        </label>
+
+        <input id="producto-nombre"
+               class="form-control"
+               formControlName="nombre"
+               maxlength="120">
+
+        @if (
+        formulario.controls.nombre.touched &&
+        formulario.controls.nombre.invalid
+        ) {
+
+        <small>
+          El nombre es obligatorio (máximo 120 caracteres).
+        </small>
+
+        }
+
+      </div>
+
+
+      <!-- ========================= DESCRIPCION ========================= -->
+
+      <div class="field field-full">
+
+        <label for="producto-descripcion">
+          Descripción
+        </label>
+
+        <textarea id="producto-descripcion"
+                  class="form-control"
+                  rows="3"
+                  formControlName="descripcion"
+                  maxlength="500">
+            </textarea>
+
+      </div>
+
+
+      <!-- ========================= CATEGORIA ========================= -->
+
+      <div class="field field-wide">
+
+        <label for="producto-categoria-form">
+          Categoría *
+        </label>
+
+        <select id="producto-categoria-form"
+                class="form-select"
+                formControlName="categoriaId">
+
+          <!-- ngValue mantiene este valor como numero -->
+          <option [ngValue]="0">
+            Selecciona una categoría
+          </option>
+
+          <!-- muestra familia y categoria juntas para reconocer mejor cada opcion -->
+          @for (
+          categoria of categorias;
+          track categoria.categoriaId
+          ) {
+
+          <option [ngValue]="categoria.categoriaId">
+            {{ nombreFamilia(categoria.familiaId) }} · {{ categoria.nombre }}
+          </option>
+
           }
 
+        </select>
+
+      </div>
+
+
+      <!-- ========================= IMPUESTO ========================= -->
+
+      <div class="field">
+
+        <label for="producto-impuesto">
+          Impuesto *
+        </label>
+
+        <select id="producto-impuesto"
+                class="form-select"
+                formControlName="impuestoId">
+
+          <option [ngValue]="0">
+            Selecciona
+          </option>
+
+          @for (
+          impuesto of impuestos;
+          track impuesto.impuestoId
+          ) {
+
+          <option [ngValue]="impuesto.impuestoId">
+            {{ impuesto.nombre }} ({{ impuesto.porcentaje }}%)
+          </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- ========================= PRECIO DE VENTA ========================= -->
+
+      <div class="field">
+
+        <label for="producto-precio">
+          Precio final (impuesto incluido) *
+        </label>
+
+        <input id="producto-precio"
+               class="form-control"
+               type="number"
+               min="0"
+               step="0.01"
+               formControlName="precioVenta">
+
+      </div>
+
+
+      <!-- ========================= COSTO ========================= -->
+
+      <div class="field">
+
+        <label for="producto-costo">
+          Costo *
+        </label>
+
+        <input id="producto-costo"
+               class="form-control"
+               type="number"
+               min="0"
+               step="0.01"
+               formControlName="costo">
+
+      </div>
+
+
+      <!-- ========================= STOCK ========================= -->
+
+      <div class="field">
+
+        <label for="producto-stock">
+          Stock *
+        </label>
+
+        <input id="producto-stock"
+               class="form-control"
+               type="number"
+               min="0"
+               step="1"
+               formControlName="stock">
+
+      </div>
+
+
+      <!-- ========================= STOCK MINIMO ========================= -->
+
+      <div class="field">
+
+        <label for="producto-stock-minimo">
+          Stock mínimo *
+        </label>
+
+        <input id="producto-stock-minimo"
+               class="form-control"
+               type="number"
+               min="0"
+               step="1"
+               formControlName="stockMinimo">
+
+      </div>
+
+
+      <!-- ========================= ACTIVO ========================= -->
+
+      <label class="active-check">
+
+        <input type="checkbox"
+               formControlName="activo">
+
+        Producto activo
+
+      </label>
+
+    </div>
+
+
+    <!-- muestra un error general si el formulario ya fue tocado y sigue invalido -->
+    @if (
+    formulario.touched &&
+    formulario.invalid
+    ) {
+
+    <p class="form-error"
+       role="alert">
+      Completa correctamente todos los campos obligatorios.
+    </p>
+
+    }
+
+
+    <!-- ========================================================= -->
+    <!-- ================= IMAGENES DEL PRODUCTO ================= -->
+    <!-- ========================================================= -->
+    <!-- esta seccion tambien queda protegida para Administrador -->
+    @if (esAdmin) {
+
+    <div class="imagenes-producto">
+
+      <h3>
+        Imágenes del producto
+      </h3>
+
+      <p>
+        Puedes agregar hasta 3 imágenes por producto.
+        Una de ellas será utilizada como imagen principal.
+      </p>
+
+
+      <!-- ========================= IMAGENES ACTUALES ========================= -->
+      <!-- si el producto ya tiene imagenes las muestra aqui -->
+      @if (imagenesProducto.length > 0) {
+
+      <div class="imagenes-actuales">
+
+        <!-- recorre las imagenes que ya estan guardadas -->
+        @for (
+        imagen of imagenesProducto;
+        track imagen.imagenId
+        ) {
+
+        <div class="imagen-item">
+
+
+          <!-- muestra la imagen usando la URL guardada -->
+          <img [src]="imagen.urlImagen"
+               [alt]="imagen.textoAlternativo || 'Imagen del producto'">
+
+
+          <!-- identifica cual imagen es la principal -->
+          @if (imagen.esPrincipal) {
+
+          <span class="imagen-principal">
+            Principal
+          </span>
+
+          }
+
+
+          <!-- ========================= ACCIONES DE IMAGEN ========================= -->
+
           <div class="imagen-acciones">
+
+
+            <!-- solamente deja marcar principal una imagen que no lo sea -->
             @if (!imagen.esPrincipal) {
-            <button class="btn btn-sm btn-outline-primary" type="button" (click)="hacerPrincipal(imagen.imagenId)">Hacer principal</button>
+
+            <button class="btn btn-sm btn-outline-primary"
+                    type="button"
+                    (click)="hacerPrincipal(imagen.imagenId)">
+              Hacer principal
+            </button>
+
             }
 
-            <button class="btn btn-sm btn-outline-danger" type="button" (click)="eliminarImagen(imagen)">Eliminar</button>
+
+            <!-- elimina la imagen seleccionada -->
+            <button class="btn btn-sm btn-outline-danger"
+                    type="button"
+                    (click)="eliminarImagen(imagen)">
+              Eliminar
+            </button>
+
           </div>
+
         </div>
+
         }
+
       </div>
-      } @else {
-      <p class="sin-imagenes">Este producto todavía no tiene imágenes.</p>
+
       }
 
+
+      <!-- si todavia no tiene imagenes muestra este mensaje -->
+      @else {
+
+      <p class="sin-imagenes">
+        Este producto todavía no tiene imágenes.
+      </p>
+
+      }
+
+
+      <!-- ========================= SELECCIONAR NUEVAS IMAGENES ========================= -->
+      <!-- solamente deja seleccionar mas mientras existan menos de 3 -->
       @if (imagenesProducto.length < 3) {
+
       <div class="subir-imagenes">
-        <label for="producto-imagenes">Seleccionar imágenes</label>
-        <input id="producto-imagenes" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple (change)="seleccionarImagenes($event)">
-        <small>Puedes tener un máximo de 3 imágenes. Cada imagen puede pesar hasta 5 MB.</small>
+
+        <label for="producto-imagenes">
+          Seleccionar imágenes
+        </label>
+
+
+        <!-- multiple permite escoger varias imagenes de una sola vez
+             change manda los archivos a seleccionarImagenes -->
+        <input id="producto-imagenes"
+               class="form-control"
+               type="file"
+               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+               multiple
+               (change)="seleccionarImagenes($event)">
+
+
+        <small>
+          Puedes tener un máximo de 3 imágenes.
+          Cada imagen puede pesar hasta 5 MB.
+        </small>
+
       </div>
+
       }
 
+
+      <!-- ========================= VISTAS PREVIAS ========================= -->
+      <!-- aparece cuando ya se seleccionaron imagenes nuevas -->
       @if (previsualizaciones.length > 0) {
+
       <div class="previsualizaciones">
-        <h4>Vista previa</h4>
+
+        <h4>
+          Vista previa
+        </h4>
+
 
         <div class="imagenes-preview">
-          @for (preview of previsualizaciones; track $index) {
-          <div class="preview-item">
-            <img [src]="preview" alt="Vista previa de la imagen">
 
+          <!-- $index indica la posicion actual de cada vista previa -->
+          @for (
+          preview of previsualizaciones;
+          track $index
+          ) {
+
+          <div class="preview-item">
+
+            <img [src]="preview"
+                 alt="Vista previa de la imagen">
+
+
+            <!-- manda el indice para eliminar solamente esa imagen seleccionada -->
             <button class="btn btn-sm btn-outline-danger"
                     type="button"
                     (click)="eliminarImagenSeleccionada($index)">
               Eliminar
             </button>
+
           </div>
+
           }
+
         </div>
+
+
+        <!-- si estamos editando un producto que ya existe
+             permite subir las nuevas imagenes directamente -->
         @if (editandoId > 0) {
-        <button class="btn btn-primary" type="button" [disabled]="subiendoImagenes" (click)="subirImagenes()">
-          {{ subiendoImagenes ? 'Subiendo imágenes…' : 'Subir imágenes' }}
+
+        <button class="btn btn-primary"
+                type="button"
+                [disabled]="subiendoImagenes"
+                (click)="subirImagenes()">
+
+          {{
+ subiendoImagenes
+                      ? 'Subiendo imágenes…'
+                      : 'Subir imágenes'
+          }}
+
         </button>
-        } @else {
-        <small>Las imágenes se subirán automáticamente al guardar el producto.</small>
+
         }
+
+
+        <!-- si el producto es nuevo las imagenes esperan
+             hasta que primero exista el producto -->
+        @else {
+
+        <small>
+          Las imágenes se subirán automáticamente al guardar el producto.
+        </small>
+
+        }
+
       </div>
+
       }
+
     </div>
+
     }
 
-    <footer><button class="btn btn-outline-secondary" type="button" (click)="cancelarFormulario()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">{{ guardando ? 'Guardando…' : 'Guardar producto' }}</button></footer>
+
+    <!-- ========================= BOTONES DEL FORMULARIO ========================= -->
+
+    <footer>
+
+      <!-- cierra el formulario sin guardar -->
+      <button class="btn btn-outline-secondary"
+              type="button"
+              (click)="cancelarFormulario()">
+        Cancelar
+      </button>
+
+
+      <!-- guarda el producto
+           se bloquea si el formulario tiene errores o ya se esta guardando -->
+      <button class="btn btn-primary"
+              type="submit"
+              [disabled]="formulario.invalid || guardando">
+
+        {{
+ guardando
+              ? 'Guardando…'
+              : 'Guardar producto'
+        }}
+
+      </button>
+
+    </footer>
+
   </form>
+
   }
 
-  <!-- Estados y tarjetas del catálogo de productos -->
+
+  <!-- ========================================================= -->
+  <!-- ================= LISTADO DE PRODUCTOS =================== -->
+  <!-- ========================================================= -->
+  <!-- ========================= CARGANDO ========================= -->
   @if (cargando) {
-    <div class="state-panel" role="status"><span class="spinner-border" aria-hidden="true"></span><strong>Cargando productos…</strong></div>
-  } @else if (!productos.length) {
-    <div class="state-panel"><span class="state-icon" aria-hidden="true">◇</span><strong>No hay productos que coincidan</strong><p>Prueba con otros filtros o limpia la búsqueda.</p></div>
-  } @else {
-    <div class="products-grid">
-      @for (producto of productos; track producto.productoId) {
-        <article class="product-card catalog-tile" [class.inactive]="esAdmin && producto.activo === false">
-          <a class="product-image catalog-tile-visual" [routerLink]="['/productos', producto.productoId]" [attr.aria-label]="'Ver ' + producto.nombre">
-            @if (producto.imagenPrincipal?.urlImagen && !imagenesFallidas.has(producto.productoId)) { <img [src]="producto.imagenPrincipal!.urlImagen" [alt]="producto.imagenPrincipal!.textoAlternativo || producto.nombre" (error)="marcarImagenError(producto.productoId)"> }
-            @else { <span class="image-placeholder" aria-hidden="true">{{ iniciales(producto.nombre) }}</span> }
-            @if (esAdmin && producto.activo === false) { <span class="inactive-label">Inactivo</span> }
-          </a>
-          <div class="product-content catalog-tile-content">
-            <div class="taxonomy"><span>{{ producto.familiaNombre }}</span><span>{{ producto.categoriaNombre }}</span></div>
-            <h2><a [routerLink]="['/productos', producto.productoId]">{{ producto.nombre }}</a></h2>
-            <p class="description">{{ producto.descripcion || 'Sin descripción disponible.' }}</p>
-            <div class="price-row">
-              <div class="price-block">
-                @if (producto.descuento.tieneDescuento) {
-                  <del>{{ producto.descuento.precioOriginal | currency:'CRC':'symbol':'1.2-2' }}</del>
-                  <strong>{{ producto.descuento.precioFinal | currency:'CRC':'symbol':'1.2-2' }}</strong>
-                  <span class="discount-badge">{{ producto.descuento.tipoDescuento === 'PROMOCIONAL' ? 'PROMO ' : '' }}-{{ producto.descuento.porcentaje }}%</span>
-                } @else {
-                  <strong>{{ producto.precioVenta | currency:'CRC':'symbol':'1.2-2' }}</strong>
-                }
-              </div>
-              <span class="stock" [class]="claseStock(producto.estadoStock)">{{ producto.estadoStock }}</span>
-            </div>
-            @if (esAdmin) {
-              <dl class="admin-data"><div><dt>Código</dt><dd>{{ producto.codigo }}</dd></div><div><dt>Stock</dt><dd>{{ producto.stock }} / mín. {{ producto.stockMinimo }}</dd></div><div><dt>Costo</dt><dd>{{ producto.costo | currency:'CRC':'symbol':'1.2-2' }}</dd></div><div><dt>Creación</dt><dd>{{ producto.fechaCreacion | date:'dd/MM/yyyy' }}</dd></div></dl>
-            }
-            <div class="card-actions">
-              <a class="btn btn-primary" [routerLink]="['/productos', producto.productoId]">Ver detalle</a>
-              @if (esCliente) { <button class="btn btn-outline-primary" type="button" [disabled]="!producto.disponible || procesandoCarrito.has(producto.productoId)" (click)="agregarAlCarrito(producto)">{{ !producto.disponible ? 'Agotado' : procesandoCarrito.has(producto.productoId) ? 'Agregando…' : 'Agregar al carrito' }}</button> }
-            </div>
-            @if (esAdmin) { <div class="admin-actions"><a class="btn btn-outline-primary" routerLink="/descuentos" [queryParams]="{ tipo: 'PRODUCTO', productoId: producto.productoId }">Descuento</a><button class="btn btn-outline-primary" type="button" (click)="editar(producto)">Editar</button><button class="btn btn-outline-secondary" type="button" [disabled]="guardando" (click)="cambiarEstado(producto)">{{ producto.activo ? 'Desactivar' : 'Activar' }}</button></div> }
-          </div>
-        </article>
-      }
-    </div>
+
+  <div class="state-panel"
+       role="status">
+
+    <span class="spinner-border"
+          aria-hidden="true">
+    </span>
+
+    <strong>
+      Cargando productos…
+    </strong>
+
+  </div>
+
   }
+
+
+  <!-- ========================= SIN PRODUCTOS ========================= -->
+  @else if (!productos.length) {
+
+  <div class="state-panel">
+
+    <span class="state-icon"
+          aria-hidden="true">
+      ◇
+    </span>
+
+    <strong>
+      No hay productos que coincidan
+    </strong>
+
+    <p>
+      Prueba con otros filtros o limpia la búsqueda.
+    </p>
+
+  </div>
+
+  }
+
+
+  <!-- ========================= TARJETAS DE PRODUCTOS ========================= -->
+  @else {
+
+  <div class="products-grid">
+
+
+    <!-- recorre todos los productos de la pagina actual -->
+    @for (
+    producto of productos;
+    track producto.productoId
+    ) {
+
+    <!-- si el Admin ve un producto inactivo
+         agrega automaticamente la clase inactive -->
+    <article class="product-card catalog-tile"
+             [class.inactive]="esAdmin && producto.activo === false">
+
+
+      <!-- ========================= IMAGEN ========================= -->
+
+      <a class="product-image catalog-tile-visual"
+         [routerLink]="[
+                '/productos',
+                producto.productoId
+              ]"
+         [attr.aria-label]="'Ver ' + producto.nombre">
+
+
+        <!-- usa la imagen principal si existe y no ha fallado antes -->
+        @if (
+        producto.imagenPrincipal?.urlImagen &&
+        !imagenesFallidas.has(producto.productoId)
+        ) {
+
+        <img [src]="producto.imagenPrincipal!.urlImagen"
+             [alt]="producto.imagenPrincipal!.textoAlternativo || producto.nombre"
+             (error)="marcarImagenError(producto.productoId)">
+
+        }
+
+
+        <!-- si no tiene imagen o la imagen fallo muestra las iniciales -->
+        @else {
+
+        <span class="image-placeholder"
+              aria-hidden="true">
+          {{ iniciales(producto.nombre) }}
+        </span>
+
+        }
+
+
+        <!-- el Admin puede ver visualmente cuando un producto esta inactivo -->
+        @if (
+        esAdmin &&
+        producto.activo === false
+        ) {
+
+        <span class="inactive-label">
+          Inactivo
+        </span>
+
+        }
+
+      </a>
+
+
+      <!-- ========================= INFORMACION ========================= -->
+
+      <div class="product-content catalog-tile-content">
+
+
+        <!-- ========================= TAXONOMIA ========================= -->
+        <!-- muestra familia y categoria del producto -->
+        <div class="taxonomy">
+
+          <span>
+            {{ producto.familiaNombre }}
+          </span>
+
+          <span>
+            {{ producto.categoriaNombre }}
+          </span>
+
+        </div>
+
+
+        <!-- ========================= NOMBRE ========================= -->
+
+        <h2>
+
+          <a [routerLink]="[
+                    '/productos',
+                    producto.productoId
+                  ]">
+            {{ producto.nombre }}
+          </a>
+
+        </h2>
+
+
+        <!-- si no existe descripcion usa un texto por defecto -->
+        <p class="description">
+          {{ producto.descripcion || 'Sin descripción disponible.' }}
+        </p>
+
+
+        <!-- ========================= PRECIO Y STOCK ========================= -->
+
+        <div class="price-row">
+
+
+          <!-- ========================= PRECIO ========================= -->
+
+          <div class="price-block">
+
+
+            <!-- si tiene descuento muestra precio original precio final y porcentaje -->
+            @if (producto.descuento.tieneDescuento) {
+
+            <!-- del muestra visualmente el precio anterior tachado -->
+            <del>
+              {{
+ producto.descuento.precioOriginal
+                        | currency:'CRC':'symbol':'1.2-2'
+              }}
+            </del>
+
+
+            <strong>
+              {{
+ producto.descuento.precioFinal
+                        | currency:'CRC':'symbol':'1.2-2'
+              }}
+            </strong>
+
+
+            <!-- si es promocional agrega PROMO antes del porcentaje -->
+            <span class="discount-badge">
+              {{
+ producto.descuento.tipoDescuento === 'PROMOCIONAL'
+                        ? 'PROMO '
+                        : ''
+              }}-{{ producto.descuento.porcentaje }}%
+            </span>
+
+            }
+
+
+            <!-- si no tiene descuento muestra el precio normal -->
+            @else {
+
+            <strong>
+              {{
+ producto.precioVenta
+                        | currency:'CRC':'symbol':'1.2-2'
+              }}
+            </strong>
+
+            }
+
+          </div>
+
+
+          <!-- claseStock devuelve la clase CSS correspondiente al estado -->
+          <span class="stock"
+                [class]="claseStock(producto.estadoStock)">
+            {{ producto.estadoStock }}
+          </span>
+
+        </div>
+
+
+        <!-- ========================= DATOS DEL ADMIN ========================= -->
+        <!-- informacion que solamente se muestra en administracion -->
+        @if (esAdmin) {
+
+        <dl class="admin-data">
+
+
+          <!-- codigo del producto -->
+          <div>
+
+            <dt>
+              Código
+            </dt>
+
+            <dd>
+              {{ producto.codigo }}
+            </dd>
+
+          </div>
+
+
+          <!-- stock actual comparado con el minimo -->
+          <div>
+
+            <dt>
+              Stock
+            </dt>
+
+            <dd>
+              {{ producto.stock }} / mín. {{ producto.stockMinimo }}
+            </dd>
+
+          </div>
+
+
+          <!-- costo interno -->
+          <div>
+
+            <dt>
+              Costo
+            </dt>
+
+            <dd>
+              {{
+ producto.costo
+                        | currency:'CRC':'symbol':'1.2-2'
+              }}
+            </dd>
+
+          </div>
+
+
+          <!-- fecha en que se creo -->
+          <div>
+
+            <dt>
+              Creación
+            </dt>
+
+            <dd>
+              {{
+ producto.fechaCreacion
+                        | date:'dd/MM/yyyy'
+              }}
+            </dd>
+
+          </div>
+
+        </dl>
+
+        }
+
+
+        <!-- ========================= ACCIONES GENERALES ========================= -->
+
+        <div class="card-actions">
+
+
+          <!-- abre el detalle del producto -->
+          <a class="btn btn-primary"
+             [routerLink]="[
+                    '/productos',
+                    producto.productoId
+                  ]">
+            Ver detalle
+          </a>
+
+
+          <!-- el boton del carrito solamente aparece para el Cliente -->
+          @if (esCliente) {
+
+          <!-- se desactiva si no hay stock
+               o si este producto ya se esta agregando -->
+          <button class="btn btn-outline-primary"
+                  type="button"
+                  [disabled]="
+                      !producto.disponible ||
+                      procesandoCarrito.has(producto.productoId)
+                    "
+                  (click)="agregarAlCarrito(producto)">
+
+            <!-- el texto cambia segun el estado actual -->
+            {{
+ !producto.disponible
+                      ? 'Agotado'
+                      : procesandoCarrito.has(producto.productoId)
+                        ? 'Agregando…'
+                        : 'Agregar al carrito'
+            }}
+
+          </button>
+
+          }
+
+        </div>
+
+
+        <!-- ========================= ACCIONES DEL ADMIN ========================= -->
+        @if (esAdmin) {
+
+        <div class="admin-actions">
+
+
+          <!-- abre descuentos con el producto ya preseleccionado -->
+          <a class="btn btn-outline-primary"
+             routerLink="/descuentos"
+             [queryParams]="{
+                      tipo: 'PRODUCTO',
+                      productoId: producto.productoId
+                    }">
+            Descuento
+          </a>
+
+
+          <!-- abre este producto en el formulario -->
+          <button class="btn btn-outline-primary"
+                  type="button"
+                  (click)="editar(producto)">
+            Editar
+          </button>
+
+
+          <!-- cambia el producto entre activo e inactivo
+               se bloquea mientras existe un guardado -->
+          <button class="btn btn-outline-secondary"
+                  type="button"
+                  [disabled]="guardando"
+                  (click)="cambiarEstado(producto)">
+
+            {{
+ producto.activo
+                      ? 'Desactivar'
+                      : 'Activar'
+            }}
+
+          </button>
+
+        </div>
+
+        }
+
+      </div>
+
+    </article>
+
+    }
+
+  </div>
+
+  }
+
+
+  <!-- ========================= PAGINACION ========================= -->
 
   <footer class="pagination-bar">
-    <label for="producto-tamano">Mostrar <select id="producto-tamano" class="form-select form-select-sm" [value]="tamanoPagina" (change)="cambiarTamano($any($event.target).value)">@for (tamano of tamanos; track tamano) { <option [value]="tamano">{{ tamano }}</option> }</select></label>
-    <span>{{ total }} productos · Página {{ pagina }} de {{ totalPaginas }}</span>
-    <div><button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="pagina === 1 || cargando" (click)="irPagina(-1)">Anterior</button><button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="pagina === totalPaginas || cargando" (click)="irPagina(1)">Siguiente</button></div>
+
+
+    <!-- permite escoger cuantos productos mostrar por pagina -->
+    <label for="producto-tamano">
+
+      Mostrar
+
+      <select id="producto-tamano"
+              class="form-select form-select-sm"
+              [value]="tamanoPagina"
+              (change)="cambiarTamano($any($event.target).value)">
+
+        @for (
+        tamano of tamanos;
+        track tamano
+        ) {
+
+        <option [value]="tamano">
+          {{ tamano }}
+        </option>
+
+        }
+
+      </select>
+
+    </label>
+
+
+    <!-- cantidad total pagina actual y total de paginas -->
+    <span>
+      {{ total }} productos · Página {{ pagina }} de {{ totalPaginas }}
+    </span>
+
+
+    <!-- ========================= BOTONES DE PAGINA ========================= -->
+
+    <div>
+
+
+      <!-- retrocede una pagina
+           se desactiva en la primera o mientras carga -->
+      <button class="btn btn-sm btn-outline-secondary"
+              type="button"
+              [disabled]="pagina === 1 || cargando"
+              (click)="irPagina(-1)">
+        Anterior
+      </button>
+
+
+      <!-- avanza una pagina
+           se desactiva en la ultima o mientras carga -->
+      <button class="btn btn-sm btn-outline-secondary"
+              type="button"
+              [disabled]="pagina === totalPaginas || cargando"
+              (click)="irPagina(1)">
+        Siguiente
+      </button>
+
+    </div>
+
   </footer>
+
 </section>
+
 }

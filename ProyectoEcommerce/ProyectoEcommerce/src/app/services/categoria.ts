@@ -7,21 +7,20 @@ import { IRespuesta } from '../model/IAuth';
 
 const baseUrl = environment.baseUrl;
 
-/**
- * Consume los endpoints administrativos de categorías
- * y la consulta activa por familia del Cliente.
- */
+// junta el mantenimiento de categorias y la consulta activa por familia del Cliente
 @Injectable({ providedIn: 'root' })
 export class CategoriaService {
 
   private http = inject(HttpClient);
 
+  // trae todas las categorias para administracion, incluida UrlImagen
   listar(): Observable<IRespuesta<ICategoria[]>> {
     return this.http.get<IRespuesta<ICategoria[]>>(
       `${baseUrl}/Categoria/Listar`
     );
   }
 
+  // limita la lista administrativa a una familia
   listarPorFamilia(
     familiaId: number
   ): Observable<IRespuesta<ICategoria[]>> {
@@ -30,6 +29,7 @@ export class CategoriaService {
     );
   }
 
+  // trae las categorias activas que alimentan las tarjetas del Cliente
   listarClientePorFamilia(
     familiaId: number
   ): Observable<IRespuesta<ICategoria[]>> {
@@ -57,6 +57,7 @@ export class CategoriaService {
     );
   }
 
+  // guarda primero los datos y devuelve el ID necesario para subir la imagen
   insertar(
     datos: ICategoria
   ): Observable<IRespuesta<ICategoria>> {
@@ -75,7 +76,7 @@ export class CategoriaService {
     );
   }
 
-  // Sube o cambia la imagen de una categoría.
+  // sube o cambia la imagen despues de que la categoria ya tiene ID
   subirImagen(
     categoriaId: number,
     archivo: File
@@ -83,6 +84,7 @@ export class CategoriaService {
 
     const formData = new FormData();
 
+    // FormData manda el archivo como multipart/form-data al controller
     formData.append(
       'archivo',
       archivo

@@ -2,9 +2,9 @@ using ProyectoEcommerce.Dominio.EntidadesTipadas;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN;
 
-/// <summary>Define la generación en memoria del documento PDF de una factura.</summary>
+// recibe los datos historicos de una compra y devuelve el PDF en memoria
 public interface IFacturaLN
 {
-    /// <summary>Genera los bytes del PDF a partir de los datos históricos de la orden.</summary>
+    // el arreglo de bytes despues se puede guardar en disco o mandar en la respuesta HTTP
     byte[] Generar(TFacturaDatos factura);
 }

@@ -8,10 +8,8 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 {
-    /// <summary>
-    /// Implementación genérica de acceso a datos para las entidades administradas por Entity Framework.
-    /// </summary>
-    /// <typeparam name="TEntity">Tipo de entidad persistida.</typeparam>
+    // este repositorio tiene las operaciones comunes de la BD
+    // TEntity cambia por FamiliaProducto, Categoria, Producto o la entidad que se necesite
     public class RepositorioAD<TEntity> : IRepositorioAD<TEntity> where TEntity : class
     {
 
@@ -25,6 +23,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
         {
 
+            // recibe el mismo contexto que guarda la unidad de trabajo
             this._context = context;
 
         }
@@ -34,6 +33,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         #endregion#region Métodos Públicos
 
 
+        // recibe una entidad nueva, la agrega al contexto y devuelve la misma entidad con su ID
         public async Task<Respuesta<TEntity>> InsertarAsync(TEntity objEntidad)
 
         {
@@ -43,6 +43,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
             try
             {
 
+                // Set escoge la tabla que corresponde al tipo TEntity
                 await _context.Set<TEntity>().AddAsync(objEntidad);
 
                 await _context.SaveChangesAsync();
@@ -66,6 +67,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         }
 
 
+        // marca toda la entidad como modificada y guarda sus valores actuales en la BD
         public async Task<Respuesta<TEntity>> ModificarAsync(TEntity objEntidad)
 
         {
@@ -75,6 +77,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
             try
             {
 
+                // Update le avisa a Entity Framework que debe crear un UPDATE para esta entidad
                 _context.Set<TEntity>().Update(objEntidad);
 
                 await _context.SaveChangesAsync();
@@ -98,6 +101,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         }
 
 
+        // borra fisicamente una entidad, aunque varias LN usan desactivacion en vez de llamar este metodo
         public async Task<Respuesta<bool>> EliminarAsync(TEntity objEntidad)
 
         {
@@ -107,6 +111,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
             try
             {
 
+                // este estado hace que SaveChanges mande un DELETE a SQL Server
                 _context.Entry(objEntidad).State = EntityState.Deleted;
 
                 await _context.SaveChangesAsync();
@@ -130,6 +135,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         }
 
 
+        // trae todos los registros y opcionalmente las relaciones indicadas en objIncludes
         public async Task<Respuesta<IEnumerable<TEntity>>> ListarAsync(List<string>? objIncludes = null)
 
         {
@@ -139,6 +145,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
             try
             {
 
+                // IQueryable va armando la consulta sin ejecutarla todavia
                 IQueryable<TEntity> objPreconsulta = _context.Set<TEntity>();
 
 
@@ -146,11 +153,13 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
                 {
 
+                    // Include agrega las tablas relacionadas que la LN necesita en la respuesta
                     objIncludes.ForEach(x => objPreconsulta = objPreconsulta.Include(x));
 
                 }
 
 
+                // ToListAsync ejecuta la consulta en SQL y trae todos los resultados
                 objRespuesta.Data = await objPreconsulta.ToListAsync();
 
             }
@@ -169,7 +178,9 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
         }
 
-        public async Task<Respuesta<IEnumerable<TEntity>>> BuscarAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null)
+        // recibe una condicion como x => x.Activo y devuelve solo los registros que la cumplen
+        public async Task<Respuesta<IEnumerable<TEntity>>> 
+        BuscarAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null)
 
         {
 
@@ -190,6 +201,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
                 }
 
 
+                // Where convierte el predicado recibido en el filtro WHERE de SQL
                 objRespuesta.Data = await objPreconsulta.Where(objPredicado).ToListAsync();
 
             }
@@ -209,6 +221,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         }
 
 
+        // filtra y ordena en SQL, luego trae solamente el pedazo que pertenece a la pagina pedida
         public async Task<Respuesta<IEnumerable<TEntity>>> BuscarPaginadoAsync(
             Expression<Func<TEntity, bool>> objPredicado,
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> ordenar,
@@ -225,8 +238,9 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
                     objIncludes.ForEach(x => consulta = consulta.Include(x));
                 }
 
-                // El filtro, orden y paginación se mantienen en IQueryable para ejecutarse en SQL Server.
+                // mientras siga como IQueryable el filtro y la paginacion se ejecutan en SQL Server
                 consulta = consulta.Where(objPredicado);
+                // Skip salta los registros de paginas anteriores y Take limita cuantos trae
                 respuesta.Data = await ordenar(consulta)
                     .Skip(Math.Max(0, omitir))
                     .Take(Math.Max(1, tomar))
@@ -241,7 +255,9 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         }
 
 
-        public async Task<Respuesta<TEntity>> ObtenerEntidadAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null)
+        // busca un solo registro con la condicion recibida y devuelve null cuando no encuentra ninguno
+        public async Task<Respuesta<TEntity>> 
+        ObtenerEntidadAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null)
 
         {
 
@@ -262,6 +278,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
                 }
 
 
+                // FirstOrDefaultAsync trae el primero y devuelve null si la consulta quedo vacia
                 objRespuesta.Data = await objPreconsulta.Where(objPredicado).FirstOrDefaultAsync();
 
             }
@@ -280,7 +297,9 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
         }
 
-        public async Task<Respuesta<int?>> ContarAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null)
+        // cuenta en la BD cuantos registros cumplen la condicion sin traer todas las filas a memoria
+        public async Task<Respuesta<int?>>
+        ContarAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null)
         {
             var respuesta = new Respuesta<int?>();
             try

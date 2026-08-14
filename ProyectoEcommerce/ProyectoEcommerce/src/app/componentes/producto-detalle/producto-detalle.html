@@ -1,58 +1,469 @@
-<section class="detail-page">
-  <a class="back-link" [routerLink]="rutaRegreso">← {{ esCliente && producto ? 'Volver a la categoría' : 'Volver a productos' }}</a>
+<!-- esta pagina muestra el detalle completo de un producto
+     incluye galeria precio descuento disponibilidad carrito y datos administrativos -->
 
+<section class="detail-page">
+
+
+  <!-- ========================= VOLVER ========================= -->
+  <!-- usa la ruta que preparo el componente
+       si es Cliente y existe producto cambia tambien el texto -->
+  <a class="back-link"
+     [routerLink]="rutaRegreso">
+    ← {{ esCliente && producto ? 'Volver a la categoría' : 'Volver a productos' }}
+  </a>
+
+
+  <!-- ========================= CARGANDO ========================= -->
+  <!-- mientras se esta esperando la informacion del producto -->
   @if (cargando) {
-    <div class="state-panel" role="status"><span class="spinner-border" aria-hidden="true"></span><strong>Cargando detalle…</strong></div>
-  } @else if (error || !producto) {
-    <div class="state-panel error" role="alert"><span aria-hidden="true">!</span><strong>{{ error || 'Producto no disponible.' }}</strong><a class="btn btn-outline-light" routerLink="/productos">Regresar al catálogo</a></div>
-  } @else {
-    <article class="detail-grid">
-      <div class="gallery-column">
-        <app-producto-carrusel [imagenes]="imagenes" [imagenPrincipal]="producto.imagenPrincipal" [textoAlternativo]="producto.nombre" [cantidadVisible]="3" />
+
+  <div class="state-panel"
+       role="status">
+
+    <span class="spinner-border"
+          aria-hidden="true">
+    </span>
+
+    <strong>
+      Cargando detalle…
+    </strong>
+
+  </div>
+
+  }
+
+
+  <!-- ========================= ERROR O PRODUCTO NO DISPONIBLE ========================= -->
+  <!-- entra aqui si ocurrio un error o si no se obtuvo ningun producto -->
+  @else if (error || !producto) {
+
+  <div class="state-panel error"
+       role="alert">
+
+    <span aria-hidden="true">
+      !
+    </span>
+
+    <!-- si existe un error muestra ese mensaje
+         si no usa el mensaje por defecto -->
+    <strong>
+      {{ error || 'Producto no disponible.' }}
+    </strong>
+
+    <a class="btn btn-outline-light"
+       routerLink="/productos">
+      Regresar al catálogo
+    </a>
+
+  </div>
+
+  }
+
+
+  <!-- ========================= DETALLE DEL PRODUCTO ========================= -->
+  @else {
+
+  <article class="detail-grid">
+
+
+    <!-- ========================= GALERIA ========================= -->
+
+    <div class="gallery-column">
+
+      <!-- manda al carrusel las imagenes del producto
+           tambien pasa la imagen principal el nombre y cuantas miniaturas mostrar -->
+      <app-producto-carrusel [imagenes]="imagenes"
+                             [imagenPrincipal]="producto.imagenPrincipal"
+                             [textoAlternativo]="producto.nombre"
+                             [cantidadVisible]="3" />
+
+    </div>
+
+
+    <!-- ========================= INFORMACION ========================= -->
+
+    <div class="info-column">
+
+
+      <!-- ========================= ETIQUETAS ========================= -->
+
+      <div class="badges">
+
+        <!-- familia del producto -->
+        <span>
+          {{ producto.familiaNombre }}
+        </span>
+
+        <!-- categoria del producto -->
+        <span>
+          {{ producto.categoriaNombre }}
+        </span>
+
+
+        <!-- el estado activo o inactivo solamente se muestra al Admin -->
+        @if (esAdmin) {
+
+        <span [class.inactive]="producto.activo === false">
+          {{ producto.activo ? 'Activo' : 'Inactivo' }}
+        </span>
+
+        }
+
       </div>
 
-      <div class="info-column">
-        <div class="badges"><span>{{ producto.familiaNombre }}</span><span>{{ producto.categoriaNombre }}</span>@if (esAdmin) { <span [class.inactive]="producto.activo === false">{{ producto.activo ? 'Activo' : 'Inactivo' }}</span> }</div>
-        <h1>{{ producto.nombre }}</h1>
-        <p class="description">{{ producto.descripcion || 'Este producto no tiene una descripción registrada.' }}</p>
-        @if (producto.descuento.tieneDescuento) {
-          <div class="detail-price">
-            <span>Antes <del>{{ producto.descuento.precioOriginal | currency:'CRC':'symbol':'1.2-2' }}</del></span>
-            <strong>Ahora {{ producto.descuento.precioFinal | currency:'CRC':'symbol':'1.2-2' }}</strong>
-            <em>{{ producto.descuento.tipoDescuento === 'PROMOCIONAL' ? 'PROMO ' : '' }}-{{ producto.descuento.porcentaje }}%</em>
-          </div>
-        } @else {
-          <strong class="price">{{ producto.precioVenta | currency:'CRC':'symbol':'1.2-2' }}</strong>
-        }
-        <div class="availability" [class.available]="producto.estadoStock === 'Disponible'" [class.low]="producto.estadoStock === 'Stock bajo'" [class.out]="producto.estadoStock === 'Agotado'"><span aria-hidden="true"></span>{{ producto.estadoStock }}</div>
-        @if (esCliente) {
-          <div class="purchase-actions"><button class="btn btn-primary" type="button" [disabled]="!producto.disponible || procesandoCarrito" (click)="agregarAlCarrito()">{{ !producto.disponible ? 'Agotado' : procesandoCarrito ? 'Agregando…' : 'Agregar al carrito' }}</button><a class="btn btn-outline-light" routerLink="/carrito">Ver carrito</a></div>
-          @if (mensajeCarrito) { <div class="cart-feedback success" role="status">{{ mensajeCarrito }}</div> }
-          @if (errorCarrito) { <div class="cart-feedback error-message" role="alert">{{ errorCarrito }}</div> }
-        }
 
-        <dl class="public-data">
-          <div><dt>Código</dt><dd>{{ producto.codigo }}</dd></div>
-          <div><dt>Familia</dt><dd>{{ producto.familiaNombre }}</dd></div>
-          <div><dt>Categoría</dt><dd>{{ producto.categoriaNombre }}</dd></div>
-          <div><dt>Impuesto</dt><dd>{{ producto.impuestoNombre }} ({{ producto.impuestoPorcentaje }}%)</dd></div>
-          <div><dt>Disponibilidad</dt><dd>{{ producto.disponible ? 'Disponible para compra' : 'No disponible' }}</dd></div>
+      <!-- ========================= NOMBRE ========================= -->
+
+      <h1>
+        {{ producto.nombre }}
+      </h1>
+
+
+      <!-- ========================= DESCRIPCION ========================= -->
+      <!-- si no existe descripcion usa el texto por defecto -->
+      <p class="description">
+        {{ producto.descripcion || 'Este producto no tiene una descripción registrada.' }}
+      </p>
+
+
+      <!-- ========================= PRECIO ========================= -->
+      <!-- si tiene descuento muestra precio anterior precio final y porcentaje -->
+      @if (producto.descuento.tieneDescuento) {
+
+      <div class="detail-price">
+
+        <!-- del muestra el precio anterior tachado -->
+        <span>
+          Antes
+          <del>
+            {{
+ producto.descuento.precioOriginal
+                  | currency:'CRC':'symbol':'1.2-2'
+            }}
+          </del>
+        </span>
+
+
+        <!-- precio despues de aplicar el descuento -->
+        <strong>
+          Ahora
+          {{
+ producto.descuento.precioFinal
+                | currency:'CRC':'symbol':'1.2-2'
+          }}
+        </strong>
+
+
+        <!-- si el descuento es promocional agrega PROMO antes del porcentaje -->
+        <em>
+          {{
+ producto.descuento.tipoDescuento === 'PROMOCIONAL'
+                ? 'PROMO '
+                : ''
+          }}-{{ producto.descuento.porcentaje }}%
+        </em>
+
+      </div>
+
+      }
+
+
+      <!-- si no tiene descuento muestra el precio normal -->
+      @else {
+
+      <strong class="price">
+        {{
+ producto.precioVenta
+              | currency:'CRC':'symbol':'1.2-2'
+        }}
+      </strong>
+
+      }
+
+
+      <!-- ========================= DISPONIBILIDAD ========================= -->
+      <!-- agrega una clase distinta dependiendo del estado del stock -->
+      <div class="availability"
+           [class.available]="producto.estadoStock === 'Disponible'"
+           [class.low]="producto.estadoStock === 'Stock bajo'"
+           [class.out]="producto.estadoStock === 'Agotado'">
+
+        <!-- este span es el punto de color que usa el CSS -->
+        <span aria-hidden="true">
+        </span>
+
+        {{ producto.estadoStock }}
+
+      </div>
+
+
+      <!-- ========================= ACCIONES DEL CLIENTE ========================= -->
+      <!-- estas opciones solamente aparecen para el Cliente -->
+      @if (esCliente) {
+
+      <div class="purchase-actions">
+
+
+        <!-- se bloquea si el producto no esta disponible
+             o si ya se esta procesando la accion del carrito -->
+        <button class="btn btn-primary"
+                type="button"
+                [disabled]="!producto.disponible || procesandoCarrito"
+                (click)="agregarAlCarrito()">
+
+          <!-- cambia el texto segun el estado actual -->
+          {{
+ !producto.disponible
+                ? 'Agotado'
+                : procesandoCarrito
+                  ? 'Agregando…'
+                  : 'Agregar al carrito'
+          }}
+
+        </button>
+
+
+        <!-- abre directamente el carrito -->
+        <a class="btn btn-outline-light"
+           routerLink="/carrito">
+          Ver carrito
+        </a>
+
+      </div>
+
+
+      <!-- ========================= MENSAJE DEL CARRITO ========================= -->
+      <!-- aparece cuando la operacion del carrito sale bien -->
+      @if (mensajeCarrito) {
+
+      <div class="cart-feedback success"
+           role="status">
+        {{ mensajeCarrito }}
+      </div>
+
+      }
+
+
+      <!-- aparece si ocurre un error con el carrito -->
+      @if (errorCarrito) {
+
+      <div class="cart-feedback error-message"
+           role="alert">
+        {{ errorCarrito }}
+      </div>
+
+      }
+
+      }
+
+
+      <!-- ========================================================= -->
+      <!-- ================= DATOS PUBLICOS ======================== -->
+      <!-- ========================================================= -->
+      <!-- informacion del producto que se puede mostrar normalmente -->
+      <dl class="public-data">
+
+
+        <!-- ========================= CODIGO ========================= -->
+
+        <div>
+
+          <dt>
+            Código
+          </dt>
+
+          <dd>
+            {{ producto.codigo }}
+          </dd>
+
+        </div>
+
+
+        <!-- ========================= FAMILIA ========================= -->
+
+        <div>
+
+          <dt>
+            Familia
+          </dt>
+
+          <dd>
+            {{ producto.familiaNombre }}
+          </dd>
+
+        </div>
+
+
+        <!-- ========================= CATEGORIA ========================= -->
+
+        <div>
+
+          <dt>
+            Categoría
+          </dt>
+
+          <dd>
+            {{ producto.categoriaNombre }}
+          </dd>
+
+        </div>
+
+
+        <!-- ========================= IMPUESTO ========================= -->
+
+        <div>
+
+          <dt>
+            Impuesto
+          </dt>
+
+          <dd>
+            {{ producto.impuestoNombre }} ({{ producto.impuestoPorcentaje }}%)
+          </dd>
+
+        </div>
+
+
+        <!-- ========================= DISPONIBILIDAD ========================= -->
+
+        <div>
+
+          <dt>
+            Disponibilidad
+          </dt>
+
+          <!-- cambia el texto dependiendo de producto.disponible -->
+          <dd>
+            {{ producto.disponible ? 'Disponible para compra' : 'No disponible' }}
+          </dd>
+
+        </div>
+
+      </dl>
+
+
+      <!-- ========================================================= -->
+      <!-- ================= DATOS DEL ADMIN ======================= -->
+      <!-- ========================================================= -->
+      <!-- esta informacion solamente se muestra al Administrador -->
+      @if (esAdmin) {
+
+      <section class="admin-panel">
+
+        <span class="eyebrow">
+          Datos administrativos
+        </span>
+
+
+        <dl>
+
+
+          <!-- ========================= CODIGO ========================= -->
+
+          <div>
+
+            <dt>
+              Código
+            </dt>
+
+            <dd>
+              {{ producto.codigo }}
+            </dd>
+
+          </div>
+
+
+          <!-- ========================= COSTO ========================= -->
+
+          <div>
+
+            <dt>
+              Costo
+            </dt>
+
+            <dd>
+              {{
+ producto.costo
+                    | currency:'CRC':'symbol':'1.2-2'
+              }}
+            </dd>
+
+          </div>
+
+
+          <!-- ========================= STOCK ========================= -->
+
+          <div>
+
+            <dt>
+              Stock exacto
+            </dt>
+
+            <dd>
+              {{ producto.stock }}
+            </dd>
+
+          </div>
+
+
+          <!-- ========================= STOCK MINIMO ========================= -->
+
+          <div>
+
+            <dt>
+              Stock mínimo
+            </dt>
+
+            <dd>
+              {{ producto.stockMinimo }}
+            </dd>
+
+          </div>
+
+
+          <!-- ========================= ESTADO ========================= -->
+
+          <div>
+
+            <dt>
+              Estado
+            </dt>
+
+            <dd>
+              {{ producto.activo ? 'Activo' : 'Inactivo' }}
+            </dd>
+
+          </div>
+
+
+          <!-- ========================= FECHA DE CREACION ========================= -->
+
+          <div>
+
+            <dt>
+              Fecha de creación
+            </dt>
+
+            <!-- date acomoda la fecha como dia mes año hora -->
+            <dd>
+              {{
+ producto.fechaCreacion
+                    | date:'dd/MM/yyyy HH:mm'
+              }}
+            </dd>
+
+          </div>
+
         </dl>
 
-        @if (esAdmin) {
-          <section class="admin-panel">
-            <span class="eyebrow">Datos administrativos</span>
-            <dl>
-              <div><dt>Código</dt><dd>{{ producto.codigo }}</dd></div>
-              <div><dt>Costo</dt><dd>{{ producto.costo | currency:'CRC':'symbol':'1.2-2' }}</dd></div>
-              <div><dt>Stock exacto</dt><dd>{{ producto.stock }}</dd></div>
-              <div><dt>Stock mínimo</dt><dd>{{ producto.stockMinimo }}</dd></div>
-              <div><dt>Estado</dt><dd>{{ producto.activo ? 'Activo' : 'Inactivo' }}</dd></div>
-              <div><dt>Fecha de creación</dt><dd>{{ producto.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</dd></div>
-            </dl>
-          </section>
-        }
-      </div>
-    </article>
+      </section>
+
+      }
+
+    </div>
+
+  </article>
+
   }
+
 </section>

@@ -2,10 +2,10 @@ using ProyectoEcommerce.Dominio.EntidadesTipadas;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN;
 
-/// <summary>Define el envío SMTP de una factura PDF al correo confirmado por el Cliente.</summary>
+// contrato para mandar por SMTP la factura que se genero despues de la compra
 public interface ICorreoFacturaLN
 {
-    /// <summary>Construye el mensaje de LessPrice y adjunta el archivo PDF indicado.</summary>
+    // recibe los datos de la factura y la ruta del PDF, luego devuelve si el correo salio o fallo
     Task<TResultadoCorreoFactura> EnviarAsync(
         TFacturaDatos factura,
         string rutaPdf,

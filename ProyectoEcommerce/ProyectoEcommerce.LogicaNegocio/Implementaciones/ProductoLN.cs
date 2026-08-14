@@ -10,9 +10,8 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.LogicaNegocio.Implementaciones;
 
-/// <summary>
-/// Aplica filtros de catálogo y reglas administrativas para los productos de LessPrice.
-/// </summary>
+// aqui se manejan las consultas del catalogo y el mantenimiento de productos
+// las relaciones se traen juntas para mostrar familia, categoria, impuesto e imagen principal
 public class ProductoLN : IProductoLN
 {
     private static readonly List<string> Relaciones = ["Categoria.Familia", "Impuesto", "Imagenes"];
@@ -29,9 +28,10 @@ public class ProductoLN : IProductoLN
         _descuentoLN = descuentoLN;
     }
 
-    /// <summary>Lista productos activos dentro del alcance validado de búsqueda del Cliente.</summary>
+    // recibe filtros del Cliente, revisa la ruta Familia -> Categoria y devuelve una pagina de productos activos
     public async Task<Respuesta<TPagina<TProductoCatalogo>>> ListarCatalogoAsync(TFiltroProductos filtro)
     {
+        // primero limpia y limita los filtros antes de usarlos para armar una consulta
         var validacion = NormalizarFiltro(filtro);
         if (validacion != null) return Error<TPagina<TProductoCatalogo>>(validacion);
 
@@ -41,10 +41,13 @@ public class ProductoLN : IProductoLN
             if (validacionAlcance != null)
                 return Error<TPagina<TProductoCatalogo>>(validacionAlcance);
 
+            // el predicado es la condicion completa que Entity Framework convierte a WHERE
             var predicado = ConstruirFiltro(filtro, false);
+            // cuenta todas las coincidencias para que Angular sepa cuantas paginas existen
             var total = await _unidadDeTrabajo.TProducto.ContarAsync(predicado);
             if (!string.IsNullOrEmpty(total.Error)) return Error<TPagina<TProductoCatalogo>>(Mensajes.ErrorProductos);
 
+            // Skip y Take se aplican en el repositorio para traer solo la pagina solicitada
             var pagina = await _unidadDeTrabajo.TProducto.BuscarPaginadoAsync(
                 predicado,
                 CrearOrden(filtro.Orden),
@@ -53,10 +56,12 @@ public class ProductoLN : IProductoLN
                 Relaciones);
             if (!string.IsNullOrEmpty(pagina.Error)) return Error<TPagina<TProductoCatalogo>>(Mensajes.ErrorProductos);
 
+            // convierte las entidades a los datos seguros del catalogo y luego agrega el mejor descuento
             var items = _mapper.Map<IEnumerable<TProductoCatalogo>>(pagina.Data ?? []).ToList();
             var descuentos = await _descuentoLN.ObtenerMejoresDescuentosAsync(items.Select(x => x.ProductoId));
             if (!string.IsNullOrEmpty(descuentos.Error) || descuentos.Data == null)
                 return Error<TPagina<TProductoCatalogo>>(Mensajes.ErrorProductos);
+            // TryGetValue encuentra cada descuento por ID sin recorrer la lista completa
             foreach (var item in items)
                 if (descuentos.Data.TryGetValue(item.ProductoId, out var descuento)) item.Descuento = descuento;
 
@@ -78,7 +83,7 @@ public class ProductoLN : IProductoLN
         }
     }
 
-    /// <summary>Lista productos para administración, incluyendo el filtro de estado.</summary>
+    // hace la misma paginacion para Administracion pero deja filtrar activos e inactivos
     public async Task<Respuesta<TPagina<TProducto>>> ListarAdministracionAsync(TFiltroProductos filtro)
     {
         var validacion = NormalizarFiltro(filtro);
@@ -86,6 +91,7 @@ public class ProductoLN : IProductoLN
 
         try
         {
+            // true cambia la parte del filtro que controla el estado del producto
             var predicado = ConstruirFiltro(filtro, true);
             var total = await _unidadDeTrabajo.TProducto.ContarAsync(predicado);
             if (!string.IsNullOrEmpty(total.Error)) return Error<TPagina<TProducto>>(Mensajes.ErrorProductos);
@@ -123,10 +129,12 @@ public class ProductoLN : IProductoLN
         }
     }
 
+    // trae el detalle de un producto solo si tambien estan activas su categoria y su familia
     public async Task<Respuesta<TProductoCatalogo>> ObtenerCatalogoAsync(int productoId)
     {
         try
         {
+            // la condicion protege la navegacion completa, no basta con que el producto este activo
             var respuesta = await _unidadDeTrabajo.TProducto.ObtenerEntidadAsync(
                 x => x.ProductoId == productoId && x.Activo && x.Categoria.Activo && x.Categoria.Familia.Activo,
                 Relaciones);
@@ -145,6 +153,7 @@ public class ProductoLN : IProductoLN
         }
     }
 
+    // trae un producto por ID para editarlo aunque este inactivo
     public async Task<Respuesta<TProducto>> ObtenerAdministracionAsync(int productoId)
     {
         try
@@ -167,12 +176,13 @@ public class ProductoLN : IProductoLN
         }
     }
 
-    /// <summary>Reúne familias, categorías e impuestos activos usados por las pantallas.</summary>
+    // junta familias, categorias e impuestos activos para llenar los select del formulario
     public async Task<Respuesta<TCatalogosProducto>> ListarCatalogosAsync()
     {
         try
         {
             var familias = await _unidadDeTrabajo.TFamiliaProducto.BuscarAsync(x => x.Activo);
+            // una categoria solo aparece si ella y su familia estan activas
             var categorias = await _unidadDeTrabajo.TCategoria.BuscarAsync(x => x.Activo && x.Familia.Activo, ["Familia"]);
             var impuestos = await _unidadDeTrabajo.TImpuesto.BuscarAsync(x => x.Activo);
             if (!string.IsNullOrEmpty(familias.Error) || !string.IsNullOrEmpty(categorias.Error) || !string.IsNullOrEmpty(impuestos.Error))
@@ -195,7 +205,7 @@ public class ProductoLN : IProductoLN
         }
     }
 
-    /// <summary>Crea un producto válido y deja trazabilidad en la bitácora.</summary>
+    // recibe el formulario, valida relaciones y codigo unico, guarda y registra al Administrador
     public async Task<Respuesta<TProducto>> InsertarAsync(TProducto datos, int administradorId)
     {
         try
@@ -204,6 +214,7 @@ public class ProductoLN : IProductoLN
             var validacion = await ValidarAsync(datos, 0);
             if (validacion != null) return Error<TProducto>(validacion);
 
+            // AutoMapper copia los campos editables y la fecha se pone aqui desde el servidor
             var entidad = _mapper.Map<Producto>(datos);
             entidad.FechaCreacion = DateTime.UtcNow;
             var insercion = await _unidadDeTrabajo.TProducto.InsertarAsync(entidad);
@@ -220,6 +231,7 @@ public class ProductoLN : IProductoLN
         }
     }
 
+    // busca el producto, valida los datos nuevos y los copia sobre la entidad que ya existe
     public async Task<Respuesta<TProducto>> ModificarAsync(TProducto datos, int administradorId)
     {
         try
@@ -231,6 +243,7 @@ public class ProductoLN : IProductoLN
             var validacion = await ValidarAsync(datos, datos.ProductoId);
             if (validacion != null) return Error<TProducto>(validacion);
 
+            // esta version de Map actualiza la entidad sin tocar ID, fecha ni navegaciones ignoradas
             _mapper.Map(datos, actual.Data);
             var actualizacion = await _unidadDeTrabajo.TProducto.ModificarAsync(actual.Data);
             if (actualizacion.Data == null || !string.IsNullOrEmpty(actualizacion.Error))
@@ -246,6 +259,7 @@ public class ProductoLN : IProductoLN
         }
     }
 
+    // activa o desactiva sin borrar el producto ni su historial
     public async Task<Respuesta<TProducto>> CambiarEstadoAsync(int productoId, bool activo, int administradorId)
     {
         try
@@ -268,7 +282,8 @@ public class ProductoLN : IProductoLN
         }
     }
 
-    /// <summary>Valida datos, relaciones activas y unicidad del código del producto.</summary>
+    // revisa textos, numeros, categoria, impuesto y codigo unico
+    // devuelve el primer mensaje encontrado o null cuando se puede guardar
     private async Task<string?> ValidarAsync(TProducto datos, int productoId)
     {
         if (string.IsNullOrWhiteSpace(datos.Codigo)) return Mensajes.CodigoProductoObligatorio;
@@ -278,18 +293,18 @@ public class ProductoLN : IProductoLN
         if (datos.PrecioVenta < 0 || datos.Costo < 0 || datos.Stock < 0 || datos.StockMinimo < 0)
             return Mensajes.ValoresProductoInvalidos;
 
+        // no deja asociar un producto nuevo a catalogos desactivados
         var categoria = await _unidadDeTrabajo.TCategoria.ObtenerEntidadAsync(x => x.CategoriaId == datos.CategoriaId && x.Activo);
         if (categoria.Data == null) return Mensajes.CategoriaProductoNoEncontrada;
         var impuesto = await _unidadDeTrabajo.TImpuesto.ObtenerEntidadAsync(x => x.ImpuestoId == datos.ImpuestoId && x.Activo);
         if (impuesto.Data == null) return Mensajes.ImpuestoProductoNoEncontrado;
+        // excluye el ID actual para que al editar se pueda conservar el mismo codigo
         var duplicado = await _unidadDeTrabajo.TProducto.ObtenerEntidadAsync(
             x => x.Codigo == datos.Codigo && x.ProductoId != productoId);
         return duplicado.Data != null ? Mensajes.CodigoProductoDuplicado : null;
     }
 
-    /// <summary>
-    /// Confirma en el servidor que familia y categoría existen, están activas y mantienen su relación real.
-    /// </summary>
+    // confirma en el servidor que familia y categoria existen, estan activas y si pertenecen entre si
     private async Task<string?> ValidarAlcanceCatalogoAsync(TFiltroProductos filtro)
     {
         if (filtro.CategoriaId.HasValue)
@@ -298,6 +313,7 @@ public class ProductoLN : IProductoLN
                 x => x.CategoriaId == filtro.CategoriaId.Value && x.Activo && x.Familia.Activo);
             if (!string.IsNullOrEmpty(categoria.Error)) return Mensajes.ErrorProductos;
             if (categoria.Data == null) return Mensajes.CategoriaProductoNoEncontrada;
+            // evita consultar una categoria usando el ID de otra familia en la URL
             if (filtro.FamiliaId.HasValue && categoria.Data.FamiliaId != filtro.FamiliaId.Value)
                 return Mensajes.CategoriaProductoNoEncontrada;
             return null;
@@ -314,12 +330,13 @@ public class ProductoLN : IProductoLN
         return null;
     }
 
-    // La consulta de Cliente obliga a que producto, categoría y familia estén activos;
-    // la administrativa permite filtrar explícitamente por estado.
+    // para Cliente obliga a que producto, categoria y familia esten activos
+    // para Administracion deja escoger el estado y conserva los demas filtros
     private static Expression<Func<Producto, bool>> ConstruirFiltro(TFiltroProductos filtro, bool administracion)
     {
         var texto = filtro.Texto ?? string.Empty;
         var disponibilidad = filtro.Disponibilidad ?? string.Empty;
+        // esta expresion todavia no consulta la BD, Entity Framework la traduce cuando se usa
         return x =>
             (administracion
                 ? (!filtro.Activo.HasValue || x.Activo == filtro.Activo.Value)
@@ -335,6 +352,8 @@ public class ProductoLN : IProductoLN
              (disponibilidad == "agotado" && x.Stock == 0));
     }
 
+    // convierte la opcion del selector en el OrderBy que se ejecutara en SQL
+    // ThenBy ProductoId desempata para que un registro no salte entre paginas
     private static Func<IQueryable<Producto>, IOrderedQueryable<Producto>> CrearOrden(string? orden) => orden switch
     {
         "nombre_desc" => x => x.OrderByDescending(p => p.Nombre).ThenBy(p => p.ProductoId),
@@ -345,12 +364,14 @@ public class ProductoLN : IProductoLN
         _ => x => x.OrderBy(p => p.Nombre).ThenBy(p => p.ProductoId)
     };
 
+    // limpia textos, arregla pagina y tamaño y rechaza rangos de precio o estados invalidos
     private static string? NormalizarFiltro(TFiltroProductos filtro)
     {
         filtro.Texto = filtro.Texto?.Trim();
         filtro.Disponibilidad = filtro.Disponibilidad?.Trim().ToLowerInvariant();
         filtro.Orden = filtro.Orden?.Trim().ToLowerInvariant();
         filtro.Pagina = Math.Max(1, filtro.Pagina);
+        // solo permite los tamaños que muestra la interfaz
         if (!new[] { 25, 50, 75, 100 }.Contains(filtro.TamanoPagina)) filtro.TamanoPagina = 25;
         if (filtro.PrecioMinimo < 0 || filtro.PrecioMaximo < 0) return Mensajes.ValoresProductoInvalidos;
         if (filtro.PrecioMinimo.HasValue && filtro.PrecioMaximo.HasValue && filtro.PrecioMaximo < filtro.PrecioMinimo)
@@ -360,6 +381,7 @@ public class ProductoLN : IProductoLN
         return null;
     }
 
+    // guarda cual Administrador hizo el cambio y sobre cual producto
     private async Task RegistrarBitacora(int usuarioId, string accion, int productoId, string? detalle)
     {
         var respuesta = await _unidadDeTrabajo.TBitacoraSistema.InsertarAsync(new BitacoraSistema
@@ -375,6 +397,7 @@ public class ProductoLN : IProductoLN
             _logger.LogWarning("No fue posible registrar la bitácora del producto: {Error}", respuesta.Error);
     }
 
+    // quita espacios y convierte una descripcion vacia en null antes de validar o guardar
     private static void Limpiar(TProducto datos)
     {
         datos.Codigo = (datos.Codigo ?? string.Empty).Trim();

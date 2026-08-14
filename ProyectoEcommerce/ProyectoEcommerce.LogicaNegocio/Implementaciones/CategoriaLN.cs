@@ -9,9 +9,8 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
 {
-    /// <summary>
-    /// Gestiona categorías, valida su familia y aplica desactivación lógica.
-    /// </summary>
+    // aqui se revisan las reglas de categorias antes de hablar con el repositorio
+    // cada categoria debe pertenecer a una familia real y su nombre no se repite dentro de ella
     public class CategoriaLN : ICategoriaLN
     {
         private IUnidadTrabajoEF _unidadDeTrabajo { get; set; }
@@ -25,16 +24,20 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             _mapper = mapper;
         }
 
-        /// <summary>Crea una categoría sin duplicar su nombre dentro de la misma familia.</summary>
+        // recibe la categoria del formulario, limpia los textos y revisa nombre y familia
+        // devuelve la categoria guardada con su ID y con UrlImagen cuando venga informada
         public async Task<Respuesta<TCategoria>> InsertarAsync(TCategoria datos)
         {
             var resultado = new Respuesta<TCategoria>();
             try
             {
                 Limpiar(datos);
+                // ValidarAsync tambien consulta que la familia seleccionada exista
                 var validacion = await ValidarAsync(datos);
                 if (validacion != null) return Error<TCategoria>(validacion);
-                var existente = await _unidadDeTrabajo.TCategoria.ObtenerEntidadAsync(x => x.FamiliaId == datos.FamiliaId && x.Nombre == datos.Nombre);
+                // el mismo nombre si puede existir en otra familia, por eso compara los dos datos
+                var existente = await _unidadDeTrabajo.TCategoria.ObtenerEntidadAsync(
+                x => x.FamiliaId == datos.FamiliaId && x.Nombre == datos.Nombre);
                 if (existente.Data != null)
                 {
                     resultado.Data = _mapper.Map<TCategoria>(existente.Data);
@@ -42,6 +45,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
                     resultado.Success = false;
                     return resultado;
                 }
+                // AutoMapper convierte el DTO en entidad y por nombre tambien copia UrlImagen
                 var entidad = _mapper.Map<Categoria>(datos);
                 var resp = await _unidadDeTrabajo.TCategoria.InsertarAsync(entidad);
                 _unidadDeTrabajo.Completar();
@@ -56,6 +60,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // lista todas las categorias para administracion, incluidas las desactivadas
         public async Task<Respuesta<IEnumerable<TCategoria>>> ListarAsync()
         {
             var resultado = new Respuesta<IEnumerable<TCategoria>>();
@@ -73,6 +78,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // actualiza una categoria despues de revisar que exista, que la familia sea valida y que no haya duplicado
         public async Task<Respuesta<TCategoria>> ModificarAsync(TCategoria datos)
         {
             var resultado = new Respuesta<TCategoria>();
@@ -81,15 +87,18 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
                 Limpiar(datos);
                 var validacion = await ValidarAsync(datos);
                 if (validacion != null) return Error<TCategoria>(validacion);
+                // FirstOrDefaultAsync dentro del repositorio devuelve null si el ID ya no existe
                 var actual = await _unidadDeTrabajo.TCategoria.ObtenerEntidadAsync(x => x.CategoriaId == datos.CategoriaId);
                 if (actual.Data == null)
                 {
                     resultado.Error = Mensajes.RegistroNoExisteModificar;
                     return resultado;
                 }
+                // excluye el mismo ID para que conservar el nombre no se marque como duplicado
                 var duplicado = await _unidadDeTrabajo.TCategoria.ObtenerEntidadAsync(
                     x => x.FamiliaId == datos.FamiliaId && x.Nombre == datos.Nombre && x.CategoriaId != datos.CategoriaId);
                 if (duplicado.Data != null) return Error<TCategoria>(Mensajes.RegistroDuplicado);
+                // copia los cambios sobre la entidad encontrada, incluida una UrlImagen null si se quito
                 _mapper.Map(datos, actual.Data);
                 var resp = await _unidadDeTrabajo.TCategoria.ModificarAsync(actual.Data);
                 _unidadDeTrabajo.Completar();
@@ -104,7 +113,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
-        /// <summary>Desactiva la categoría para conservar productos y referencias existentes.</summary>
+        // desactiva la categoria sin borrar los productos que dependen de ella
         public async Task<Respuesta<bool>> EliminarAsync(TCategoria datos)
         {
             var resultado = new Respuesta<bool>();
@@ -131,12 +140,14 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // busca por una parte del nombre y devuelve todas las coincidencias
         public async Task<Respuesta<IEnumerable<TCategoria>>> BuscarAsync(TCategoria datos)
         {
             var resultado = new Respuesta<IEnumerable<TCategoria>>();
             try
             {
                 var nombre = datos.Nombre ?? string.Empty;
+                // Contains termina como una busqueda parcial en SQL Server
                 var resp = await _unidadDeTrabajo.TCategoria.BuscarAsync(x => x.Nombre.Contains(nombre));
                 resultado.Data = _mapper.Map<IEnumerable<TCategoria>>(resp.Data);
             }
@@ -149,6 +160,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // trae una categoria por ID, tambien se usa antes de asociarle una imagen
         public async Task<Respuesta<TCategoria>> ObtenerAsync(TCategoria datos)
         {
             var resultado = new Respuesta<TCategoria>();
@@ -171,6 +183,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // recibe una familia y trae todas sus categorias para la pantalla administrativa
         public async Task<Respuesta<IEnumerable<TCategoria>>> ListarPorFamiliaAsync(int familiaId)
         {
             if (familiaId <= 0) return Error<IEnumerable<TCategoria>>(Mensajes.FamiliaObligatoria);
@@ -178,6 +191,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             {
                 var familia = await _unidadDeTrabajo.TFamiliaProducto.ObtenerEntidadAsync(x => x.FamiliaId == familiaId);
                 if (familia.Data == null) return Error<IEnumerable<TCategoria>>(Mensajes.FamiliaNoEncontrada);
+                // este filtro se ejecuta en SQL y evita traer categorias de otras familias
                 var respuesta = await _unidadDeTrabajo.TCategoria.BuscarAsync(x => x.FamiliaId == familiaId);
                 if (!string.IsNullOrEmpty(respuesta.Error)) return Error<IEnumerable<TCategoria>>(Mensajes.ErrorOperacion);
                 return new Respuesta<IEnumerable<TCategoria>>
@@ -192,7 +206,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             }
         }
 
-        /// <summary>Lista categorías activas solo cuando la familia solicitada también está activa.</summary>
+        // para el Cliente primero revisa que la familia este activa y luego trae solo sus categorias activas
         public async Task<Respuesta<IEnumerable<TCategoria>>> ListarClientePorFamiliaAsync(int familiaId)
         {
             if (familiaId <= 0) return Error<IEnumerable<TCategoria>>(Mensajes.FamiliaObligatoria);
@@ -209,6 +223,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
 
                 return new Respuesta<IEnumerable<TCategoria>>
                 {
+                    // ?? [] usa una lista vacia si el repositorio no devolvio datos
                     Data = _mapper.Map<IEnumerable<TCategoria>>(respuesta.Data ?? [])
                         .OrderBy(x => x.Nombre)
                 };
@@ -220,6 +235,8 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             }
         }
 
+        // revisa los campos obligatorios y devuelve el primer mensaje encontrado
+        // si todo esta bien devuelve null para que el proceso pueda seguir
         private async Task<string?> ValidarAsync(TCategoria datos)
         {
             if (string.IsNullOrWhiteSpace(datos.Nombre)) return Mensajes.NombreObligatorio;
@@ -228,6 +245,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return familia.Data == null ? Mensajes.FamiliaNoEncontrada : null;
         }
 
+        // quita espacios sobrantes antes de comparar o guardar los textos
         private static void Limpiar(TCategoria datos)
         {
             datos.Nombre = (datos.Nombre ?? string.Empty).Trim();

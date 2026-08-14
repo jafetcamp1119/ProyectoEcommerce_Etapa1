@@ -1,6 +1,5 @@
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Modelo administrativo básico de una orden.</summary>
 public class TOrden
 {
     public int OrdenId { get; set; }
