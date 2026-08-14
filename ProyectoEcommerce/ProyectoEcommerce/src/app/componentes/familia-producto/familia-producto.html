@@ -1,108 +1,368 @@
+<!-- esta pagina permite administrar las familias de productos
+     aqui se pueden crear editar activar desactivar y asignar una imagen opcional -->
 <section class="catalog-page">
+
+
+  <!-- ========================= ENCABEZADO ========================= -->
+
   <header class="page-heading">
+
     <div>
-      <span class="eyebrow">Catálogo</span>
-      <h1>Familias de producto</h1>
-      <p>Organiza el catálogo y entra a las categorías de cada familia.</p>
+
+      <span class="eyebrow">
+        Catálogo
+      </span>
+
+      <h1>
+        Familias de producto
+      </h1>
+
+      <p>
+        Organiza el catálogo y entra a las categorías de cada familia.
+      </p>
+
     </div>
-    <button class="btn btn-primary" type="button" (click)="nuevo()">Nueva familia</button>
+
+    <!-- abre el formulario limpio para crear una familia nueva -->
+    <button class="btn btn-primary"
+            type="button"
+            (click)="nuevo()">
+      Nueva familia
+    </button>
+
   </header>
 
-  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
 
+  <!-- ========================= MENSAJES ========================= -->
+  <!-- muestra un mensaje cuando una operacion termina correctamente -->
+  @if (mensaje) {
+
+  <div class="alert alert-success"
+       role="status">
+    {{ mensaje }}
+  </div>
+
+  }
+
+  <!-- muestra cualquier error que ocurra -->
+  @if (error) {
+
+  <div class="alert alert-danger"
+       role="alert">
+    {{ error }}
+  </div>
+
+  }
+
+
+  <!-- ========================= FORMULARIO ========================= -->
+  <!-- el formulario solamente aparece cuando mostrarFormulario es true -->
   @if (mostrarFormulario) {
-    <form class="editor card" [formGroup]="formulario" (ngSubmit)="guardar()">
-      <div class="card-body">
-        <div class="editor-title">
-          <h2>{{ editandoId ? 'Editar familia' : 'Nueva familia' }}</h2>
-          <button class="btn-close" type="button" aria-label="Cerrar" (click)="cancelar()"></button>
-        </div>
-        <div class="form-grid">
-          <div>
-            <label class="form-label" for="familia-nombre">Nombre</label>
-            <input id="familia-nombre" class="form-control" formControlName="nombre" maxlength="80">
-            @if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) {
-            <small class="text-danger">El nombre es obligatorio.</small>
-            }
-          </div>
-          <div>
-            <label class="form-label" for="familia-descripcion">Descripción</label>
-            <input id="familia-descripcion" class="form-control" formControlName="descripcion" maxlength="250">
-          </div>
-        </div>
-        <div class="familia-imagen">
-          <label class="form-label" for="familia-imagen">Imagen de la familia</label>
 
-          <input id="familia-imagen"
+  <!-- [formGroup] conecta este formulario con formulario en TypeScript
+       ngSubmit llama guardar cuando se envia -->
+  <form class="editor card"
+        [formGroup]="formulario"
+        (ngSubmit)="guardar()">
+
+    <div class="card-body">
+
+
+      <!-- ========================= TITULO DEL FORMULARIO ========================= -->
+
+      <div class="editor-title">
+
+        <!-- cambia el titulo dependiendo de si se esta creando o editando -->
+        <h2>
+          {{ editandoId ? 'Editar familia' : 'Nueva familia' }}
+        </h2>
+
+        <!-- cierra el formulario sin guardar -->
+        <button class="btn-close"
+                type="button"
+                aria-label="Cerrar"
+                (click)="cancelar()">
+        </button>
+
+      </div>
+
+
+      <!-- ========================= CAMPOS ========================= -->
+
+      <div class="form-grid">
+
+
+        <!-- ========================= NOMBRE ========================= -->
+
+        <div>
+
+          <label class="form-label"
+                 for="familia-nombre">
+            Nombre
+          </label>
+
+          <!-- formControlName conecta este input con nombre dentro del formulario -->
+          <input id="familia-nombre"
                  class="form-control"
-                 type="file"
-                 accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                 (change)="seleccionarImagen($event)">
+                 formControlName="nombre"
+                 maxlength="80">
 
-          <small class="text-muted">
-            Puedes seleccionar una imagen de hasta 5 MB.
+          <!-- muestra el error cuando el campo ya fue tocado y sigue invalido -->
+          @if (
+          formulario.controls.nombre.touched &&
+          formulario.controls.nombre.invalid
+          ) {
+
+          <small class="text-danger">
+            El nombre es obligatorio.
           </small>
 
-          @if (previsualizacionImagen) {
-          <div class="familia-imagen-preview">
-            <img [src]="previsualizacionImagen"
-                 alt="Vista previa de la familia">
-
-            <button class="btn btn-outline-danger btn-sm"
-                    type="button"
-                    (click)="quitarImagenSeleccionada()">
-              Cambiar imagen
-            </button>
-          </div>
           }
+
         </div>
-        <div class="editor-actions">
-          <button class="btn btn-outline-secondary" type="button" (click)="cancelar()">Cancelar</button>
-          <button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">
-            {{ guardando ? 'Guardando…' : 'Guardar' }}
-          </button>
+
+
+        <!-- ========================= DESCRIPCION ========================= -->
+
+        <div>
+
+          <label class="form-label"
+                 for="familia-descripcion">
+            Descripción
+          </label>
+
+          <input id="familia-descripcion"
+                 class="form-control"
+                 formControlName="descripcion"
+                 maxlength="250">
+
         </div>
+
       </div>
-    </form>
+
+
+      <!-- ========================= IMAGEN ========================= -->
+
+      <div class="familia-imagen">
+
+        <label class="form-label"
+               for="familia-imagen">
+          Imagen de la familia
+        </label>
+
+        <!-- type file permite escoger una imagen desde la computadora
+             accept limita los tipos de archivo que aparecen permitidos
+             change manda el archivo seleccionado al metodo seleccionarImagen -->
+        <input id="familia-imagen"
+               class="form-control"
+               type="file"
+               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+               (change)="seleccionarImagen($event)">
+
+        <small class="text-muted">
+          Puedes seleccionar una imagen de hasta 5 MB.
+        </small>
+
+
+        <!-- solo crea la vista previa cuando existe una imagen para mostrar -->
+        @if (previsualizacionImagen) {
+
+        <div class="familia-imagen-preview">
+
+          <!-- [src] usa la imagen que se preparo para la vista previa -->
+          <img [src]="previsualizacionImagen"
+               alt="Vista previa de la familia">
+
+          <!-- quita la imagen que estaba seleccionada en el formulario -->
+          <button class="btn btn-outline-danger btn-sm"
+                  type="button"
+                  (click)="quitarImagenSeleccionada()">
+            Quitar imagen
+          </button>
+
+        </div>
+
+        }
+
+      </div>
+
+
+      <!-- ========================= BOTONES DEL FORMULARIO ========================= -->
+
+      <div class="editor-actions">
+
+        <!-- cierra el formulario sin guardar -->
+        <button class="btn btn-outline-secondary"
+                type="button"
+                (click)="cancelar()">
+          Cancelar
+        </button>
+
+        <!-- se bloquea si el formulario tiene errores o ya existe un guardado en proceso -->
+        <button class="btn btn-primary"
+                type="submit"
+                [disabled]="formulario.invalid || guardando">
+
+          <!-- cambia el texto mientras se esta guardando -->
+          {{ guardando ? 'Guardando…' : 'Guardar' }}
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </form>
+
   }
 
+
+  <!-- ========================= ESTADOS DE CARGA ========================= -->
+  <!-- mientras la API esta trayendo las familias muestra este estado -->
   @if (cargando) {
-    <div class="state-card">Cargando familias…</div>
-  } @else if (!familias.length) {
-    <div class="state-card">Todavía no hay familias registradas.</div>
-  } @else {
-    <div class="family-grid">
-      @for (familia of familias; track familia.familiaId) {
-        <article class="family-card catalog-tile" [class.inactive]="!familia.activo">
-          <div class="family-visual catalog-tile-visual">
-            @if (familia.urlImagen) {
-            <img [src]="familia.urlImagen"
-                 [alt]="familia.nombre"
-                 class="family-image">
-            } @else {
-            <span>{{ iniciales(familia.nombre) }}</span>
-            }
-          </div>
-          <div class="family-content catalog-tile-content">
-            <div class="title-row">
-              <h2>{{ familia.nombre }}</h2>
-              <span class="badge" [class.text-bg-success]="familia.activo" [class.text-bg-secondary]="!familia.activo">
-                {{ familia.activo ? 'Activa' : 'Inactiva' }}
-              </span>
-            </div>
-            <p>{{ familia.descripcion || 'Sin descripción.' }}</p>
-            <div class="card-actions">
-              <a class="btn btn-primary btn-sm" [routerLink]="['/categorias', familia.familiaId]">Ver categorías</a>
-              <a class="btn btn-outline-primary btn-sm" routerLink="/descuentos" [queryParams]="{ tipo: 'FAMILIA', familiaId: familia.familiaId }">Descuento</a>
-              <button class="btn btn-outline-secondary btn-sm" type="button" (click)="editar(familia)">Editar</button>
-              <button class="btn btn-outline-secondary btn-sm" type="button" (click)="cambiarEstado(familia)">
-                {{ familia.activo ? 'Desactivar' : 'Activar' }}
-              </button>
-            </div>
-          </div>
-        </article>
-      }
-    </div>
+
+  <div class="state-card">
+    Cargando familias…
+  </div>
+
   }
+
+
+  <!-- si termino de cargar y no hay familias muestra este mensaje -->
+  @else if (!familias.length) {
+
+  <div class="state-card">
+    Todavía no hay familias registradas.
+  </div>
+
+  }
+
+
+  <!-- ========================= LISTA DE FAMILIAS ========================= -->
+  @else {
+
+  <!-- contiene todas las tarjetas de familias -->
+  <div class="family-grid">
+
+    <!-- recorre las familias
+         track usa familiaId para que Angular identifique cada tarjeta -->
+    @for (familia of familias; track familia.familiaId) {
+
+    <!-- si la familia esta inactiva agrega automaticamente la clase inactive -->
+    <article class="family-card catalog-tile"
+             [class.inactive]="!familia.activo">
+
+
+      <!-- ========================= IMAGEN O INICIALES ========================= -->
+
+      <div class="family-visual catalog-tile-visual">
+
+        <!-- mostrarImagen revisa si existe una imagen que se pueda enseñar -->
+        @if (mostrarImagen(familia.urlImagen)) {
+
+        <!-- si la imagen falla llama marcarImagenConError
+             para que no siga intentando mostrarla -->
+        <img [src]="familia.urlImagen"
+             [alt]="familia.nombre"
+             (error)="marcarImagenConError(familia.urlImagen)"
+             class="family-image">
+
+        }
+
+        <!-- si no hay imagen disponible muestra las iniciales de la familia -->
+        @else {
+
+        <span>
+          {{ iniciales(familia.nombre) }}
+        </span>
+
+        }
+
+      </div>
+
+
+      <!-- ========================= INFORMACION ========================= -->
+
+      <div class="family-content catalog-tile-content">
+
+
+        <!-- ========================= TITULO Y ESTADO ========================= -->
+
+        <div class="title-row">
+
+          <h2>
+            {{ familia.nombre }}
+          </h2>
+
+          <!-- cambia el color del badge dependiendo del estado -->
+          <span class="badge"
+                [class.text-bg-success]="familia.activo"
+                [class.text-bg-secondary]="!familia.activo">
+
+            {{ familia.activo ? 'Activa' : 'Inactiva' }}
+
+          </span>
+
+        </div>
+
+
+        <!-- si no existe descripcion usa Sin descripción -->
+        <p>
+          {{ familia.descripcion || 'Sin descripción.' }}
+        </p>
+
+
+        <!-- ========================= ACCIONES ========================= -->
+
+        <div class="card-actions">
+
+
+          <!-- manda a las categorias que pertenecen a esta familia -->
+          <a class="btn btn-primary btn-sm"
+             [routerLink]="['/categorias', familia.familiaId]">
+            Ver categorías
+          </a>
+
+
+          <!-- abre el modulo de descuentos
+               queryParams manda ya seleccionado el tipo FAMILIA y su id -->
+          <a class="btn btn-outline-primary btn-sm"
+             routerLink="/descuentos"
+             [queryParams]="{
+                  tipo: 'FAMILIA',
+                  familiaId: familia.familiaId
+                }">
+            Descuento
+          </a>
+
+
+          <!-- abre el formulario con los datos de esta familia -->
+          <button class="btn btn-outline-secondary btn-sm"
+                  type="button"
+                  (click)="editar(familia)">
+            Editar
+          </button>
+
+
+          <!-- cambia el estado de la familia entre activa e inactiva -->
+          <button class="btn btn-outline-secondary btn-sm"
+                  type="button"
+                  (click)="cambiarEstado(familia)">
+
+            {{ familia.activo ? 'Desactivar' : 'Activar' }}
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </article>
+
+    }
+
+  </div>
+
+  }
+
 </section>

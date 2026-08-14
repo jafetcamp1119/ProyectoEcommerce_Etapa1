@@ -4,17 +4,18 @@ using ProyectoEcommerce.Dominio.EntidadesTipadas;
 
 namespace ProyectoEcommerce.Dominio.DTO
 {
-    /// <summary>
-    /// Define la conversión entre entidades Database First y objetos tipados que viajan por la API.
-    /// </summary>
+    // aqui se le dice a AutoMapper como convertir entre las entidades de la BD y los datos de la API
     public class AutoMapperProfile : Profile
     {
         public AutoMapperProfile()
         {
+            // ReverseMap deja convertir en los dos sentidos
+            // UrlImagen pasa solo porque tiene el mismo nombre y tipo en la entidad y en el DTO
             CreateMap<TFamiliaProducto, FamiliaProducto>().ReverseMap();
             CreateMap<TCategoria, Categoria>().ReverseMap();
             CreateMap<TImpuesto, Impuesto>().ReverseMap();
-            // En escritura se ignoran identificadores, fechas y navegaciones controladas por EF o por la LN.
+
+            // al guardar un producto ignora datos que controla la BD, Entity Framework o la LN
             CreateMap<TProducto, Producto>()
                 .ForMember(x => x.ProductoId, o => o.Ignore())
                 .ForMember(x => x.FechaCreacion, o => o.Ignore())
@@ -22,6 +23,7 @@ namespace ProyectoEcommerce.Dominio.DTO
                 .ForMember(x => x.Impuesto, o => o.Ignore())
                 .ForMember(x => x.Imagenes, o => o.Ignore())
                 .ForMember(x => x.OrdenDetalles, o => o.Ignore());
+            // al devolver un producto agarra tambien nombres de sus relaciones y calcula su estado de stock
             CreateMap<Producto, TProducto>()
                 .ForMember(x => x.FamiliaId, o => o.MapFrom(x => x.Categoria.FamiliaId))
                 .ForMember(x => x.FamiliaNombre, o => o.MapFrom(x => x.Categoria.Familia.Nombre))
@@ -30,13 +32,14 @@ namespace ProyectoEcommerce.Dominio.DTO
                 .ForMember(x => x.ImpuestoPorcentaje, o => o.MapFrom(x => x.Impuesto.Porcentaje))
                 .ForMember(x => x.Disponible, o => o.MapFrom(x => x.Stock > 0))
                 .ForMember(x => x.EstadoStock, o => o.MapFrom(x => x.Stock == 0 ? "Agotado" : x.Stock <= x.StockMinimo ? "Stock bajo" : "Disponible"))
+                // Where deja imagenes activas, los OrderBy las acomodan y FirstOrDefault toma la principal
                 .ForMember(x => x.ImagenPrincipal, o => o.MapFrom(x => x.Imagenes
                     .Where(i => i.Activo)
                     .OrderByDescending(i => i.EsPrincipal)
                     .ThenBy(i => i.Orden)
                     .ThenBy(i => i.ImagenId)
                     .FirstOrDefault()));
-            // El catálogo reúne nombres relacionados, disponibilidad e imagen principal en una sola respuesta.
+            // esta version es la que usa el catalogo para mandar todo lo necesario en una sola respuesta
             CreateMap<Producto, TProductoCatalogo>()
                 .ForMember(x => x.FamiliaId, o => o.MapFrom(x => x.Categoria.FamiliaId))
                 .ForMember(x => x.FamiliaNombre, o => o.MapFrom(x => x.Categoria.Familia.Nombre))
@@ -51,10 +54,12 @@ namespace ProyectoEcommerce.Dominio.DTO
                     .ThenBy(i => i.Orden)
                     .ThenBy(i => i.ImagenId)
                     .FirstOrDefault()));
+            // estos tipos tienen propiedades con los mismos nombres y no necesitan reglas extra
             CreateMap<TUsuario, Usuario>().ReverseMap();
             CreateMap<TOrden, Orden>().ReverseMap();
             CreateMap<TOrdenDetalle, OrdenDetalle>().ReverseMap();
             CreateMap<TProductoImagen, ProductoImagen>().ReverseMap();
+            // en descuentos la LN decide el ID y las relaciones para evitar que lleguen objetos falsos desde Angular
             CreateMap<TDescuento, Descuento>()
                 .ForMember(x => x.DescuentoId, o => o.Ignore())
                 .ForMember(x => x.MontoFijo, o => o.Ignore())

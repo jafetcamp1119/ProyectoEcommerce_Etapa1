@@ -9,9 +9,8 @@ namespace ProyectoEcommerce.API.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-/// <summary>
-/// Coordina checkout, confirmación de ventas, consulta de órdenes y descarga protegida de facturas.
-/// </summary>
+// coordina checkout, compra, consultas de ordenes y descarga de facturas
+// la LN mantiene la logica pesada y aqui se acomodan las respuestas HTTP
 public class OrdenController : ControllerBase
 {
     private readonly IOrdenLN _ordenLN;
@@ -23,8 +22,7 @@ public class OrdenController : ControllerBase
         _entorno = entorno;
     }
 
-    /// <summary>Prepara los datos del carrito y del Cliente necesarios para mostrar el checkout.</summary>
-    /// <returns>Cliente, carrito vigente y totales recalculados.</returns>
+    // pide a la LN el Cliente, carrito y totales que se muestran antes de confirmar
     [Authorize(Roles = "Cliente")]
     [HttpGet("Checkout")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -35,22 +33,21 @@ public class OrdenController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Confirma una compra del Cliente mediante la transacción definida en la lógica de negocio.</summary>
-    /// <param name="datos">Correo, dirección y método de pago seleccionados.</param>
-    /// <param name="cancellationToken">Permite cancelar la solicitud HTTP.</param>
-    /// <returns>Resultado de la venta, factura y envío de correo.</returns>
+    // recibe correo, direccion y metodo de pago y manda todo a la transaccion de compra
+    // CancellationToken deja cancelar el trabajo si la solicitud HTTP se corta
     [Authorize(Roles = "Cliente")]
     [HttpPost("ConfirmarCompra")]
     public async Task<IActionResult> ConfirmarCompra([FromBody] TConfirmarCompra datos, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
         var resultado = await _ordenLN.ConfirmarCompraAsync(datos, UsuarioIdActual(), cancellationToken);
+        // si el stock cambio durante el checkout devuelve 409 para que Angular avise el conflicto
         if (resultado.Error.Contains("stock suficiente", StringComparison.OrdinalIgnoreCase)) return Conflict(resultado);
         if (!string.IsNullOrEmpty(resultado.Error)) return BadRequest(resultado);
         return Ok(resultado);
     }
 
-    /// <summary>Lista únicamente las órdenes que pertenecen al Cliente autenticado.</summary>
+    // lista solamente las ordenes del Cliente que viene en el JWT
     [Authorize(Roles = "Cliente")]
     [HttpGet("MisOrdenes")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -61,7 +58,7 @@ public class OrdenController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Lista órdenes de todos los Clientes para la vista administrativa.</summary>
+    // para el Administrador lista ordenes de todos los clientes
     [Authorize(Roles = "Administrador")]
     [HttpGet("Administracion")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -72,7 +69,7 @@ public class OrdenController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Obtiene el detalle si la orden pertenece al Cliente o el solicitante es Administrador.</summary>
+    // manda a la LN el ID, el usuario actual y si tiene rol Administrador para revisar el permiso
     [HttpGet("Detalle/{ordenId:int}")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Detalle(int ordenId)
@@ -82,23 +79,24 @@ public class OrdenController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Descarga el PDF validando propiedad de la orden y que la ruta permanezca dentro de wwwroot.</summary>
+    // busca la factura autorizada y devuelve el PDF como archivo descargable
     [HttpGet("Factura/{ordenId:int}")]
     public async Task<IActionResult> Factura(int ordenId)
     {
         var resultado = await _ordenLN.ObtenerFacturaAsync(ordenId, UsuarioIdActual(), User.IsInRole("Administrador"));
         if (resultado.Data == null || !string.IsNullOrEmpty(resultado.Error)) return NotFound(resultado);
 
-        // Se normaliza la ruta antes de leer el archivo para impedir accesos fuera de la carpeta pública esperada.
+        // GetFullPath acomoda la ruta completa para comprobar que siga dentro de wwwroot
         var raizWeb = Path.GetFullPath(_entorno.WebRootPath ?? Path.Combine(_entorno.ContentRootPath, "wwwroot"));
         var ruta = Path.GetFullPath(Path.Combine(raizWeb, resultado.Data.RutaRelativa.Replace('/', Path.DirectorySeparatorChar)));
         var prefijoSeguro = raizWeb.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        // si la ruta intenta salir de la carpeta permitida devuelve 403 y no lee el archivo
         if (!ruta.StartsWith(prefijoSeguro, StringComparison.OrdinalIgnoreCase)) return Forbid();
         if (!System.IO.File.Exists(ruta)) return NotFound();
         return PhysicalFile(ruta, "application/pdf", $"Factura-{resultado.Data.NumeroFactura}.pdf");
     }
 
-    /// <summary>Cancela una orden pendiente que pertenece al Cliente autenticado.</summary>
+    // cancela una orden propia solo cuando todavia esta pendiente
     [Authorize(Roles = "Cliente")]
     [HttpPut("Cancelar/{ordenId:int}")]
     public async Task<IActionResult> Cancelar(int ordenId)
@@ -108,6 +106,7 @@ public class OrdenController : ControllerBase
         return Ok(resultado);
     }
 
+    // los siguientes endpoints conservan las operaciones administrativas de la arquitectura original
     [Authorize(Roles = "Administrador")]
     [HttpGet("Listar")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -167,7 +166,7 @@ public class OrdenController : ControllerBase
         return Ok(resultado);
     }
 
-    // El UsuarioId del JWT delimita todas las consultas de propiedad realizadas por la LN.
+    // agarra el UsuarioId del Claim para que la LN limite las consultas al dueño real
     private int UsuarioIdActual() =>
         int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 }

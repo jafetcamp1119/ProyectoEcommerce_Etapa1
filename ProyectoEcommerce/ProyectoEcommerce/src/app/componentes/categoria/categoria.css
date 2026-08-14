@@ -1,187 +1,297 @@
+/* esta pagina acomoda el formulario de categorias la vista previa de imagen
+   la tabla con los registros y los controles de paginacion */
+
 :host {
+  /* representa todo el componente de Angular */
   display: block;
 }
 
+
+/* ========================= PAGINA GENERAL ========================= */
+
+/* deja un espacio abajo para que el contenido no termine pegado al borde */
 .catalog-page {
   padding-bottom: 2rem;
 }
 
+
+/* ========================= ENCABEZADO ========================= */
+
+/* acomoda el titulo de la pagina y las acciones que tenga al lado */
 .page-heading {
   display: flex;
+  /* alinea los elementos hacia la parte de abajo */
   align-items: end;
+  /* manda el titulo hacia un lado y las acciones hacia el otro */
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.4rem;
 }
 
+  /* titulo principal de la pagina */
   .page-heading h1 {
-    margin: .15rem 0;
+    margin: 0.15rem 0;
+    /* clamp cambia el tamaño dependiendo de la pantalla
+     pero mantiene un minimo y un maximo */
     font-size: clamp(1.7rem, 3vw, 2.35rem);
   }
 
+  /* texto pequeño que aparece debajo del titulo */
   .page-heading p {
     margin: 0;
     color: var(--cui-secondary-color);
   }
 
+
+/* texto pequeño que aparece arriba del titulo */
 .eyebrow {
   display: block;
   color: var(--cui-primary);
-  font-size: .78rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: .12em;
+  /* separa un poco las letras */
+  letter-spacing: 0.12em;
+  /* hace que el texto se vea en mayusculas */
   text-transform: uppercase;
 }
 
+
+/* ========================= BOTON PARA VOLVER ========================= */
+
+/* enlace que permite regresar a la pantalla anterior */
 .back-link {
   display: inline-block;
-  margin-bottom: .7rem;
+  margin-bottom: 0.7rem;
+  /* quita el subrayado normal del enlace */
   text-decoration: none;
 }
 
+
+/* ========================= TARJETAS ========================= */
+
+/* editor es la tarjeta del formulario
+   table-card es la tarjeta donde se muestra la tabla
+   comparten el mismo estilo de sombra */
 .editor,
 .table-card {
   border: 0;
-  box-shadow: 0 .35rem 1.2rem rgba(32, 56, 85, .09);
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.09);
 }
 
+/* deja espacio entre el formulario y la tabla */
 .editor {
   margin-bottom: 1.3rem;
 }
 
+
+/* ========================= PARTES DEL FORMULARIO ========================= */
+
+/* estos bloques usan flex porque tienen varios elementos que deben quedar alineados */
 .editor-title,
 .editor-actions,
 .table-footer,
 .actions {
   display: flex;
   align-items: center;
-  gap: .55rem;
+  gap: 0.55rem;
 }
 
+/* separa el titulo del formulario de cualquier accion que aparezca al lado */
 .editor-title {
   justify-content: space-between;
 }
 
+  /* titulo que aparece dentro del formulario */
   .editor-title h2 {
     margin: 0 0 1rem;
     font-size: 1.15rem;
   }
 
+
+/* ========================= CAMPOS DEL FORMULARIO ========================= */
+
+/* distribuye los campos del formulario en 2 columnas */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
+  /* wide sirve para los campos que necesitan ocupar las 2 columnas completas */
   .form-grid .wide {
+    /* 1 / -1 significa desde la primera columna hasta la ultima */
     grid-column: 1 / -1;
   }
 
+
+/* ========================= IMAGEN DE LA CATEGORIA ========================= */
+
+/* separa la parte de imagen del resto de campos */
 .categoria-imagen {
   margin-top: 1rem;
 }
 
+
+/* contiene la vista previa de la imagen antes o despues de guardarla */
 .categoria-imagen-preview {
   margin-top: 1rem;
+  /* evita que la vista previa se haga demasiado grande */
   max-width: 320px;
 }
 
+
+  /* imagen que se muestra dentro de la vista previa */
   .categoria-imagen-preview img {
     width: 100%;
     height: 180px;
+    /* cover llena todo el espacio sin deformar la imagen
+     si sobra una parte simplemente la recorta */
     object-fit: cover;
     border: 1px solid var(--cui-border-color);
-    border-radius: .7rem;
+    border-radius: 0.7rem;
+    /* evita espacios pequeños que algunas imagenes dejan debajo */
     display: block;
   }
 
+
+  /* boton que aparece debajo de la vista previa */
   .categoria-imagen-preview .btn {
     width: 100%;
-    margin-top: .5rem;
+    margin-top: 0.5rem;
   }
 
+
+/* ========================= BOTONES DEL FORMULARIO ========================= */
+
+/* acomoda los botones como Guardar o Cancelar hacia la derecha */
 .editor-actions {
   justify-content: end;
   margin-top: 1rem;
 }
 
+
+/* ========================= TABLA ========================= */
+
+/* evita que el contenido de la tabla se salga de las esquinas de la tarjeta */
 .table-card {
   overflow: hidden;
 }
 
+
+/* encabezados de las columnas de la tabla */
 .table thead th {
   padding: 1rem;
   color: var(--cui-secondary-color);
-  font-size: .78rem;
+  font-size: 0.78rem;
+  /* pone los nombres de las columnas visualmente en mayusculas */
   text-transform: uppercase;
 }
 
+
+/* espacio interno de cada celda de la tabla */
 .table td {
-  padding: .9rem 1rem;
+  padding: 0.9rem 1rem;
 }
 
+
+/* se usa para que un registro inactivo se vea un poco apagado */
 .inactive {
-  opacity: .65;
+  opacity: 0.65;
 }
 
+
+/* mensaje que aparece cuando la tabla no tiene registros */
 .empty {
+  /* important hace que este padding tenga prioridad sobre otros estilos de la tabla */
   padding: 2.4rem !important;
   text-align: center;
   color: var(--cui-secondary-color);
 }
 
+
+/* ========================= PIE DE LA TABLA ========================= */
+
+/* aqui van los controles como cantidad por pagina y botones para cambiar de pagina */
 .table-footer {
+  display: flex;
+  /* permite que los controles bajen a otra linea si no caben */
   flex-wrap: wrap;
+  /* separa los controles hacia ambos lados */
   justify-content: space-between;
-  padding: .8rem 1rem;
+  padding: 0.8rem 1rem;
   border-top: 1px solid var(--cui-border-color);
   color: var(--cui-secondary-color);
-  font-size: .88rem;
+  font-size: 0.88rem;
 }
 
+
+  /* acomoda el texto y el select de cantidad por pagina uno al lado del otro */
   .table-footer label {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: 0.5rem;
   }
 
+
+  /* evita que el select ocupe todo el ancho disponible */
   .table-footer .form-select {
     width: auto;
   }
 
+
+  /* acomoda juntos los botones para avanzar o retroceder de pagina */
   .table-footer div {
     display: flex;
-    gap: .4rem;
+    gap: 0.4rem;
   }
 
+
+/* ========================= MINIATURA DE LA TABLA ========================= */
+
+/* esta es la imagen pequeña que aparece dentro de cada fila de categoria */
+.categoria-miniatura {
+  width: 55px;
+  height: 55px;
+  /* mantiene la imagen proporcionada aunque el espacio sea cuadrado */
+  object-fit: cover;
+  border-radius: 0.5rem;
+  display: block;
+}
+
+
+/* ========================= PANTALLAS PEQUEÑAS ========================= */
+
+/* cuando la pantalla baja de 720px se acomoda todo para celular */
 @media (max-width: 720px) {
+
+  /* el encabezado deja de ir de lado a lado y pasa a una columna */
   .page-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
+
+  /* el formulario deja de tener 2 columnas */
   .form-grid {
     grid-template-columns: 1fr;
   }
 
+
+    /* wide ya no necesita ocupar 2 columnas porque ahora solo existe una */
     .form-grid .wide {
       grid-column: auto;
     }
 
+
+  /* los controles del pie de tabla se ponen uno debajo del otro */
   .table-footer {
     align-items: stretch;
     flex-direction: column;
   }
 
+
+    /* los botones se reparten el espacio disponible */
     .table-footer div .btn {
       flex: 1;
     }
-}
-
-.categoria-miniatura {
-  width: 55px;
-  height: 55px;
-  object-fit: cover;
-  border-radius: .5rem;
-  display: block;
 }

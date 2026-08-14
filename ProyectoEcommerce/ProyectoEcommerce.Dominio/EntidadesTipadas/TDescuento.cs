@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Datos administrativos de un descuento porcentual.</summary>
 public class TDescuento
 {
     public int DescuentoId { get; set; }
@@ -34,7 +33,6 @@ public class TDescuento
     public string VigenciaActual { get; set; } = string.Empty;
 }
 
-/// <summary>Precio efectivo ya resuelto por la lógica de negocio.</summary>
 public class TDescuentoAplicado
 {
     public int ProductoId { get; set; }
@@ -48,7 +46,6 @@ public class TDescuentoAplicado
     public decimal PrecioFinal { get; set; }
 }
 
-/// <summary>Listas activas utilizadas por el formulario administrativo.</summary>
 public class TCatalogosDescuento
 {
     public IEnumerable<TFamiliaProducto> Familias { get; set; } = [];
@@ -71,7 +68,6 @@ public class TCambioEstadoDescuento
     public bool Activo { get; set; }
 }
 
-/// <summary>Candidato mínimo usado por el selector central y por sus pruebas.</summary>
 public class TDescuentoCandidato
 {
     public int DescuentoId { get; set; }

@@ -3,24 +3,24 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN
 {
-    /// <summary>Define consultas de catálogo y mantenimiento administrativo de productos.</summary>
+    // acciones para mostrar el catalogo y para mantener productos desde administracion
     public interface IProductoLN
     {
-        /// <summary>Lista productos activos según texto, familia, categoría, precio y disponibilidad.</summary>
+        // filtra productos activos y devuelve solo la pagina pedida por el Cliente
         Task<Respuesta<TPagina<TProductoCatalogo>>> ListarCatalogoAsync(TFiltroProductos filtro);
-        /// <summary>Lista productos para administración, incluidos sus estados.</summary>
+        // lista productos activos e inactivos con los filtros administrativos
         Task<Respuesta<TPagina<TProducto>>> ListarAdministracionAsync(TFiltroProductos filtro);
-        /// <summary>Obtiene el detalle público de un producto disponible.</summary>
+        // trae un producto activo con los datos que se muestran al Cliente
         Task<Respuesta<TProductoCatalogo>> ObtenerCatalogoAsync(int productoId);
-        /// <summary>Obtiene los datos completos de un producto para editarlo.</summary>
+        // trae los datos completos que necesita el formulario de edicion
         Task<Respuesta<TProducto>> ObtenerAdministracionAsync(int productoId);
-        /// <summary>Obtiene familias, categorías e impuestos necesarios para los formularios.</summary>
+        // junta familias, categorias e impuestos para llenar los select del formulario
         Task<Respuesta<TCatalogosProducto>> ListarCatalogosAsync();
-        /// <summary>Crea un producto y registra la acción del Administrador.</summary>
+        // crea el producto y apunta en bitacora cual Administrador lo hizo
         Task<Respuesta<TProducto>> InsertarAsync(TProducto datos, int administradorId);
-        /// <summary>Actualiza un producto y registra la acción del Administrador.</summary>
+        // valida y guarda los cambios del producto
         Task<Respuesta<TProducto>> ModificarAsync(TProducto datos, int administradorId);
-        /// <summary>Cambia el estado lógico del producto sin eliminarlo físicamente.</summary>
+        // activa o desactiva sin borrar el registro ni sus imagenes
         Task<Respuesta<TProducto>> CambiarEstadoAsync(int productoId, bool activo, int administradorId);
     }
 }

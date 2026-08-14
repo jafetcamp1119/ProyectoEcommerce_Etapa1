@@ -5,9 +5,8 @@ using ProyectoEcommerce.Dominio.InterfazLN;
 
 namespace ProyectoEcommerce.API.Controllers
 {
-    /// <summary>
-    /// Gestiona la configuración de impuestos utilizada para desglosar precios y facturas.
-    /// </summary>
+    // este controller recibe las solicitudes de la pantalla de impuestos
+    // el Authorize de la clase deja entrar solamente al Administrador
     [Authorize(Roles = "Administrador")]
     [Route("api/[controller]")]
     [ApiController]
@@ -16,7 +15,7 @@ namespace ProyectoEcommerce.API.Controllers
         private IImpuestoLN _impuestoLN { get; }
         public ImpuestoController(IImpuestoLN impuestoLN) { _impuestoLN = impuestoLN; }
 
-        /// <summary>Lista los impuestos configurados.</summary>
+        // pide a la LN todos los impuestos configurados
         [HttpGet("Listar")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> Listar()
@@ -26,6 +25,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        // recibe un ID desde la ruta y devuelve el impuesto o un 404
         [HttpGet("Obtener/{id}")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> Obtener(int id)
@@ -35,6 +35,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        // recibe el nombre desde el query string y devuelve sus coincidencias
         [HttpGet("Buscar")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> Buscar(string nombre)
@@ -44,7 +45,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Crea un impuesto después de validar nombre y porcentaje.</summary>
+        // recibe el formulario y la LN revisa nombre, porcentaje y fechas antes de guardar
         [HttpPost("Insertar")]
         public async Task<IActionResult> Insertar([FromBody] TImpuesto impuesto)
         {
@@ -54,7 +55,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Actualiza un impuesto existente.</summary>
+        // actualiza un impuesto existente con los datos que mando Angular
         [HttpPut("Modificar")]
         public async Task<IActionResult> Modificar([FromBody] TImpuesto impuesto)
         {
@@ -64,7 +65,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Desactiva el impuesto sin eliminar referencias históricas.</summary>
+        // manda el ID a la LN para desactivarlo sin borrar referencias historicas
         [HttpDelete("Eliminar/{id}")]
         public async Task<IActionResult> Eliminar(int id)
         {

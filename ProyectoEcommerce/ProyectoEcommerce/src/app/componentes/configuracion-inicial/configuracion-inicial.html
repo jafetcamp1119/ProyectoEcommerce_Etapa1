@@ -1,102 +1,307 @@
+<!-- esta pantalla aparece solamente una vez para crear el primer Administrador de LessPrice
+     los campos estan conectados al formulario configuracionForm del componente -->
 <main class="auth-shell">
-  <section class="auth-card" aria-labelledby="setup-title">
+
+  <!-- tarjeta principal de la configuracion inicial -->
+  <section class="auth-card"
+           aria-labelledby="setup-title">
+
+
+    <!-- ========================= ENCABEZADO ========================= -->
+    <!-- muestra el logo y el titulo de la pantalla -->
     <div class="auth-brand">
-      <img src="favicon.ico" alt="" width="54" height="54">
+
+      <img src="favicon.ico"
+           alt=""
+           width="54"
+           height="54">
+
       <div>
-        <span class="auth-eyebrow">LessPrice</span>
-        <h1 id="setup-title">Configuración inicial</h1>
+
+        <span class="auth-eyebrow">
+          LessPrice
+        </span>
+
+        <h1 id="setup-title">
+          Configuración inicial
+        </h1>
+
       </div>
+
     </div>
 
-    <p class="auth-intro">Crea la cuenta administradora principal de LessPrice.</p>
 
+    <!-- explica para que sirve esta pantalla -->
+    <p class="auth-intro">
+      Crea la cuenta administradora principal de LessPrice.
+    </p>
+
+
+    <!-- ========================= MENSAJE DE ERROR ========================= -->
+    <!-- si ocurre algun problema durante la configuracion se muestra aqui -->
     @if (mensajeError) {
-      <div class="alert alert-danger" role="alert">{{ mensajeError }}</div>
+
+    <div class="alert alert-danger"
+         role="alert">
+      {{ mensajeError }}
+    </div>
+
     }
 
-    <form [formGroup]="configuracionForm" (ngSubmit)="crearAdministrador()" novalidate>
+
+    <!-- ========================= FORMULARIO ========================= -->
+    <!-- [formGroup] conecta este formulario con configuracionForm
+         ngSubmit llama crearAdministrador cuando se envia
+         novalidate evita usar los mensajes automaticos del navegador -->
+    <form [formGroup]="configuracionForm"
+          (ngSubmit)="crearAdministrador()"
+          novalidate>
+
+
+      <!-- ========================= NOMBRE Y APELLIDOS ========================= -->
+      <!-- auth-grid acomoda estos 2 campos uno al lado del otro -->
       <div class="auth-grid">
+
+
+        <!-- ========================= NOMBRE ========================= -->
+
         <div class="auth-field">
-          <label for="setup-nombre">Nombre</label>
-          <input id="setup-nombre" class="form-control" formControlName="nombre" autocomplete="given-name">
+
+          <label for="setup-nombre">
+            Nombre
+          </label>
+
+          <!-- formControlName conecta este input con nombre dentro del formulario
+               autocomplete given-name le indica al navegador que este campo guarda un nombre -->
+          <input id="setup-nombre"
+                 class="form-control"
+                 formControlName="nombre"
+                 autocomplete="given-name">
+
+
+          <!-- tieneError revisa si este campo ya debe mostrar el error required -->
           @if (tieneError('nombre', 'required')) {
-            <span class="field-error">El nombre es obligatorio.</span>
+
+          <span class="field-error">
+            El nombre es obligatorio.
+          </span>
+
           }
+
         </div>
 
+
+        <!-- ========================= APELLIDOS ========================= -->
+
         <div class="auth-field">
-          <label for="setup-apellidos">Apellidos</label>
-          <input id="setup-apellidos" class="form-control" formControlName="apellidos" autocomplete="family-name">
+
+          <label for="setup-apellidos">
+            Apellidos
+          </label>
+
+          <!-- family-name permite que el navegador reconozca este campo como apellidos -->
+          <input id="setup-apellidos"
+                 class="form-control"
+                 formControlName="apellidos"
+                 autocomplete="family-name">
+
+
           @if (tieneError('apellidos', 'required')) {
-            <span class="field-error">Los apellidos son obligatorios.</span>
+
+          <span class="field-error">
+            Los apellidos son obligatorios.
+          </span>
+
           }
+
         </div>
+
       </div>
 
+
+      <!-- ========================= CORREO ========================= -->
+
       <div class="auth-field">
-        <label for="setup-correo">Correo electrónico</label>
-        <input
-          id="setup-correo"
-          class="form-control"
-          type="email"
-          formControlName="correo"
-          autocomplete="email"
-          readonly>
+
+        <label for="setup-correo">
+          Correo electrónico
+        </label>
+
+
+        <!-- el correo viene definido para la configuracion inicial
+             readonly permite verlo pero evita cambiarlo desde este input -->
+        <input id="setup-correo"
+               class="form-control"
+               type="email"
+               formControlName="correo"
+               autocomplete="email"
+               readonly>
+
+
+        <!-- primero revisa si el correo esta vacio -->
         @if (tieneError('correo', 'required')) {
-          <span class="field-error">El correo electrónico es obligatorio.</span>
-        } @else if (tieneError('correo', 'email')) {
-          <span class="field-error">Ingresa un correo electrónico válido.</span>
-        } @else if (tieneError('correo', 'correoNoAutorizado')) {
-          <span class="field-error">Este correo no está autorizado para la configuración inicial.</span>
+
+        <span class="field-error">
+          El correo electrónico es obligatorio.
+        </span>
+
         }
+
+        <!-- si existe pero tiene formato incorrecto muestra este error -->
+        @else if (tieneError('correo', 'email')) {
+
+        <span class="field-error">
+          Ingresa un correo electrónico válido.
+        </span>
+
+        }
+
+        <!-- este error aparece si el correo no es el autorizado para crear el primer admin -->
+        @else if (tieneError('correo', 'correoNoAutorizado')) {
+
+        <span class="field-error">
+          Este correo no está autorizado para la configuración inicial.
+        </span>
+
+        }
+
       </div>
+
+
+      <!-- ========================= TELEFONO ========================= -->
 
       <div class="auth-field">
-        <label for="setup-telefono">Teléfono</label>
-        <input id="setup-telefono" class="form-control" type="tel" formControlName="telefono" autocomplete="tel">
+
+        <label for="setup-telefono">
+          Teléfono
+        </label>
+
+
+        <!-- type tel indica que el campo contiene un numero telefonico
+             autocomplete tel permite usar un telefono guardado en el navegador -->
+        <input id="setup-telefono"
+               class="form-control"
+               type="tel"
+               formControlName="telefono"
+               autocomplete="tel">
+
+
         @if (tieneError('telefono', 'required')) {
-          <span class="field-error">El teléfono es obligatorio.</span>
+
+        <span class="field-error">
+          El teléfono es obligatorio.
+        </span>
+
         }
+
       </div>
 
+
+      <!-- ========================= CONTRASEÑAS ========================= -->
+      <!-- pone contraseña y confirmacion dentro del mismo grid -->
       <div class="auth-grid">
-        <div class="auth-field">
-          <label for="setup-contrasena">Contraseña</label>
-          <input
-            id="setup-contrasena"
-            class="form-control"
-            type="password"
-            formControlName="contrasena"
-            autocomplete="new-password">
-          @if (tieneError('contrasena', 'required')) {
-            <span class="field-error">La contraseña es obligatoria.</span>
-          } @else if (tieneError('contrasena', 'minlength')) {
-            <span class="field-error">Debe tener al menos 8 caracteres.</span>
-          }
-        </div>
+
+
+        <!-- ========================= CONTRASEÑA ========================= -->
 
         <div class="auth-field">
-          <label for="setup-confirmacion">Confirmar contraseña</label>
-          <input
-            id="setup-confirmacion"
-            class="form-control"
-            type="password"
-            formControlName="confirmarContrasena"
-            autocomplete="new-password">
-          @if (tieneError('confirmarContrasena', 'required')) {
-            <span class="field-error">Confirma la contraseña.</span>
-          } @else if (configuracionForm.hasError('contrasenasDiferentes') && configuracionForm.controls.confirmarContrasena.touched) {
-            <span class="field-error">Las contraseñas no coinciden.</span>
+
+          <label for="setup-contrasena">
+            Contraseña
+          </label>
+
+
+          <!-- new-password indica que se esta creando una contraseña nueva
+               y no usando necesariamente una que ya estaba guardada -->
+          <input id="setup-contrasena"
+                 class="form-control"
+                 type="password"
+                 formControlName="contrasena"
+                 autocomplete="new-password">
+
+
+          <!-- primero revisa si esta vacia -->
+          @if (tieneError('contrasena', 'required')) {
+
+          <span class="field-error">
+            La contraseña es obligatoria.
+          </span>
+
           }
+
+          <!-- minlength revisa el minimo configurado en el formulario -->
+          @else if (tieneError('contrasena', 'minlength')) {
+
+          <span class="field-error">
+            Debe tener al menos 8 caracteres.
+          </span>
+
+          }
+
         </div>
+
+
+        <!-- ========================= CONFIRMAR CONTRASEÑA ========================= -->
+
+        <div class="auth-field">
+
+          <label for="setup-confirmacion">
+            Confirmar contraseña
+          </label>
+
+
+          <input id="setup-confirmacion"
+                 class="form-control"
+                 type="password"
+                 formControlName="confirmarContrasena"
+                 autocomplete="new-password">
+
+
+          <!-- revisa primero que la confirmacion no este vacia -->
+          @if (tieneError('confirmarContrasena', 'required')) {
+
+          <span class="field-error">
+            Confirma la contraseña.
+          </span>
+
+          }
+
+          <!-- contrasenasDiferentes es un error del formulario completo
+               touched evita mostrarlo antes de que la persona use el campo -->
+          @else if (
+          configuracionForm.hasError('contrasenasDiferentes') &&
+          configuracionForm.controls.confirmarContrasena.touched
+          ) {
+
+          <span class="field-error">
+            Las contraseñas no coinciden.
+          </span>
+
+          }
+
+        </div>
+
       </div>
 
-      <button
-        class="btn btn-primary auth-submit"
-        type="submit"
-        [disabled]="configuracionForm.invalid || procesando">
-        {{ procesando ? 'Creando administrador…' : 'Crear administrador' }}
+
+      <!-- ========================= CREAR ADMINISTRADOR ========================= -->
+      <!-- no permite enviar mientras el formulario tenga errores
+           tampoco mientras ya se esta procesando otra solicitud -->
+      <button class="btn btn-primary auth-submit"
+              type="submit"
+              [disabled]="configuracionForm.invalid || procesando">
+
+        <!-- cambia el texto mientras espera la respuesta de la API -->
+        {{
+          procesando
+            ? 'Creando administrador…'
+            : 'Crear administrador'
+        }}
+
       </button>
+
     </form>
+
   </section>
+
 </main>

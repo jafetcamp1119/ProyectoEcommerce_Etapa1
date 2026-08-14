@@ -15,8 +15,8 @@ using ProyectoEcommerce.LogicaNegocio.Implementaciones;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// La API registra únicamente los proveedores de log necesarios para mostrar
-// información de ejecución en consola y en el depurador de Visual Studio.
+// aqui se dejan solamente los logs que se ven en la consola y en Visual Studio
+// SetMinimumLevel evita llenar la salida con mensajes menos importantes que Information
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
@@ -24,8 +24,8 @@ builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 builder.Services.AddControllers();
 
-// La política permite que el cliente Angular consuma la API durante el desarrollo.
-// La autenticación y los permisos siguen siendo validados por JWT y por los atributos Authorize.
+// esta politica deja que Angular mande solicitudes a la API aunque use otro puerto
+// CORS no da permisos de usuario, eso todavia lo revisan el JWT y los [Authorize]
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("cors", policy =>
@@ -36,21 +36,26 @@ builder.Services.AddCors(options =>
     });
 });
 
+// aqui conecta Entity Framework con SQL Server usando la cadena de appsettings
+// LazyLoadingProxies permite traer una relacion cuando se entra a una propiedad de navegacion
 builder.Services.AddDbContext<ProyectoEcommerceContext>(options =>
     options.UseLazyLoadingProxies()
         .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddMvc().AddJsonOptions(options =>
 {
+    // evita ciclos como familia -> categorias -> familia cuando se convierte una respuesta a JSON
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    // el cero quita el limite fijo de profundidad para los objetos que si se pueden convertir
     options.JsonSerializerOptions.MaxDepth = 0;
 });
 
+// Newtonsoft tambien ignora relaciones que vuelven al objeto anterior
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
-// Las dependencias se resuelven por solicitud HTTP y conservan la separación existente
-// entre Controllers, lógica de negocio y acceso a datos.
+// AddScoped crea una instancia por solicitud HTTP
+// asi el controller, la LN y los repositorios comparten la misma unidad de trabajo
 builder.Services.AddScoped<IUnidadTrabajoEF, UnidadTrabajoEF>();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<IFamiliaProductoLN, FamiliaProductoLN>();
@@ -66,8 +71,8 @@ builder.Services.AddScoped<ICorreoFacturaLN, CorreoFacturaLN>();
 builder.Services.AddScoped<IDescuentoLN, DescuentoLN>();
 
 var jwtKey = builder.Configuration["Jwt:Key"];
-// La clave de firma se obtiene de los proveedores de configuración. Nunca se genera una clave nueva
-// al reiniciar la API, porque eso invalidaría sesiones legítimas todavía vigentes.
+// la clave firma los JWT para que nadie pueda cambiar sus datos por fuera de la API
+// se lee de configuracion para no generar otra cada vez que se reinicia el proyecto
 if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
 {
     throw new InvalidOperationException("La configuración Jwt:Key debe contener al menos 32 bytes.");
@@ -76,6 +81,7 @@ if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // estas reglas revisan de donde vino el token, para quien se creo, su fecha y su firma
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -85,14 +91,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            // no agrega minutos de gracia cuando el token ya vencio
             ClockSkew = TimeSpan.Zero
         };
         options.Events = new JwtBearerEvents
         {
             OnTokenValidated = async contexto =>
             {
-                // Además de validar firma y vencimiento, se consulta el estado actual del usuario.
-                // Así se rechazan tokens de cuentas desactivadas, bloqueadas o cuyo rol cambió.
+                // aunque la firma sea correcta aqui vuelve a revisar al usuario en la BD
+                // esto corta una sesion si la cuenta se desactivo, se bloqueo o cambio de rol
+                // los Claims son los datos pequeños que quedaron guardados dentro del JWT
                 var idTexto = contexto.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
                 var rolToken = contexto.Principal?.FindFirstValue(ClaimTypes.Role);
                 if (!int.TryParse(idTexto, out var usuarioId))
@@ -101,8 +109,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     return;
                 }
 
+                // HttpContext representa la solicitud que esta entrando
+                // desde sus servicios se abre un alcance corto para consultar el contexto de la BD
                 await using var alcance = contexto.HttpContext.RequestServices.CreateAsyncScope();
                 var db = alcance.ServiceProvider.GetRequiredService<ProyectoEcommerceContext>();
+
+                // AsNoTracking solo consulta y no prepara cambios
+                // Include trae el rol junto con el usuario y FirstOrDefaultAsync devuelve null si no existe
                 var usuario = await db.Usuarios.AsNoTracking().Include(x => x.Rol)
                     .FirstOrDefaultAsync(x => x.UsuarioId == usuarioId);
                 if (usuario == null || !usuario.Activo || !usuario.Rol.Activo ||
@@ -119,9 +132,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(_ => { }, typeof(AutoMapperProfile));
 
+// Build termina de acomodar todos los servicios y crea la aplicacion que va a recibir solicitudes
 var app = builder.Build();
 
-// El orden es importante: primero se identifica al usuario y después se evalúan sus permisos.
+// el orden importa: primero deja pasar la solicitud por CORS y sirve archivos de wwwroot
+// despues identifica al usuario y al final revisa si tiene permiso para entrar al endpoint
 app.UseCors("cors");
 app.UseStaticFiles();
 app.UseAuthentication();
@@ -129,9 +144,11 @@ app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
+    // Swagger solo queda disponible mientras se trabaja en desarrollo
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// busca las rutas declaradas en los controllers y empieza a escuchar solicitudes
 app.MapControllers();
 app.Run();

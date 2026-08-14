@@ -1,4 +1,4 @@
-/** Resultado de agregar o acumular un producto en el carrito. */
+// respuesta corta despues de agregar o acumular un producto
 export interface IResultadoAgregarCarrito {
   carritoId: number;
   productoId: number;
@@ -7,7 +7,7 @@ export interface IResultadoAgregarCarrito {
   productoNuevo: boolean;
 }
 
-/** Carrito vigente con totales calculados por el servidor. */
+// carrito vigente con totales que siempre calcula el servidor
 export interface ICarritoActual {
   carritoId: number;
   estado: string;

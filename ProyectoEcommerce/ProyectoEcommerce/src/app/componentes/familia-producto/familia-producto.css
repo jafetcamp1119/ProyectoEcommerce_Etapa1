@@ -1,47 +1,237 @@
-:host { display: block; }
-.catalog-page { padding-bottom: 2rem; }
-.page-heading { display: flex; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1.5rem; }
-.page-heading h1 { margin: .15rem 0; font-size: clamp(1.7rem, 3vw, 2.35rem); }
-.page-heading p { margin: 0; color: var(--cui-secondary-color); }
-.eyebrow { color: var(--cui-primary); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.editor { margin-bottom: 1.5rem; border: 0; box-shadow: 0 .3rem 1rem rgba(32, 56, 85, .09); }
-.editor-title, .title-row, .card-actions, .editor-actions { display: flex; align-items: center; }
-.editor-title, .title-row { justify-content: space-between; gap: 1rem; }
-.editor-title h2 { margin: 0 0 1rem; font-size: 1.15rem; }
-.form-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; }
-.editor-actions { justify-content: end; gap: .6rem; margin-top: 1rem; }
-.family-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(285px, 1fr)); gap: 1.1rem; }
-.family-visual { font-size: 2rem; }
-.family-content h2 { margin: 0; font-size: 1.12rem; }
-.family-content p { min-height: 3rem; margin: .7rem 0 1rem; color: var(--cui-secondary-color); }
-.card-actions { flex-wrap: wrap; gap: .45rem; }
-.state-card { padding: 2.5rem; text-align: center; color: var(--cui-secondary-color); background: var(--cui-card-bg); border: 1px dashed var(--cui-border-color); border-radius: 1rem; }
-@media (max-width: 720px) { .page-heading { align-items: stretch; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } }
+/* esta pagina acomoda el formulario la vista previa de imagen
+   y las tarjetas de familias manteniendo el diseño actual */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= PAGINA GENERAL ========================= */
+
+/* deja espacio abajo para que el contenido no termine pegado al borde */
+.catalog-page {
+  padding-bottom: 2rem;
+}
+
+
+/* ========================= ENCABEZADO ========================= */
+
+/* acomoda el titulo de la pagina y las acciones que tenga al lado */
+.page-heading {
+  display: flex;
+  /* manda el contenido hacia los 2 extremos */
+  justify-content: space-between;
+  /* alinea los elementos hacia la parte de abajo */
+  align-items: end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+
+  /* titulo principal de la pagina */
+  .page-heading h1 {
+    margin: 0.15rem 0;
+    /* clamp adapta el tamaño segun la pantalla
+     sin bajar de 1.7rem ni pasar de 2.35rem */
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+  }
+
+
+  /* texto que aparece debajo del titulo */
+  .page-heading p {
+    margin: 0;
+    color: var(--cui-secondary-color);
+  }
+
+
+/* texto pequeño que aparece encima del titulo */
+.eyebrow {
+  color: var(--cui-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  /* separa un poco las letras */
+  letter-spacing: 0.12em;
+  /* pone el texto visualmente en mayusculas */
+  text-transform: uppercase;
+}
+
+
+/* ========================= FORMULARIO ========================= */
+
+/* tarjeta donde se crea o edita una familia */
+.editor {
+  margin-bottom: 1.5rem;
+  border: 0;
+  /* agrega una sombra suave alrededor del formulario */
+  box-shadow: 0 0.3rem 1rem rgba(32, 56, 85, 0.09);
+}
+
+
+/* estas partes comparten flex porque acomodan elementos en una misma linea */
+.editor-title,
+.title-row,
+.card-actions,
+.editor-actions {
+  display: flex;
+  align-items: center;
+}
+
+
+/* separa el contenido del titulo hacia los extremos */
+.editor-title,
+.title-row {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+
+  /* titulo que aparece dentro del formulario */
+  .editor-title h2 {
+    margin: 0 0 1rem;
+    font-size: 1.15rem;
+  }
+
+
+/* acomoda los campos del formulario en 2 columnas
+   la segunda columna tiene el doble de espacio que la primera */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1rem;
+}
+
+
+/* ========================= BOTONES DEL FORMULARIO ========================= */
+
+/* acomoda los botones como Guardar o Cancelar hacia la derecha */
+.editor-actions {
+  justify-content: end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+
+/* ========================= TARJETAS DE FAMILIAS ========================= */
+
+/* acomoda automaticamente todas las tarjetas de familias */
+.family-grid {
+  display: grid;
+  /* auto-fit crea la cantidad de columnas que quepan
+     cada tarjeta tiene minimo 285px y despues puede crecer */
+  grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+  gap: 1.1rem;
+}
+
+
+/* controla el tamaño del elemento visual usado por la familia */
+.family-visual {
+  font-size: 2rem;
+}
+
+
+/* nombre de la familia dentro de la tarjeta */
+.family-content h2 {
+  margin: 0;
+  font-size: 1.12rem;
+}
+
+
+/* descripcion de la familia */
+.family-content p {
+  /* deja un minimo de espacio para que las tarjetas se mantengan parejas */
+  min-height: 3rem;
+  margin: 0.7rem 0 1rem;
+  color: var(--cui-secondary-color);
+}
+
+
+/* ========================= ACCIONES DE LA TARJETA ========================= */
+
+/* acomoda los botones que aparecen dentro de cada familia */
+.card-actions {
+  /* si los botones no caben en una sola linea permite que bajen a otra */
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+
+/* ========================= ESTADOS VACIOS ========================= */
+
+/* tarjeta usada para mensajes como que no hay familias registradas */
+.state-card {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--cui-secondary-color);
+  background: var(--cui-card-bg);
+  /* dashed deja el borde como pequeñas lineas separadas */
+  border: 1px dashed var(--cui-border-color);
+  border-radius: 1rem;
+}
+
+
+/* ========================= IMAGEN DE LA FAMILIA ========================= */
+
+/* separa la parte donde se selecciona la imagen del resto del formulario */
 .familia-imagen {
   margin-top: 1rem;
 }
 
+
+/* contiene la vista previa de la imagen seleccionada */
 .familia-imagen-preview {
   margin-top: 1rem;
+  /* evita que la vista previa se haga demasiado grande */
   max-width: 320px;
 }
 
+
+  /* imagen que aparece dentro de la vista previa */
   .familia-imagen-preview img {
     width: 100%;
     height: 180px;
+    /* cover llena todo el espacio sin deformar la imagen
+     si sobra una parte simplemente la recorta */
     object-fit: cover;
-    border-radius: .7rem;
+    border-radius: 0.7rem;
     border: 1px solid var(--cui-border-color);
   }
 
+
+  /* boton que aparece debajo de la vista previa */
   .familia-imagen-preview .btn {
     width: 100%;
-    margin-top: .5rem;
+    margin-top: 0.5rem;
   }
 
+
+/* ========================= IMAGEN DE LA TARJETA ========================= */
+
+/* imagen que aparece en las tarjetas de familias */
 .family-image {
   width: 100%;
   height: 160px;
+  /* hace que la imagen llene el espacio sin deformarse */
   object-fit: cover;
+  /* evita espacios raros que pueden quedar debajo de una imagen */
   display: block;
+}
+
+
+/* ========================= PANTALLAS PEQUEÑAS ========================= */
+
+/* cuando la pantalla baja de 720px acomoda la pagina para celular */
+@media (max-width: 720px) {
+
+  /* el encabezado deja de estar horizontal */
+  .page-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  /* el formulario deja de tener 2 columnas y pasa a una sola */
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }

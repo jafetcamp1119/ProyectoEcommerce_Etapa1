@@ -1,8 +1,329 @@
-:host { display: block; }
-.order-detail-page { padding-bottom: 2rem; }.back-link { display: inline-flex; margin-bottom: 1rem; color: var(--cui-primary); font-weight: 700; text-decoration: none; }
-.detail-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }.detail-heading h1 { margin: .1rem 0; }.detail-heading p { margin: 0; color: var(--cui-secondary-color); }.eyebrow { color: var(--cui-primary); font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }.heading-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }.status { padding: .38rem .65rem; border-radius: 999px; font-size: .7rem; font-weight: 800; }.status[data-status="FACTURADA"], .status[data-status="CONFIRMADA"] { color: #167a45; background: #dff7e9; }.status[data-status="PENDIENTE"], .status[data-status="PROFORMA"] { color: #8a5d00; background: #fff1c7; }.status[data-status="CANCELADA"] { color: #a62d36; background: #fde3e5; }
-.information-card, .products-card, .state-card { padding: 1.15rem; background: var(--cui-card-bg); border: 1px solid var(--cui-border-color); border-radius: 1rem; box-shadow: 0 .35rem 1.2rem rgba(32,56,85,.08); }.information-card { margin-bottom: 1rem; }.information-card h2, .products-card h2 { margin: 0 0 1rem; font-size: 1.15rem; }.information-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin: 0; }.information-card dl div { min-width: 0; padding: .7rem; background: var(--cui-tertiary-bg); border-radius: .65rem; }.information-card .full { grid-column: 1 / -1; }.information-card dt, .totals dt { color: var(--cui-secondary-color); font-size: .68rem; font-weight: 800; text-transform: uppercase; }.information-card dd { margin: .25rem 0 0; overflow-wrap: anywhere; }.information-card dd small { display: block; color: var(--cui-secondary-color); }
-.table-scroll { overflow-x: auto; }table { width: 100%; min-width: 760px; border-collapse: collapse; }th, td { padding: .75rem .6rem; border-bottom: 1px solid var(--cui-border-color); text-align: right; }th { color: var(--cui-secondary-color); font-size: .68rem; text-transform: uppercase; }th:first-child, td:first-child { text-align: left; }td a { color: var(--cui-body-color); font-weight: 700; text-decoration: none; }td small { display: block; color: var(--cui-secondary-color); }
-.totals { width: min(100%, 390px); margin: 1rem 0 0 auto; }.totals div { display: flex; justify-content: space-between; padding: .4rem 0; }.totals dd { margin: 0; }.totals .grand-total { margin-top: .35rem; padding-top: .8rem; border-top: 1px solid var(--cui-border-color); font-size: 1.15rem; font-weight: 800; }
-.state-card { display: flex; align-items: center; flex-direction: column; justify-content: center; min-height: 260px; text-align: center; }
-@media (max-width: 650px) { .detail-heading { align-items: stretch; flex-direction: column; }.information-card dl { grid-template-columns: 1fr; }.information-card .full { grid-column: auto; } }
+/* esta pagina acomoda el detalle completo de una orden
+   incluye encabezado informacion productos totales y estados */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= PAGINA GENERAL ========================= */
+
+.order-detail-page {
+  /* deja espacio abajo para que el contenido no termine pegado al borde */
+  padding-bottom: 2rem;
+}
+
+
+/* ========================= ENLACE PARA VOLVER ========================= */
+
+.back-link {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  color: var(--cui-primary);
+  font-weight: 700;
+  /* quita la linea que normalmente traen los enlaces */
+  text-decoration: none;
+}
+
+
+/* ========================= ENCABEZADO ========================= */
+
+/* acomoda la informacion principal de la orden y las acciones */
+.detail-heading {
+  display: flex;
+  /* alinea el contenido hacia la parte de abajo */
+  align-items: flex-end;
+  /* deja la informacion y las acciones en extremos opuestos */
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+
+  /* titulo principal de la orden */
+  .detail-heading h1 {
+    margin: 0.1rem 0;
+  }
+
+
+  /* texto que aparece debajo del titulo */
+  .detail-heading p {
+    margin: 0;
+    color: var(--cui-secondary-color);
+  }
+
+
+/* texto pequeño que aparece encima del titulo */
+.eyebrow {
+  color: var(--cui-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  /* separa un poco las letras */
+  letter-spacing: 0.12em;
+  /* pone el texto visualmente en mayusculas */
+  text-transform: uppercase;
+}
+
+
+/* ========================= ACCIONES DEL ENCABEZADO ========================= */
+
+/* acomoda los botones y el estado de la orden */
+.heading-actions {
+  display: flex;
+  align-items: center;
+  /* permite que bajen a otra linea si no caben */
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+
+/* ========================= ESTADO DE LA ORDEN ========================= */
+
+/* diseño base de la etiqueta de estado */
+.status {
+  padding: 0.38rem 0.65rem;
+  /* deja la etiqueta completamente redondeada */
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+
+  /* ordenes facturadas o confirmadas */
+  .status[data-status="FACTURADA"],
+  .status[data-status="CONFIRMADA"] {
+    color: #167a45;
+    background: #dff7e9;
+  }
+
+
+  /* ordenes pendientes o proformas */
+  .status[data-status="PENDIENTE"],
+  .status[data-status="PROFORMA"] {
+    color: #8a5d00;
+    background: #fff1c7;
+  }
+
+
+  /* ordenes canceladas */
+  .status[data-status="CANCELADA"] {
+    color: #a62d36;
+    background: #fde3e5;
+  }
+
+
+/* ========================= TARJETAS PRINCIPALES ========================= */
+
+/* las tarjetas de informacion productos y estados comparten el mismo diseño */
+.information-card,
+.products-card,
+.state-card {
+  padding: 1.15rem;
+  background: var(--cui-card-bg);
+  border: 1px solid var(--cui-border-color);
+  border-radius: 1rem;
+  /* agrega una sombra suave alrededor de las tarjetas */
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.08);
+}
+
+
+/* separa la tarjeta de informacion del resto del contenido */
+.information-card {
+  margin-bottom: 1rem;
+}
+
+
+  /* titulos de las tarjetas */
+  .information-card h2,
+  .products-card h2 {
+    margin: 0 0 1rem;
+    font-size: 1.15rem;
+  }
+
+
+  /* ========================= INFORMACION DE LA ORDEN ========================= */
+
+  /* acomoda los datos de la orden en 2 columnas */
+  .information-card dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 0;
+  }
+
+
+    /* cada dato tiene su propio bloque */
+    .information-card dl div {
+      /* evita que el contenido haga crecer demasiado la columna */
+      min-width: 0;
+      padding: 0.7rem;
+      background: var(--cui-tertiary-bg);
+      border-radius: 0.65rem;
+    }
+
+
+  /* hace que un dato pueda ocupar las 2 columnas */
+  .information-card .full {
+    grid-column: 1 / -1;
+  }
+
+
+  /* nombres de los datos dentro de informacion y totales */
+  .information-card dt,
+  .totals dt {
+    color: var(--cui-secondary-color);
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+
+  /* valor de cada dato */
+  .information-card dd {
+    margin: 0.25rem 0 0;
+    /* permite partir textos largos como correos o direcciones
+     para que no se salgan de la tarjeta */
+    overflow-wrap: anywhere;
+  }
+
+
+    /* texto secundario dentro de un valor */
+    .information-card dd small {
+      display: block;
+      color: var(--cui-secondary-color);
+    }
+
+
+/* ========================= TABLA DE PRODUCTOS ========================= */
+
+/* permite mover horizontalmente la tabla si no cabe en la pantalla */
+.table-scroll {
+  overflow-x: auto;
+}
+
+
+/* tabla donde aparecen los productos de la orden */
+table {
+  width: 100%;
+  /* evita que las columnas se compriman demasiado */
+  min-width: 760px;
+  /* une los bordes de las celdas */
+  border-collapse: collapse;
+}
+
+
+/* estilos compartidos por encabezados y celdas */
+th,
+td {
+  padding: 0.75rem 0.6rem;
+  border-bottom: 1px solid var(--cui-border-color);
+  /* por defecto los valores quedan alineados a la derecha */
+  text-align: right;
+}
+
+
+/* encabezados de las columnas */
+th {
+  color: var(--cui-secondary-color);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+
+  /* la primera columna se alinea a la izquierda
+   tanto en encabezado como en los datos */
+  th:first-child,
+  td:first-child {
+    text-align: left;
+  }
+
+
+/* enlaces dentro de las celdas */
+td a {
+  color: var(--cui-body-color);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+
+/* texto secundario dentro de las celdas */
+td small {
+  display: block;
+  color: var(--cui-secondary-color);
+}
+
+
+/* ========================= TOTALES ========================= */
+
+/* contiene subtotal descuentos impuestos y total final */
+.totals {
+  /* usa como maximo 390px
+     pero puede reducirse si la pantalla es mas pequeña */
+  width: min(100%, 390px);
+  /* auto a la izquierda empuja el bloque hacia la derecha */
+  margin: 1rem 0 0 auto;
+}
+
+
+  /* cada fila acomoda el nombre y su monto en extremos opuestos */
+  .totals div {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+  }
+
+
+  /* quita el margen que trae dd por defecto */
+  .totals dd {
+    margin: 0;
+  }
+
+
+  /* resalta el total final de la orden */
+  .totals .grand-total {
+    margin-top: 0.35rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--cui-border-color);
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+
+/* ========================= ESTADOS GENERALES ========================= */
+
+/* tarjeta usada para carga errores o ausencia de informacion */
+.state-card {
+  display: flex;
+  align-items: center;
+  /* pone el contenido uno debajo del otro */
+  flex-direction: column;
+  justify-content: center;
+  min-height: 260px;
+  text-align: center;
+}
+
+
+/* ========================= PANTALLAS PEQUEÑAS ========================= */
+
+/* cuando la pantalla baja de 650px acomoda el detalle para celular */
+@media (max-width: 650px) {
+
+  /* el encabezado deja de estar horizontal */
+  .detail-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  /* la informacion pasa de 2 columnas a una sola */
+  .information-card dl {
+    grid-template-columns: 1fr;
+  }
+
+
+  /* full ya no necesita ocupar 2 columnas porque solamente existe una */
+  .information-card .full {
+    grid-column: auto;
+  }
+}

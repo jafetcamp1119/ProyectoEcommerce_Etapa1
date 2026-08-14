@@ -9,7 +9,7 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
 {
-    /// <summary>Gestiona impuestos, porcentajes y vigencia usados en el desglose de precios.</summary>
+    // aqui se validan y guardan los impuestos que despues se usan para separar precio base e impuesto
     public class ImpuestoLN : IImpuestoLN
     {
         private IUnidadTrabajoEF _unidadDeTrabajo { get; set; }
@@ -23,13 +23,14 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             _mapper = mapper;
         }
 
-        /// <summary>Crea un impuesto validando porcentaje, fechas y nombre único.</summary>
+        // recibe un impuesto nuevo, revisa nombre, porcentaje y fechas y devuelve lo que se guardo
         public async Task<Respuesta<TImpuesto>> InsertarAsync(TImpuesto datos)
         {
             var resultado = new Respuesta<TImpuesto>();
             try
             {
                 Limpiar(datos);
+                // Validar devuelve un mensaje cuando algo esta mal o null cuando se puede seguir
                 var validacion = Validar(datos);
                 if (validacion != null) return Error<TImpuesto>(validacion);
                 var existente = await _unidadDeTrabajo.TImpuesto.ObtenerEntidadAsync(x => x.Nombre == datos.Nombre);
@@ -39,6 +40,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
                     resultado.Error = Mensajes.RegistroDuplicado;
                     return resultado;
                 }
+                // si no vino una fecha usa hoy para que la vigencia tenga un inicio real
                 if (datos.FechaInicio == default)
                     datos.FechaInicio = DateOnly.FromDateTime(DateTime.Today);
                 var entidad = _mapper.Map<Impuesto>(datos);
@@ -55,6 +57,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // trae todos los impuestos para la pantalla administrativa
         public async Task<Respuesta<IEnumerable<TImpuesto>>> ListarAsync()
         {
             var resultado = new Respuesta<IEnumerable<TImpuesto>>();
@@ -72,6 +75,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // valida y guarda los cambios de un impuesto que ya existe
         public async Task<Respuesta<TImpuesto>> ModificarAsync(TImpuesto datos)
         {
             var resultado = new Respuesta<TImpuesto>();
@@ -86,6 +90,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
                     resultado.Error = Mensajes.RegistroNoExisteModificar;
                     return resultado;
                 }
+                // busca el mismo nombre en otro ID para no crear dos impuestos iguales
                 var duplicado = await _unidadDeTrabajo.TImpuesto.ObtenerEntidadAsync(
                     x => x.Nombre == datos.Nombre && x.ImpuestoId != datos.ImpuestoId);
                 if (duplicado.Data != null) return Error<TImpuesto>(Mensajes.RegistroDuplicado);
@@ -103,7 +108,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
-        /// <summary>Desactiva el impuesto para conservar referencias de productos y órdenes.</summary>
+        // cambia Activo a false sin borrar referencias de productos y ordenes anteriores
         public async Task<Respuesta<bool>> EliminarAsync(TImpuesto datos)
         {
             var resultado = new Respuesta<bool>();
@@ -130,6 +135,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // busca impuestos que contienen el texto recibido en su nombre
         public async Task<Respuesta<IEnumerable<TImpuesto>>> BuscarAsync(TImpuesto datos)
         {
             var resultado = new Respuesta<IEnumerable<TImpuesto>>();
@@ -148,6 +154,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // trae un solo impuesto por su ID o devuelve RegistroNoEncontrado
         public async Task<Respuesta<TImpuesto>> ObtenerAsync(TImpuesto datos)
         {
             var resultado = new Respuesta<TImpuesto>();
@@ -170,6 +177,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        // hace las validaciones que comparten insertar y modificar
         private static string? Validar(TImpuesto datos)
         {
             if (string.IsNullOrWhiteSpace(datos.Nombre)) return Mensajes.NombreObligatorio;
@@ -178,6 +186,7 @@ namespace ProyectoEcommerce.LogicaNegocio.Implementaciones
             return null;
         }
 
+        // Trim evita guardar espacios que hagan parecer diferentes dos nombres iguales
         private static void Limpiar(TImpuesto datos) =>
             datos.Nombre = (datos.Nombre ?? string.Empty).Trim();
 

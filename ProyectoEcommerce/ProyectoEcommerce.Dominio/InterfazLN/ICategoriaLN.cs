@@ -3,24 +3,24 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN
 {
-    /// <summary>Define el mantenimiento de categorías y sus consultas por familia.</summary>
+    // acciones disponibles para guardar categorias y buscarlas dentro de una familia
     public interface ICategoriaLN
     {
-        /// <summary>Crea una categoría válida.</summary>
+        // crea una categoria despues de revisar su nombre y su familia
         Task<Respuesta<TCategoria>> InsertarAsync(TCategoria datos);
-        /// <summary>Actualiza una categoría existente.</summary>
+        // guarda cambios de una categoria, incluida su UrlImagen opcional
         Task<Respuesta<TCategoria>> ModificarAsync(TCategoria datos);
-        /// <summary>Desactiva lógicamente una categoría.</summary>
+        // desactiva sin borrar productos ni relaciones
         Task<Respuesta<bool>> EliminarAsync(TCategoria datos);
-        /// <summary>Busca categorías por los criterios recibidos.</summary>
+        // busca categorias usando el nombre recibido
         Task<Respuesta<IEnumerable<TCategoria>>> BuscarAsync(TCategoria datos);
-        /// <summary>Obtiene una categoría por identificador.</summary>
+        // trae una categoria especifica por su ID
         Task<Respuesta<TCategoria>> ObtenerAsync(TCategoria datos);
-        /// <summary>Lista categorías para administración.</summary>
+        // lista activas e inactivas para administracion
         Task<Respuesta<IEnumerable<TCategoria>>> ListarAsync();
-        /// <summary>Lista categorías administrativas de una familia.</summary>
+        // trae todas las categorias que pertenecen a la familia indicada
         Task<Respuesta<IEnumerable<TCategoria>>> ListarPorFamiliaAsync(int familiaId);
-        /// <summary>Lista categorías activas de una familia activa para el Cliente.</summary>
+        // para el Cliente solo deja salir categorias activas de una familia activa
         Task<Respuesta<IEnumerable<TCategoria>>> ListarClientePorFamiliaAsync(int familiaId);
     }
 }

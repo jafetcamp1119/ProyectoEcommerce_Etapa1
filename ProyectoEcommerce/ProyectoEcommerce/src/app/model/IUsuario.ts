@@ -1,4 +1,4 @@
-/** Usuario presentado en la administración, sin credenciales ni hash. */
+// usuario que se muestra en administracion, nunca incluye contraseña ni PasswordHash
 export interface IUsuario {
   usuarioId: number;
   rolId: number;

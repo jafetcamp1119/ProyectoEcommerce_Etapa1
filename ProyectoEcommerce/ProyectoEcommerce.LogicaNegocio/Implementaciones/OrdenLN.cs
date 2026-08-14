@@ -15,14 +15,12 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.LogicaNegocio.Implementaciones;
 
-/// <summary>
-/// Coordina checkout, creación transaccional de ventas, inventario, factura y correo.
-/// </summary>
+// aqui se coordina checkout, venta, inventario, factura y correo
+// la compra usa SQL directo y una transaccion para no dejar ordenes o stock a medias
 public class OrdenLN : IOrdenLN
 {
-    // PROFORMA representa una cotización; PENDIENTE una orden todavía no confirmada;
-    // CONFIRMADA ya afectó inventario; FACTURADA tiene documento registrado;
-    // CANCELADA dejó de continuar el flujo. La LN solo utiliza los estados ya definidos por el sistema.
+    // PROFORMA es cotizacion, PENDIENTE todavia no confirma y CONFIRMADA ya resto inventario
+    // FACTURADA tiene PDF registrado y CANCELADA ya no sigue el flujo
     private static readonly string[] EstadosPermitidos = ["PROFORMA", "PENDIENTE", "CONFIRMADA", "FACTURADA", "CANCELADA"];
     private readonly IUnidadTrabajoEF _unidadDeTrabajo;
     private readonly ILogger<OrdenLN> _logger;
@@ -53,12 +51,14 @@ public class OrdenLN : IOrdenLN
         _entorno = entorno;
     }
 
-    /// <summary>Reúne los datos vigentes del Cliente y su carrito sin crear todavía una orden.</summary>
+    // recibe el usuario del JWT y junta sus datos con el carrito actual
+    // solo prepara la pantalla, todavia no crea una orden ni resta stock
     public async Task<Respuesta<TCheckoutPreparacion>> PrepararCheckoutAsync(int usuarioId)
     {
         if (usuarioId <= 0) return Error<TCheckoutPreparacion>(Mensajes.SesionInvalidaCarrito);
         try
         {
+            // busca un usuario activo y despues pide al carrito sus precios y descuentos actuales
             var usuario = await _unidadDeTrabajo.TUsuario.ObtenerEntidadAsync(x => x.UsuarioId == usuarioId && x.Activo);
             if (usuario.Data == null || !string.IsNullOrEmpty(usuario.Error))
                 return Error<TCheckoutPreparacion>(Mensajes.SesionInvalidaCarrito);
@@ -89,24 +89,25 @@ public class OrdenLN : IOrdenLN
         }
     }
 
-    /// <summary>
-    /// Confirma la venta y, después del commit, genera el PDF y trata de enviarlo por correo.
-    /// </summary>
+    // valida el formulario, confirma venta e inventario y despues genera PDF y manda correo
+    // devuelve numero, total y si cada paso posterior se pudo completar
     public async Task<Respuesta<TCompraCompletada>> ConfirmarCompraAsync(
         TConfirmarCompra datos,
         int usuarioId,
         CancellationToken cancellationToken = default)
     {
+        // limpia correo, direccion y metodo antes de abrir conexion o transaccion
         var validacion = ValidarConfirmacion(datos, usuarioId);
         if (validacion != null) return Error<TCompraCompletada>(validacion);
 
         TFacturaDatos factura;
-        // La venta y el inventario se completan primero. Un fallo posterior de PDF o SMTP
-        // no revierte una compra que ya fue confirmada correctamente.
+        // primero confirma venta e inventario
+        // un fallo posterior del PDF o SMTP no devuelve una compra que ya fue confirmada
         try
         {
             factura = await CrearVentaAsync(datos, usuarioId, cancellationToken);
         }
+        // el procedimiento usa el numero 51001 para avisar que el stock cambio
         catch (SqlException ex) when (ex.Number == 51001)
         {
             _logger.LogWarning("Stock insuficiente al confirmar el carrito del UsuarioId {UsuarioId}.", usuarioId);
@@ -125,6 +126,7 @@ public class OrdenLN : IOrdenLN
         var facturaGenerada = false;
         var correoEnviado = false;
         var mensaje = "Compra realizada correctamente.";
+        // arma una ruta conocida dentro de wwwroot para guardar y luego descargar el PDF
         var nombreArchivo = $"Factura-{factura.NumeroOrden}.pdf";
         var rutaRelativa = $"documentos/facturas/{nombreArchivo}";
         var raizWeb = _entorno.WebRootPath ?? Path.Combine(_entorno.ContentRootPath, "wwwroot");
@@ -132,12 +134,15 @@ public class OrdenLN : IOrdenLN
 
         try
         {
+            // CreateDirectory tambien funciona cuando la carpeta ya existe
             Directory.CreateDirectory(Path.GetDirectoryName(rutaAbsoluta)!);
             var contenido = _facturaLN.Generar(factura);
+            // guarda los bytes del PDF y despues registra la ruta en la tabla Documentos
             await File.WriteAllBytesAsync(rutaAbsoluta, contenido, cancellationToken);
             await RegistrarFacturaAsync(factura, rutaRelativa, usuarioId, cancellationToken);
             facturaGenerada = true;
 
+            // SMTP se intenta solamente cuando el PDF ya existe y esta registrado
             var correo = await _correoFacturaLN.EnviarAsync(factura, rutaAbsoluta, cancellationToken);
             correoEnviado = correo.Enviado;
             if (correoEnviado)
@@ -149,10 +154,13 @@ public class OrdenLN : IOrdenLN
         {
             _logger.LogError(ex, "La OrdenId {OrdenId} fue confirmada, pero falló su facturación posterior.", factura.OrdenId);
             mensaje = "La compra fue realizada, pero no fue posible completar la generación de la factura.";
+            // si quedo un archivo incompleto intenta limpiarlo sin esconder el error principal
             if (!facturaGenerada && File.Exists(rutaAbsoluta))
             {
                 try { File.Delete(rutaAbsoluta); }
-                catch (Exception limpiezaEx) { _logger.LogWarning(limpiezaEx, "No fue posible limpiar un PDF incompleto de OrdenId {OrdenId}.", factura.OrdenId); }
+                catch (Exception limpiezaEx) {
+                _logger.LogWarning(limpiezaEx, "No fue posible limpiar un PDF incompleto de OrdenId {OrdenId}.", factura.OrdenId); 
+                }
             }
         }
 
@@ -171,38 +179,44 @@ public class OrdenLN : IOrdenLN
         };
     }
 
-    /// <summary>Crea Orden, OrdenDetalle y Pago dentro de una transacción serializable.</summary>
+    // crea Orden, detalles y pago, confirma inventario y cierra carrito dentro de una sola transaccion
+    // devuelve los datos historicos que luego se usan para armar la factura
     private async Task<TFacturaDatos> CrearVentaAsync(
         TConfirmarCompra datos,
         int usuarioId,
         CancellationToken cancellationToken)
     {
+        // await using cierra conexion y transaccion aunque el metodo salga por una excepcion
         await using var conexion = new SqlConnection(CadenaConexion());
         await conexion.OpenAsync(cancellationToken);
-        // Serializable evita que dos compras confirmen simultáneamente el mismo stock disponible.
+        // Serializable evita que dos compras confirmen al mismo tiempo el mismo stock disponible
         await using var transaccion = (SqlTransaction)await conexion.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
 
         try
         {
+            // cada consulta usa la misma conexion y transaccion para ver un estado consistente
             var cliente = await ConsultarClienteAsync(conexion, transaccion, usuarioId, cancellationToken)
                 ?? throw new CompraInvalidaException(Mensajes.SesionInvalidaCarrito);
             var carritoId = await ConsultarCarritoAbiertoAsync(conexion, transaccion, usuarioId, cancellationToken);
             if (!carritoId.HasValue)
                 throw new CompraInvalidaException("Tu carrito está vacío.");
 
-            // El servidor vuelve a leer producto, precio e inventario; no confía en importes enviados por Angular.
+            // vuelve a leer producto, precio e inventario, nunca confia en importes enviados por Angular
             var items = await ConsultarItemsCompraAsync(conexion, transaccion, carritoId.Value, cancellationToken);
             if (items.Count == 0)
                 throw new CompraInvalidaException("Tu carrito está vacío.");
+            // Any devuelve true apenas encuentra un producto invalido o sin stock suficiente
             if (items.Any(x => !x.ProductoActivo || x.Cantidad > x.StockDisponible))
                 throw new CompraInvalidaException("Uno o más productos ya no tienen stock suficiente. Revisa tu carrito.");
 
+            // suma los valores recalculados en el servidor para formar la cabecera de la orden
             var subtotal = items.Sum(x => x.Subtotal);
             var descuentos = items.Sum(x => x.Descuento);
             var impuestos = items.Sum(x => x.Impuestos);
             var total = items.Sum(x => x.TotalLinea);
             var fecha = DateTime.UtcNow;
 
+            // OUTPUT devuelve el ID y la fecha exacta que SQL puso al crear la orden
             var insertarOrden = CrearComando(conexion, transaccion, """
                 INSERT INTO dbo.Ordenes (UsuarioId, FechaOrden, Estado, TipoOrden, DireccionEnvio, Moneda, Total, DescuentoTotal)
                 OUTPUT INSERTED.OrdenId, INSERTED.FechaOrden
@@ -213,6 +227,7 @@ public class OrdenLN : IOrdenLN
             insertarOrden.Parameters.Add(DecimalParametro("@Total", total));
             insertarOrden.Parameters.Add(DecimalParametro("@DescuentoTotal", descuentos));
             int ordenId;
+            // ExecuteReaderAsync se usa porque el INSERT devuelve dos valores con OUTPUT
             await using (var lector = await insertarOrden.ExecuteReaderAsync(cancellationToken))
             {
                 if (!await lector.ReadAsync(cancellationToken)) throw new InvalidOperationException("No se creó la orden.");
@@ -220,7 +235,7 @@ public class OrdenLN : IOrdenLN
                 fecha = lector.GetDateTime(1);
             }
 
-            // OrdenDetalle conserva los valores históricos usados en esta compra.
+            // recorre cada item y guarda los valores historicos usados en esta compra
             foreach (var item in items)
             {
                 var insertarDetalle = CrearComando(conexion, transaccion, """
@@ -239,9 +254,11 @@ public class OrdenLN : IOrdenLN
                 insertarDetalle.Parameters.Add(DecimalParametro("@PorcentajeDescuento", item.PorcentajeDescuento, 5));
                 insertarDetalle.Parameters.Add(DecimalParametro("@Subtotal", item.Subtotal));
                 insertarDetalle.Parameters.Add(DecimalParametro("@TotalLinea", item.TotalLinea));
+                // ExecuteNonQueryAsync ejecuta el INSERT y no espera filas como respuesta
                 await insertarDetalle.ExecuteNonQueryAsync(cancellationToken);
             }
 
+            // el pago es una simulacion academica y se deja PENDIENTE sin procesar dinero real
             var insertarPago = CrearComando(conexion, transaccion, """
                 INSERT INTO dbo.Pagos (OrdenId, Fecha, Monto, Metodo, Estado, Referencia)
                 VALUES (@OrdenId, SYSDATETIME(), @Monto, @Metodo, N'PENDIENTE',
@@ -252,15 +269,14 @@ public class OrdenLN : IOrdenLN
             insertarPago.Parameters.AddWithValue("@Metodo", datos.MetodoPago);
             await insertarPago.ExecuteNonQueryAsync(cancellationToken);
 
-            // sp_ConfirmarOrdenVenta verifica nuevamente el stock, evita sobreventa,
-            // descuenta existencias, registra el movimiento de inventario y confirma la orden.
+            // el stored procedure vuelve a revisar stock, evita sobreventa, resta inventario y confirma
             var confirmar = CrearComando(conexion, transaccion, "dbo.sp_ConfirmarOrdenVenta");
             confirmar.CommandType = CommandType.StoredProcedure;
             confirmar.Parameters.AddWithValue("@OrdenId", ordenId);
             confirmar.Parameters.AddWithValue("@UsuarioId", usuarioId);
             await confirmar.ExecuteNonQueryAsync(cancellationToken);
 
-            // El carrito se marca como CONVERTIDO solo dentro de la misma transacción exitosa.
+            // el carrito se marca CONVERTIDO dentro de la misma transaccion
             var cerrarCarrito = CrearComando(conexion, transaccion, """
                 UPDATE dbo.Carritos SET Estado = N'CONVERTIDO'
                 WHERE CarritoId = @CarritoId AND UsuarioId = @UsuarioId AND Estado = N'ACTIVO';
@@ -270,6 +286,7 @@ public class OrdenLN : IOrdenLN
             if (await cerrarCarrito.ExecuteNonQueryAsync(cancellationToken) != 1)
                 throw new InvalidOperationException("No se pudo cerrar el carrito convertido.");
 
+            // Commit deja definitivos orden, detalles, pago, inventario y cierre del carrito juntos
             await transaccion.CommitAsync(cancellationToken);
 
             return new TFacturaDatos
@@ -291,16 +308,19 @@ public class OrdenLN : IOrdenLN
         }
         catch
         {
+            // cualquier error antes del Commit hace Rollback para no guardar la venta a medias
             if (transaccion.Connection != null) await transaccion.RollbackAsync(CancellationToken.None);
             throw;
         }
     }
 
+    // bloquea y trae el Cliente activo durante la confirmacion
     private static async Task<ClienteCompra?> ConsultarClienteAsync(
         SqlConnection conexion, SqlTransaction transaccion, int usuarioId, CancellationToken cancellationToken)
     {
         var comando = CrearComando(conexion, transaccion, """
             SELECT Nombre, Apellidos
+            -- UPDLOCK y HOLDLOCK conservan el bloqueo hasta terminar la transaccion
             FROM dbo.Usuarios WITH (UPDLOCK, HOLDLOCK)
             WHERE UsuarioId = @UsuarioId AND Activo = 1;
             """);
@@ -310,6 +330,7 @@ public class OrdenLN : IOrdenLN
         return new ClienteCompra { NombreCompleto = $"{lector.GetString(0)} {lector.GetString(1)}".Trim() };
     }
 
+    // busca y bloquea el carrito ACTIVO del usuario, devuelve null si esta vacio o ya se convirtio
     private static async Task<int?> ConsultarCarritoAbiertoAsync(
         SqlConnection conexion, SqlTransaction transaccion, int usuarioId, CancellationToken cancellationToken)
     {
@@ -318,11 +339,13 @@ public class OrdenLN : IOrdenLN
             WHERE UsuarioId = @UsuarioId AND Estado = N'ACTIVO';
             """);
         comando.Parameters.AddWithValue("@UsuarioId", usuarioId);
+        // ExecuteScalarAsync trae solamente el primer valor de la primera fila
         var valor = await comando.ExecuteScalarAsync(cancellationToken);
         return valor == null || valor == DBNull.Value ? null : Convert.ToInt32(valor);
     }
 
-    /// <summary>Bloquea y lee los productos del carrito para validar stock y capturar precios vigentes.</summary>
+    // bloquea y lee los productos del carrito para validar stock y capturar precios actuales
+    // despues busca candidatos de descuento y calcula cada linea
     private static async Task<List<TFacturaItemCompra>> ConsultarItemsCompraAsync(
         SqlConnection conexion, SqlTransaction transaccion, int carritoId, CancellationToken cancellationToken)
     {
@@ -342,6 +365,7 @@ public class OrdenLN : IOrdenLN
         var items = new List<TFacturaItemCompra>();
         await using (var lector = await comando.ExecuteReaderAsync(cancellationToken))
         {
+            // ReadAsync avanza una fila a la vez hasta terminar los productos del carrito
             while (await lector.ReadAsync(cancellationToken))
             {
                 var cantidad = lector.GetInt32(2);
@@ -361,6 +385,7 @@ public class OrdenLN : IOrdenLN
             }
         }
 
+        // crea una lista vacia de candidatos por producto para llenarla con la segunda consulta
         var candidatosPorProducto = items.ToDictionary(x => x.ProductoId, _ => new List<TDescuentoCandidato>());
         var descuentosComando = CrearComando(conexion, transaccion, """
             SELECT cd.ProductoId, d.DescuentoId, d.TipoDescuento, d.Nombre, d.Porcentaje
@@ -382,6 +407,7 @@ public class OrdenLN : IOrdenLN
             while (await lectorDescuentos.ReadAsync(cancellationToken))
             {
                 var productoId = lectorDescuentos.GetInt32(0);
+                // TryGetValue encuentra la lista correcta y continue ignora un ID inesperado
                 if (!candidatosPorProducto.TryGetValue(productoId, out var candidatos)) continue;
                 candidatos.Add(new TDescuentoCandidato
                 {
@@ -393,6 +419,7 @@ public class OrdenLN : IOrdenLN
             }
         }
 
+        // recorre los productos y deja precio, descuento e impuesto listos para guardar
         foreach (var item in items)
         {
             var descuento = ResolucionDescuentos.Calcular(
@@ -413,10 +440,8 @@ public class OrdenLN : IOrdenLN
         return items;
     }
 
-    /// <summary>
-    /// Cambia la orden de CONFIRMADA a FACTURADA y vincula el PDF mediante la tabla Documentos.
-    /// El número se toma de NumeroFactura y la ruta apunta al archivo guardado en wwwroot.
-    /// </summary>
+    // cambia la orden de CONFIRMADA a FACTURADA y registra numero, ruta y correo del PDF
+    // usa otra transaccion porque este paso ocurre despues de confirmar la compra
     private async Task RegistrarFacturaAsync(
         TFacturaDatos factura,
         string rutaRelativa,
@@ -433,6 +458,7 @@ public class OrdenLN : IOrdenLN
                 WHERE OrdenId = @OrdenId AND Estado = N'CONFIRMADA';
                 """);
             actualizar.Parameters.AddWithValue("@OrdenId", factura.OrdenId);
+            // debe cambiar exactamente una fila para asegurar que la orden estaba confirmada
             if (await actualizar.ExecuteNonQueryAsync(cancellationToken) != 1)
                 throw new InvalidOperationException("La orden no estaba confirmada para facturar.");
 
@@ -450,6 +476,7 @@ public class OrdenLN : IOrdenLN
 
             await InsertarBitacoraAsync(conexion, transaccion, usuarioId, "GENERAR_FACTURA", factura.OrdenId,
                 $"Documento {factura.NumeroFactura} generado.", cancellationToken);
+            // confirma estado, documento y bitacora juntos
             await transaccion.CommitAsync(cancellationToken);
         }
         catch
@@ -459,7 +486,7 @@ public class OrdenLN : IOrdenLN
         }
     }
 
-    /// <summary>Marca el documento como enviado después de que SMTP confirma el envío.</summary>
+    // despues de que SMTP responde bien marca EnviadoCorreo y deja la bitacora
     private async Task MarcarCorreoEnviadoAsync(int ordenId, int usuarioId, CancellationToken cancellationToken)
     {
         await using var conexion = new SqlConnection(CadenaConexion());
@@ -484,14 +511,15 @@ public class OrdenLN : IOrdenLN
         }
     }
 
-    /// <summary>Lista únicamente órdenes pertenecientes al Cliente autenticado.</summary>
+    // pasa el UsuarioId para que la consulta agregue el filtro de dueño
     public Task<Respuesta<TPagina<TOrdenResumen>>> ListarClienteAsync(TFiltroOrdenes filtro, int usuarioId) =>
         ListarOrdenesAsync(filtro, usuarioId);
 
-    /// <summary>Lista órdenes sin limitar por propietario para la vista administrativa.</summary>
+    // pasa null para que el Administrador vea ordenes de todos los clientes
     public Task<Respuesta<TPagina<TOrdenResumen>>> ListarAdministracionAsync(TFiltroOrdenes filtro) =>
         ListarOrdenesAsync(filtro, null);
 
+    // arma una consulta SQL con los filtros permitidos y devuelve total mas una pagina de resumenes
     private async Task<Respuesta<TPagina<TOrdenResumen>>> ListarOrdenesAsync(TFiltroOrdenes filtro, int? usuarioId)
     {
         NormalizarFiltro(filtro);
@@ -504,6 +532,7 @@ public class OrdenLN : IOrdenLN
         {
             await using var conexion = new SqlConnection(CadenaConexion());
             await conexion.OpenAsync();
+            // empieza con la condicion fija y agrega solo las partes de filtros que tienen valor
             var condiciones = new List<string> { "o.TipoOrden = N'VENTA'" };
             var comando = conexion.CreateCommand();
             if (usuarioId.HasValue)
@@ -533,6 +562,7 @@ public class OrdenLN : IOrdenLN
             }
             if (!string.IsNullOrEmpty(filtro.Numero))
             {
+                // Where deja solo digitos para aceptar numeros mostrados como 000012 o FAC-000012
                 var digitos = new string(filtro.Numero.Where(char.IsDigit).ToArray());
                 if (!int.TryParse(digitos, out var ordenId)) condiciones.Add("1 = 0");
                 else
@@ -542,6 +572,7 @@ public class OrdenLN : IOrdenLN
                 }
             }
 
+            // junta las condiciones controladas por el codigo y los valores viajan como parametros
             var donde = string.Join(" AND ", condiciones);
             comando.CommandText = $"""
                 SELECT COUNT(*) FROM dbo.Ordenes o INNER JOIN dbo.Usuarios u ON u.UsuarioId = o.UsuarioId WHERE {donde};
@@ -552,11 +583,14 @@ public class OrdenLN : IOrdenLN
                        CONVERT(bit, CASE WHEN d.DocumentoId IS NULL THEN 0 ELSE 1 END)
                 FROM dbo.Ordenes o
                 INNER JOIN dbo.Usuarios u ON u.UsuarioId = o.UsuarioId
+                -- OUTER APPLY calcula datos relacionados sin perder una orden que aun no tenga ese dato
                 OUTER APPLY (SELECT SUM(od.Cantidad) CantidadProductos FROM dbo.OrdenDetalle od WHERE od.OrdenId = o.OrdenId) c
                 OUTER APPLY (SELECT TOP (1) pg.Metodo FROM dbo.Pagos pg WHERE pg.OrdenId = o.OrdenId ORDER BY pg.PagoId DESC) p
-                OUTER APPLY (SELECT TOP (1) doc.DocumentoId, doc.CorreoDestino FROM dbo.Documentos doc WHERE doc.OrdenId = o.OrdenId AND doc.Tipo = N'FACTURA' ORDER BY doc.DocumentoId DESC) d
+                OUTER APPLY (SELECT TOP (1) doc.DocumentoId, doc.CorreoDestino FROM dbo.Documentos doc WHERE doc.OrdenId = 
+                o.OrdenId AND doc.Tipo = N'FACTURA' ORDER BY doc.DocumentoId DESC) d
                 WHERE {donde}
                 ORDER BY o.FechaOrden DESC, o.OrdenId DESC
+                -- OFFSET salta paginas anteriores y FETCH trae solo el tamaño pedido
                 OFFSET @Omitir ROWS FETCH NEXT @Tomar ROWS ONLY;
                 """;
             comando.Parameters.AddWithValue("@Omitir", (filtro.Pagina - 1) * filtro.TamanoPagina);
@@ -565,6 +599,7 @@ public class OrdenLN : IOrdenLN
             var items = new List<TOrdenResumen>();
             var total = 0;
             await using var lector = await comando.ExecuteReaderAsync();
+            // la primera respuesta es el total y NextResult pasa a la lista paginada
             if (await lector.ReadAsync()) total = lector.GetInt32(0);
             await lector.NextResultAsync();
             while (await lector.ReadAsync()) items.Add(MapearResumen(lector));
@@ -586,7 +621,7 @@ public class OrdenLN : IOrdenLN
         }
     }
 
-    /// <summary>Obtiene la orden si pertenece al usuario o si el solicitante tiene rol Administrador.</summary>
+    // trae la cabecera y despues sus productos si pertenece al Cliente o consulta un Administrador
     public async Task<Respuesta<TOrdenDetalleConsulta>> ObtenerDetalleAsync(int ordenId, int usuarioId, bool administrador)
     {
         if (ordenId <= 0 || usuarioId <= 0) return Error<TOrdenDetalleConsulta>(Mensajes.RegistroNoEncontrado);
@@ -603,8 +638,11 @@ public class OrdenLN : IOrdenLN
                 FROM dbo.Ordenes o
                 INNER JOIN dbo.Usuarios u ON u.UsuarioId = o.UsuarioId
                 OUTER APPLY (SELECT TOP (1) pg.Metodo FROM dbo.Pagos pg WHERE pg.OrdenId = o.OrdenId ORDER BY pg.PagoId DESC) p
-                OUTER APPLY (SELECT TOP (1) doc.DocumentoId, doc.Numero, doc.CorreoDestino, doc.EnviadoCorreo FROM dbo.Documentos doc WHERE doc.OrdenId = o.OrdenId AND doc.Tipo = N'FACTURA' ORDER BY doc.DocumentoId DESC) d
+                OUTER APPLY (SELECT TOP (1) doc.DocumentoId, doc.Numero, doc.CorreoDestino, 
+                doc.EnviadoCorreo FROM dbo.Documentos doc WHERE doc.OrdenId = o.OrdenId AND doc.Tipo =
+                N'FACTURA' ORDER BY doc.DocumentoId DESC) d
                 WHERE o.OrdenId = @OrdenId AND o.TipoOrden = N'VENTA'
+                  -- el Administrador puede ver cualquiera, el Cliente solo la orden que coincide con su ID
                   AND (@Administrador = 1 OR o.UsuarioId = @UsuarioId);
                 """;
             cabecera.Parameters.AddWithValue("@OrdenId", ordenId);
@@ -634,6 +672,7 @@ public class OrdenLN : IOrdenLN
             }
             if (resultado == null) return Error<TOrdenDetalleConsulta>(Mensajes.RegistroNoEncontrado);
 
+            // despues de encontrar una cabecera autorizada trae las lineas historicas de esa orden
             var detalles = conexion.CreateCommand();
             detalles.CommandText = """
                 SELECT od.ProductoId, p.Nombre, od.Cantidad, od.PrecioUnitario,
@@ -668,6 +707,7 @@ public class OrdenLN : IOrdenLN
                     });
                 }
             }
+            // suma las lineas para completar el resumen que se muestra arriba de la tabla
             resultado.Productos = productos;
             resultado.CantidadProductos = productos.Sum(x => x.Cantidad);
             resultado.Subtotal = productos.Sum(x => x.Subtotal);
@@ -682,7 +722,7 @@ public class OrdenLN : IOrdenLN
         }
     }
 
-    /// <summary>Localiza la factura registrada para una orden autorizada.</summary>
+    // busca la ruta y numero de la ultima factura autorizada para esa orden
     public async Task<Respuesta<TArchivoFactura>> ObtenerFacturaAsync(int ordenId, int usuarioId, bool administrador)
     {
         try
@@ -714,7 +754,7 @@ public class OrdenLN : IOrdenLN
         }
     }
 
-    /// <summary>Cancela únicamente una orden PENDIENTE que pertenece al Cliente.</summary>
+    // intenta cambiar a CANCELADA solo una orden propia que todavia esta PENDIENTE
     public async Task<Respuesta<bool>> CancelarPendienteAsync(int ordenId, int usuarioId)
     {
         if (ordenId <= 0 || usuarioId <= 0) return Error<bool>(Mensajes.RegistroNoEncontrado);
@@ -730,6 +770,7 @@ public class OrdenLN : IOrdenLN
                 """);
             comando.Parameters.AddWithValue("@OrdenId", ordenId);
             comando.Parameters.AddWithValue("@UsuarioId", usuarioId);
+            // cero filas significa que no existe, no es del usuario o ya cambio de estado
             if (await comando.ExecuteNonQueryAsync() != 1)
             {
                 await transaccion.RollbackAsync();
@@ -747,6 +788,8 @@ public class OrdenLN : IOrdenLN
         }
     }
 
+    // operaciones administrativas conservadas por la arquitectura original de ordenes
+    // este metodo completa valores basicos y crea una orden directamente
     public async Task<Respuesta<TOrden>> InsertarAsync(TOrden datos)
     {
         try
@@ -768,6 +811,7 @@ public class OrdenLN : IOrdenLN
         }
     }
 
+    // lista simple de ordenes para compatibilidad con el mantenimiento original
     public async Task<Respuesta<IEnumerable<TOrden>>> ListarAsync()
     {
         var respuesta = await _unidadDeTrabajo.TOrden.ListarAsync();
@@ -776,15 +820,18 @@ public class OrdenLN : IOrdenLN
             : Error<IEnumerable<TOrden>>(Mensajes.ErrorOperacion);
     }
 
+    // busca por ID y copia los cambios si la orden existe
     public async Task<Respuesta<TOrden>> ModificarAsync(TOrden datos)
     {
         var actual = await _unidadDeTrabajo.TOrden.ObtenerEntidadAsync(x => x.OrdenId == datos.OrdenId);
         if (actual.Data == null) return Error<TOrden>(Mensajes.RegistroNoExisteModificar);
         _mapper.Map(datos, actual.Data);
         var respuesta = await _unidadDeTrabajo.TOrden.ModificarAsync(actual.Data);
-        return respuesta.Data == null ? Error<TOrden>(Mensajes.ErrorOperacion) : new Respuesta<TOrden> { Data = _mapper.Map<TOrden>(respuesta.Data) };
+        return respuesta.Data == null ? Error<TOrden>(Mensajes.ErrorOperacion) : new Respuesta<TOrden> {
+        Data = _mapper.Map<TOrden>(respuesta.Data) };
     }
 
+    // borrado fisico conservado para el contrato administrativo original
     public async Task<Respuesta<bool>> EliminarAsync(TOrden datos)
     {
         var entidad = await _unidadDeTrabajo.TOrden.ObtenerEntidadAsync(x => x.OrdenId == datos.OrdenId);
@@ -793,6 +840,7 @@ public class OrdenLN : IOrdenLN
         return !string.IsNullOrEmpty(respuesta.Error) ? Error<bool>(Mensajes.ErrorOperacion) : new Respuesta<bool> { Data = respuesta.Data };
     }
 
+    // busca ordenes cuyo estado contiene el texto recibido
     public async Task<Respuesta<IEnumerable<TOrden>>> BuscarAsync(TOrden datos)
     {
         var estado = datos.Estado ?? string.Empty;
@@ -802,6 +850,7 @@ public class OrdenLN : IOrdenLN
             : Error<IEnumerable<TOrden>>(Mensajes.ErrorOperacion);
     }
 
+    // trae una sola orden por su ID
     public async Task<Respuesta<TOrden>> ObtenerAsync(TOrden datos)
     {
         var respuesta = await _unidadDeTrabajo.TOrden.ObtenerEntidadAsync(x => x.OrdenId == datos.OrdenId);
@@ -810,6 +859,7 @@ public class OrdenLN : IOrdenLN
             : new Respuesta<TOrden> { Data = _mapper.Map<TOrden>(respuesta.Data) };
     }
 
+    // convierte las columnas del lector SQL al resumen que recibe Angular
     private static TOrdenResumen MapearResumen(SqlDataReader lector) => new()
     {
         OrdenId = lector.GetInt32(0),
@@ -824,6 +874,7 @@ public class OrdenLN : IOrdenLN
         FacturaDisponible = lector.GetBoolean(8)
     };
 
+    // inserta la bitacora usando la misma conexion y transaccion de la operacion principal
     private static async Task InsertarBitacoraAsync(
         SqlConnection conexion, SqlTransaction transaccion, int usuarioId, string accion,
         int ordenId, string detalle, CancellationToken cancellationToken)
@@ -839,19 +890,24 @@ public class OrdenLN : IOrdenLN
         await comando.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    // crea comandos ligados a la transaccion y deja un minuto maximo de espera
     private static SqlCommand CrearComando(SqlConnection conexion, SqlTransaction transaccion, string texto) =>
         new(texto, conexion, transaccion) { CommandTimeout = 60 };
 
+    // define precision y dos decimales para no depender de AddWithValue con montos
     private static SqlParameter DecimalParametro(string nombre, decimal valor, byte precision = 18) =>
         new(nombre, SqlDbType.Decimal) { Precision = precision, Scale = 2, Value = valor };
 
+    // toma la misma conexion configurada para el resto del proyecto
     private string CadenaConexion() => _configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("No existe la conexión DefaultConnection.");
 
+    // limpia y valida los datos del checkout antes de abrir la transaccion de compra
     private static string? ValidarConfirmacion(TConfirmarCompra datos, int usuarioId)
     {
         if (usuarioId <= 0) return Mensajes.SesionInvalidaCarrito;
         datos.CorreoDestino = (datos.CorreoDestino ?? string.Empty).Trim().ToLowerInvariant();
+        // Regex cambia varios espacios seguidos por uno solo
         datos.DireccionEnvio = Regex.Replace((datos.DireccionEnvio ?? string.Empty).Trim(), @"\s+", " ");
         datos.MetodoPago = (datos.MetodoPago ?? string.Empty).Trim().ToUpperInvariant();
         if (!datos.CorreoConfirmado) return "Debes confirmar que el correo de la factura es correcto.";
@@ -864,6 +920,7 @@ public class OrdenLN : IOrdenLN
         return null;
     }
 
+    // limpia filtros y corrige pagina y tamaño antes de armar el SQL
     private static void NormalizarFiltro(TFiltroOrdenes filtro)
     {
         filtro.Numero = filtro.Numero?.Trim();

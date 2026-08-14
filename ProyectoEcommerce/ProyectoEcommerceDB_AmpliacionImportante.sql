@@ -14,6 +14,7 @@
 USE [ProyectoEcommerceDB];
 GO
 
+-- estas opciones dejan un comportamiento consistente para indices, restricciones y errores
 SET XACT_ABORT ON;
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
@@ -24,11 +25,31 @@ SET CONCAT_NULL_YIELDS_NULL ON;
 SET NUMERIC_ROUNDABORT OFF;
 GO
 
+-- se detiene temprano si alguien intenta correr la ampliacion antes del script base
 IF OBJECT_ID(N'dbo.Usuarios', N'U') IS NULL
     THROW 50001, 'No existe dbo.Usuarios. Ejecute primero el script base en una base vacia.', 1;
 GO
 
+/* Imagen opcional para los dos niveles de navegacion del catalogo */
+-- COL_LENGTH devuelve null cuando la columna todavia no existe
+-- por eso este bloque se puede correr varias veces sin intentar duplicarla
+IF COL_LENGTH(N'dbo.FamiliasProducto', N'UrlImagen') IS NULL
+BEGIN
+    ALTER TABLE dbo.FamiliasProducto
+        ADD UrlImagen NVARCHAR(500) NULL;
+END;
+GO
+
+-- hace la misma revision para las categorias que cuelgan de cada familia
+IF COL_LENGTH(N'dbo.Categorias', N'UrlImagen') IS NULL
+BEGIN
+    ALTER TABLE dbo.Categorias
+        ADD UrlImagen NVARCHAR(500) NULL;
+END;
+GO
+
 /* Seguridad y autorizacion */
+-- cada bloque revisa primero si el objeto existe para poder repetir la ampliacion
 IF OBJECT_ID(N'dbo.Roles', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Roles
@@ -43,6 +64,7 @@ BEGIN
 END;
 GO
 
+-- crea los dos roles conocidos y deja inactivos otros roles que no usa esta etapa
 IF NOT EXISTS (SELECT 1 FROM dbo.Roles WHERE Nombre = N'Administrador')
     INSERT dbo.Roles (Nombre, Descripcion) VALUES (N'Administrador', N'Acceso administrativo al sistema.');
 IF NOT EXISTS (SELECT 1 FROM dbo.Roles WHERE Nombre = N'Cliente')
@@ -55,6 +77,7 @@ IF COL_LENGTH(N'dbo.Usuarios', N'RolId') IS NULL
     ALTER TABLE dbo.Usuarios ADD RolId INT NULL;
 GO
 
+-- usuarios anteriores reciben Administrador para poder volver RolId obligatorio sin perder registros
 DECLARE @RolAdministrador INT = (SELECT RolId FROM dbo.Roles WHERE Nombre = N'Administrador');
 UPDATE dbo.Usuarios SET RolId = @RolAdministrador WHERE RolId IS NULL;
 GO
@@ -71,6 +94,7 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Usuar
     CREATE INDEX IX_Usuarios_RolId ON dbo.Usuarios (RolId);
 GO
 
+-- PasswordHash solo se vuelve obligatorio cuando ya no quedan usuarios viejos sin hash
 IF NOT EXISTS (SELECT 1 FROM dbo.Usuarios WHERE PasswordHash IS NULL OR LTRIM(RTRIM(PasswordHash)) = N'')
     ALTER TABLE dbo.Usuarios ALTER COLUMN PasswordHash NVARCHAR(500) NOT NULL;
 GO
@@ -139,6 +163,7 @@ BEGIN
 END;
 GO
 
+-- guarda las opciones esperadas y despues actualiza o inserta sin depender de IDs fijos
 DECLARE @Opciones TABLE
 (
     Nombre NVARCHAR(80), Ruta NVARCHAR(160), Icono NVARCHAR(60), Orden INT
@@ -161,6 +186,7 @@ WHERE NOT EXISTS (SELECT 1 FROM dbo.MenuOpciones m WHERE m.Ruta=o.Ruta);
 DECLARE @AdministradorId INT=(SELECT RolId FROM dbo.Roles WHERE Nombre=N'Administrador');
 DECLARE @ClienteId INT=(SELECT RolId FROM dbo.Roles WHERE Nombre=N'Cliente');
 
+-- el Administrador recibe mantenimientos y el Cliente solo las rutas comerciales permitidas
 INSERT dbo.RolMenuOpciones (RolId,MenuOpcionId)
 SELECT @AdministradorId,m.MenuOpcionId FROM dbo.MenuOpciones m
 WHERE m.Ruta IN (N'/',N'/familias-producto',N'/categorias',N'/impuestos',N'/productos',N'/roles',N'/ordenes')
@@ -171,12 +197,14 @@ SELECT @ClienteId,m.MenuOpcionId FROM dbo.MenuOpciones m
 WHERE m.Ruta IN (N'/',N'/productos',N'/ordenes')
 AND NOT EXISTS (SELECT 1 FROM dbo.RolMenuOpciones x WHERE x.RolId=@ClienteId AND x.MenuOpcionId=m.MenuOpcionId);
 
+-- limpia permisos viejos del Cliente que ya no pertenecen a su menu
 DELETE rm FROM dbo.RolMenuOpciones rm
 INNER JOIN dbo.MenuOpciones m ON m.MenuOpcionId=rm.MenuOpcionId
 WHERE rm.RolId=@ClienteId AND m.Ruta NOT IN (N'/',N'/productos',N'/ordenes');
 GO
 
 /* Imagenes de productos: rutas, no binarios */
+-- esta tabla sigue siendo exclusiva de productos y no se reemplaza por UrlImagen del catalogo
 IF OBJECT_ID(N'dbo.ProductoImagenes', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.ProductoImagenes
@@ -204,6 +232,7 @@ IF COL_LENGTH(N'dbo.ProductoImagenes', N'TextoAlternativo') IS NULL
     ALTER TABLE dbo.ProductoImagenes ADD TextoAlternativo NVARCHAR(180) NULL;
 GO
 
+-- el indice filtrado permite una sola imagen principal activa por producto
 IF NOT EXISTS
 (
     SELECT 1 FROM sys.indexes

@@ -10,10 +10,8 @@ namespace ProyectoEcommerce.API.Controllers;
 [Authorize(Roles = "Cliente")]
 [Route("api/[controller]")]
 [ApiController]
-/// <summary>
-/// Expone las operaciones del carrito abierto del Cliente autenticado.
-/// El UsuarioId siempre se obtiene del JWT y nunca del cuerpo enviado por Angular.
-/// </summary>
+// recibe las solicitudes del carrito del Cliente autenticado
+// el UsuarioId siempre sale del JWT para que nadie pueda mandar el ID de otro Cliente
 public class CarritoController : ControllerBase
 {
     private readonly ICarritoLN _carritoLN;
@@ -23,22 +21,21 @@ public class CarritoController : ControllerBase
         _carritoLN = carritoLN;
     }
 
-    /// <summary>Agrega un producto al carrito actual después de validar disponibilidad y stock.</summary>
-    /// <param name="datos">Producto y cantidad solicitada.</param>
-    /// <returns>Resumen del carrito actualizado.</returns>
+    // recibe producto y cantidad, la LN revisa stock y devuelve el carrito actualizado
     [HttpPost("Agregar")]
     public async Task<IActionResult> Agregar([FromBody] TAgregarProductoCarrito datos)
     {
+        // ModelState revisa las reglas que tienen las propiedades del DTO
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
         var resultado = await _carritoLN.AgregarAsync(datos, UsuarioIdActual());
+        // Conflict usa el codigo HTTP 409 porque el stock actual choca con la cantidad pedida
         if (resultado.Error == Mensajes.StockInsuficienteCarrito) return Conflict(resultado);
         if (resultado.Error == Mensajes.ProductoNoDisponibleCarrito) return BadRequest(resultado);
         if (!string.IsNullOrEmpty(resultado.Error)) return BadRequest(resultado);
         return Ok(resultado);
     }
 
-    /// <summary>Obtiene el carrito activo perteneciente al Cliente identificado por el JWT.</summary>
-    /// <returns>Carrito con artículos y totales calculados en el servidor.</returns>
+    // trae el carrito del Cliente con sus lineas y totales calculados en el servidor
     [HttpGet("Actual")]
     [HttpGet("Resumen")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -49,9 +46,7 @@ public class CarritoController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Actualiza la cantidad de un detalle sin permitir superar el stock disponible.</summary>
-    /// <param name="datos">Detalle y nueva cantidad.</param>
-    /// <returns>Carrito recalculado.</returns>
+    // recibe el ID del detalle y su nueva cantidad, luego devuelve todo el carrito recalculado
     [HttpPut("Cantidad")]
     public async Task<IActionResult> ActualizarCantidad([FromBody] TActualizarCantidadCarrito datos)
     {
@@ -63,9 +58,7 @@ public class CarritoController : ControllerBase
         return Ok(resultado);
     }
 
-    /// <summary>Elimina un detalle únicamente si pertenece al carrito del Cliente autenticado.</summary>
-    /// <param name="carritoDetalleId">Identificador del detalle que se desea retirar.</param>
-    /// <returns>Carrito actualizado.</returns>
+    // quita una linea solo si pertenece al carrito del usuario que viene en el token
     [HttpDelete("Detalle/{carritoDetalleId:int}")]
     public async Task<IActionResult> EliminarDetalle(int carritoDetalleId)
     {
@@ -74,7 +67,8 @@ public class CarritoController : ControllerBase
         return Ok(resultado);
     }
 
-    // La identidad se toma del token para impedir que un Cliente opere sobre el carrito de otro usuario.
+    // FindFirstValue busca el Claim del ID dentro del JWT
+    // si falta o no es un numero devuelve cero y la LN lo rechaza
     private int UsuarioIdActual() =>
         int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 }

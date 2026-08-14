@@ -1,164 +1,561 @@
+<!-- esta pagina sirve para administrar las categorias
+     si viene familiaId muestra solo las categorias de esa familia
+     si no viene muestra todas las categorias registradas -->
 <section class="catalog-page">
+
+  <!-- ========================= ENCABEZADO ========================= -->
+
   <header class="page-heading">
+
     <div>
-      @if (familiaId) { <a class="back-link" routerLink="/familias-producto">← Volver a familias</a> }
-      <span class="eyebrow">Catálogo</span>
-      <h1>{{ familiaActual?.nombre ? 'Categorías de ' + familiaActual!.nombre : 'Categorías' }}</h1>
-      <p>{{ familiaId ? (familiaActual?.descripcion || 'Administra esta sección del catálogo.') : 'Administra todas las categorías registradas.' }}</p>
+
+      <!-- si estamos viendo las categorias de una familia especifica
+           muestra el enlace para volver a la lista de familias -->
+      @if (familiaId) {
+      <a class="back-link"
+         routerLink="/familias-producto">
+        ← Volver a familias
+      </a>
+      }
+
+      <span class="eyebrow">
+        Catálogo
+      </span>
+
+      <!-- cambia el titulo dependiendo de si estamos dentro de una familia
+           el ! despues de familiaActual le dice a Angular que aqui sabemos que el dato existe -->
+      <h1>
+        {{
+          familiaActual?.nombre
+            ? 'Categorías de ' + familiaActual!.nombre
+            : 'Categorías'
+        }}
+      </h1>
+
+      <!-- si hay una familia seleccionada muestra su descripcion
+           si no tiene descripcion usa el texto que esta despues de ||
+           si no estamos dentro de una familia muestra el mensaje general -->
+      <p>
+        {{
+          familiaId
+            ? (familiaActual?.descripcion || 'Administra esta sección del catálogo.')
+            : 'Administra todas las categorías registradas.'
+        }}
+      </p>
+
     </div>
-    <button class="btn btn-primary" type="button" (click)="nueva()">Nueva categoría</button>
+
+    <!-- llama nueva() para abrir el formulario limpio y crear otra categoria -->
+    <button class="btn btn-primary"
+            type="button"
+            (click)="nueva()">
+      Nueva categoría
+    </button>
+
   </header>
 
-  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
 
-  @if (mostrarFormulario) {
-    <form class="card editor" [formGroup]="formulario" (ngSubmit)="guardar()">
-      <div class="card-body">
-        <div class="editor-title"><h2>{{ editandoId ? 'Editar categoría' : 'Nueva categoría' }}</h2><button class="btn-close" type="button" aria-label="Cerrar" (click)="cancelar()"></button></div>
-        <div class="form-grid">
-          <div>
-            <label class="form-label" for="categoria-familia">Familia</label>
-            <select id="categoria-familia" class="form-select" formControlName="familiaId" [attr.disabled]="familiaId ? true : null">
-              <option [value]="0">Selecciona una familia</option>
-              @for (familia of familias; track familia.familiaId) {
-              <option [value]="familia.familiaId">{{ familia.nombre }}</option> }
-            </select>
-            @if (formulario.controls.familiaId.touched && formulario.controls.familiaId.invalid) { <small class="text-danger">Selecciona una familia.</small> }
-          </div>
-          <div>
-            <label class="form-label" for="categoria-nombre">Nombre</label>
-            <input id="categoria-nombre" class="form-control" formControlName="nombre" maxlength="80">
-            @if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) { <small class="text-danger">El nombre es obligatorio.</small> }
-          </div>
-          <div class="wide">
-            <label class="form-label" for="categoria-descripcion">Descripción</label>
-            <input id="categoria-descripcion" class="form-control" formControlName="descripcion" maxlength="250">
-          </div>
-          <div class="categoria-imagen">
-            <label class="form-label" for="categoria-imagen">
-              Imagen de la categoría
-            </label>
-
-            <input id="categoria-imagen"
-                   class="form-control"
-                   type="file"
-                   accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                   (change)="seleccionarImagen($event)">
-
-            <small class="text-muted">
-              Puedes seleccionar una imagen de hasta 5 MB.
-            </small>
-
-            @if (previsualizacionImagen) {
-            <div class="categoria-imagen-preview">
-              <img [src]="previsualizacionImagen"
-                   alt="Vista previa de la categoría">
-
-              <button class="btn btn-outline-danger btn-sm"
-                      type="button"
-                      (click)="quitarImagenSeleccionada()">
-                Cambiar imagen
-              </button>
-            </div>
-            }
-          </div>
-        </div>
-        <div class="editor-actions"><button class="btn btn-outline-secondary" type="button" (click)="cancelar()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">{{ guardando ? 'Guardando…' : 'Guardar' }}</button></div>
-      </div>
-    </form>
-  }
-    <div class="card table-card">
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Imagen</th>
-
-              @if (!familiaId) {
-              <th>Familia</th>
-              }
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th class="text-end">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (cargando) {
-            <tr>
-              <td colspan="6" class="empty">
-                Cargando categorías…
-              </td>
-            </tr>
-            }
-            @else if (!categorias.length) {
-            <tr>
-              <td colspan="6" class="empty">
-                No hay categorías para mostrar.
-              </td>
-            </tr>
-            }
-            @for (categoria of categoriasPagina; track categoria.categoriaId) {
-            <tr [class.inactive]="!categoria.activo">
-
-              <td>
-                <strong>{{ categoria.nombre }}</strong>
-              </td>
-              <td>
-                @if (categoria.urlImagen) {
-                <img [src]="categoria.urlImagen"
-                     [alt]="categoria.nombre"
-                     class="categoria-miniatura">
-                } @else {
-                <span>—</span>
-                }
-              </td>
-              @if (!familiaId) {
-              <td>
-                {{ nombreFamilia(categoria.familiaId) }}
-              </td>
-              }
-              <td>
-                {{ categoria.descripcion || '—' }}
-              </td>
-              <td>
-                <span class="badge"
-                      [class.text-bg-success]="categoria.activo"
-                      [class.text-bg-secondary]="!categoria.activo">
-
-                  {{ categoria.activo ? 'Activa' : 'Inactiva' }}
-                </span>
-              </td>
-              <td class="text-end actions">
-                <a class="btn btn-sm btn-outline-primary"
-                   routerLink="/descuentos"
-                   [queryParams]="{
-                  tipo: 'CATEGORIA',
-                  categoriaId: categoria.categoriaId
-                }">
-                  Descuento
-                </a>
-                <button class="btn btn-sm btn-outline-secondary"
-                        type="button"
-                        (click)="editar(categoria)">
-                  Editar
-                </button>
-                <button class="btn btn-sm btn-outline-secondary"
-                        type="button"
-                        (click)="cambiarEstado(categoria)">
-                  {{ categoria.activo ? 'Desactivar' : 'Activar' }}
-                </button>
-              </td>
-            </tr>
-            }
-          </tbody>
-      </table>
-    </div>
-    <footer class="table-footer">
-      <label>Filas <select class="form-select form-select-sm" [value]="tamanoPagina" (change)="cambiarTamano($any($event.target).value)">@for (tamano of tamanos; track tamano) { <option [value]="tamano">{{ tamano }}</option> }</select></label>
-      <span>{{ categorias.length }} registros · Página {{ pagina }} de {{ totalPaginas }}</span>
-      <div><button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="pagina === 1" (click)="irPagina(-1)">Anterior</button><button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="pagina === totalPaginas" (click)="irPagina(1)">Siguiente</button></div>
-    </footer>
+  <!-- ========================= MENSAJES ========================= -->
+  <!-- muestra el mensaje verde cuando una operacion sale bien -->
+  @if (mensaje) {
+  <div class="alert alert-success"
+       role="status">
+    {{ mensaje }}
   </div>
+  }
+
+  <!-- muestra el mensaje rojo si ocurre algun error -->
+  @if (error) {
+  <div class="alert alert-danger"
+       role="alert">
+    {{ error }}
+  </div>
+  }
+
+
+  <!-- ========================= FORMULARIO ========================= -->
+  <!-- el formulario solamente aparece cuando mostrarFormulario es true -->
+  @if (mostrarFormulario) {
+
+  <!-- [formGroup] conecta este formulario con formulario en TypeScript
+       ngSubmit llama guardar() cuando se presiona el boton de Guardar -->
+  <form class="card editor"
+        [formGroup]="formulario"
+        (ngSubmit)="guardar()">
+
+    <div class="card-body">
+
+
+      <!-- ========================= TITULO DEL FORMULARIO ========================= -->
+
+      <div class="editor-title">
+
+        <!-- si editandoId tiene un valor estamos editando
+             si no tiene valor estamos creando una categoria nueva -->
+        <h2>
+          {{ editandoId ? 'Editar categoría' : 'Nueva categoría' }}
+        </h2>
+
+        <!-- cierra el formulario sin guardar los cambios -->
+        <button class="btn-close"
+                type="button"
+                aria-label="Cerrar"
+                (click)="cancelar()">
+        </button>
+
+      </div>
+
+
+      <!-- ========================= CAMPOS ========================= -->
+
+      <div class="form-grid">
+
+
+        <!-- ========================= FAMILIA ========================= -->
+
+        <div>
+
+          <label class="form-label"
+                 for="categoria-familia">
+            Familia
+          </label>
+
+          <!-- formControlName conecta este select con familiaId dentro del formulario
+               si la pagina ya viene desde una familia especifica el select se bloquea -->
+          <select id="categoria-familia"
+                  class="form-select"
+                  formControlName="familiaId"
+                  [attr.disabled]="familiaId ? true : null">
+
+            <option [value]="0">
+              Selecciona una familia
+            </option>
+
+            <!-- recorre todas las familias disponibles para llenar el select
+                 track usa familiaId para identificar cada opcion -->
+            @for (familia of familias; track familia.familiaId) {
+
+            <option [value]="familia.familiaId">
+              {{ familia.nombre }}
+            </option>
+
+            }
+
+          </select>
+
+          <!-- touched revisa que la persona ya haya usado el campo
+               invalid revisa si todavia tiene algun error -->
+          @if (
+          formulario.controls.familiaId.touched &&
+          formulario.controls.familiaId.invalid
+          ) {
+          <small class="text-danger">
+            Selecciona una familia.
+          </small>
+          }
+
+        </div>
+
+
+        <!-- ========================= NOMBRE ========================= -->
+
+        <div>
+
+          <label class="form-label"
+                 for="categoria-nombre">
+            Nombre
+          </label>
+
+          <!-- maxlength limita el nombre a 80 caracteres desde el HTML -->
+          <input id="categoria-nombre"
+                 class="form-control"
+                 formControlName="nombre"
+                 maxlength="80">
+
+          <!-- muestra el error si ya tocaron el campo y sigue siendo invalido -->
+          @if (
+          formulario.controls.nombre.touched &&
+          formulario.controls.nombre.invalid
+          ) {
+          <small class="text-danger">
+            El nombre es obligatorio.
+          </small>
+          }
+
+        </div>
+
+
+        <!-- ========================= DESCRIPCION ========================= -->
+        <!-- wide hace que este campo ocupe las 2 columnas del formulario -->
+        <div class="wide">
+
+          <label class="form-label"
+                 for="categoria-descripcion">
+            Descripción
+          </label>
+
+          <input id="categoria-descripcion"
+                 class="form-control"
+                 formControlName="descripcion"
+                 maxlength="250">
+
+        </div>
+
+
+        <!-- ========================= IMAGEN ========================= -->
+
+        <div class="categoria-imagen">
+
+          <label class="form-label"
+                 for="categoria-imagen">
+            Imagen de la categoría
+          </label>
+
+          <!-- type file permite seleccionar un archivo desde la computadora
+               accept limita el selector a jpg jpeg png o webp
+               change llama seleccionarImagen cuando la persona escoge un archivo -->
+          <input id="categoria-imagen"
+                 class="form-control"
+                 type="file"
+                 accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                 (change)="seleccionarImagen($event)">
+
+          <small class="text-muted">
+            Puedes seleccionar una imagen de hasta 5 MB.
+          </small>
+
+
+          <!-- si ya existe una imagen seleccionada muestra su vista previa
+               si no hay imagen este bloque ni siquiera se crea -->
+          @if (previsualizacionImagen) {
+
+          <div class="categoria-imagen-preview">
+
+            <!-- [src] toma directamente la imagen que se guardo para la vista previa -->
+            <img [src]="previsualizacionImagen"
+                 alt="Vista previa de la categoría">
+
+            <!-- elimina la imagen que se habia seleccionado antes de guardar -->
+            <button class="btn btn-outline-danger btn-sm"
+                    type="button"
+                    (click)="quitarImagenSeleccionada()">
+              Quitar imagen
+            </button>
+
+          </div>
+
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- ========================= BOTONES DEL FORMULARIO ========================= -->
+
+      <div class="editor-actions">
+
+        <!-- cierra el formulario sin guardar -->
+        <button class="btn btn-outline-secondary"
+                type="button"
+                (click)="cancelar()">
+          Cancelar
+        </button>
+
+        <!-- se bloquea si el formulario tiene errores o ya se esta guardando
+             esto tambien evita mandar la misma solicitud varias veces -->
+        <button class="btn btn-primary"
+                type="submit"
+                [disabled]="formulario.invalid || guardando">
+
+          <!-- cambia el texto mientras espera la respuesta de la API -->
+          {{ guardando ? 'Guardando…' : 'Guardar' }}
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </form>
+
+  }
+
+
+  <!-- ========================= TABLA DE CATEGORIAS ========================= -->
+
+  <div class="card table-card">
+
+    <!-- table-responsive permite mover horizontalmente la tabla si la pantalla es pequeña -->
+    <div class="table-responsive">
+
+      <table class="table align-middle mb-0">
+
+        <thead>
+
+          <tr>
+
+            <th>
+              Nombre
+            </th>
+
+            <th>
+              Imagen
+            </th>
+
+            <!-- cuando estamos mostrando todas las categorias hace falta enseñar a que familia pertenece cada una
+                 si ya estamos dentro de una familia esta columna no hace falta -->
+            @if (!familiaId) {
+            <th>
+              Familia
+            </th>
+            }
+
+            <th>
+              Descripción
+            </th>
+
+            <th>
+              Estado
+            </th>
+
+            <th class="text-end">
+              Acciones
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+
+          <!-- ========================= CARGANDO ========================= -->
+          <!-- mientras espera la respuesta de la API muestra esta fila -->
+          @if (cargando) {
+
+          <tr>
+
+            <!-- colspan hace que esta celda ocupe varias columnas de la tabla -->
+            <td colspan="6"
+                class="empty">
+              Cargando categorías…
+            </td>
+
+          </tr>
+
+          }
+
+
+          <!-- ========================= SIN REGISTROS ========================= -->
+          <!-- si ya termino de cargar y la lista esta vacia muestra este mensaje -->
+          @else if (!categorias.length) {
+
+          <tr>
+
+            <td colspan="6"
+                class="empty">
+              No hay categorías para mostrar.
+            </td>
+
+          </tr>
+
+          }
+
+
+          <!-- ========================= FILAS DE CATEGORIAS ========================= -->
+          <!-- recorre solamente las categorias de la pagina actual
+               track usa categoriaId para que Angular identifique correctamente cada fila -->
+          @for (categoria of categoriasPagina; track categoria.categoriaId) {
+
+          <!-- si la categoria esta inactiva agrega la clase inactive -->
+          <tr [class.inactive]="!categoria.activo">
+
+
+            <!-- ========================= NOMBRE ========================= -->
+
+            <td>
+              <strong>
+                {{ categoria.nombre }}
+              </strong>
+            </td>
+
+
+            <!-- ========================= IMAGEN ========================= -->
+
+            <td>
+
+              <!-- mostrarImagen revisa si existe una url valida y si esa imagen no fallo anteriormente -->
+              @if (mostrarImagen(categoria.urlImagen)) {
+
+              <!-- si la imagen da error se llama marcarImagenConError
+                   para dejar de intentar mostrar una imagen que no funciona -->
+              <img [src]="categoria.urlImagen"
+                   [alt]="categoria.nombre"
+                   (error)="marcarImagenConError(categoria.urlImagen)"
+                   class="categoria-miniatura">
+
+              }
+
+              <!-- si no tiene imagen muestra un guion en vez de dejar la celda rara -->
+              @else {
+              <span>
+                —
+              </span>
+              }
+
+            </td>
+
+
+            <!-- ========================= FAMILIA ========================= -->
+            <!-- solo aparece cuando estamos viendo todas las categorias -->
+            @if (!familiaId) {
+
+            <td>
+
+              <!-- nombreFamilia busca el nombre usando el id guardado en la categoria -->
+              {{ nombreFamilia(categoria.familiaId) }}
+
+            </td>
+
+            }
+
+
+            <!-- ========================= DESCRIPCION ========================= -->
+
+            <td>
+
+              <!-- si no tiene descripcion muestra un guion -->
+              {{ categoria.descripcion || '—' }}
+
+            </td>
+
+
+            <!-- ========================= ESTADO ========================= -->
+
+            <td>
+
+              <!-- la clase del badge cambia dependiendo de si la categoria esta activa o inactiva -->
+              <span class="badge"
+                    [class.text-bg-success]="categoria.activo"
+                    [class.text-bg-secondary]="!categoria.activo">
+
+                {{ categoria.activo ? 'Activa' : 'Inactiva' }}
+
+              </span>
+
+            </td>
+
+
+            <!-- ========================= ACCIONES ========================= -->
+
+            <td class="text-end actions">
+
+              <!-- lleva al modulo de descuentos
+                   queryParams manda tambien el tipo de descuento y el id de esta categoria -->
+              <a class="btn btn-sm btn-outline-primary"
+                 routerLink="/descuentos"
+                 [queryParams]="{
+                    tipo: 'CATEGORIA',
+                    categoriaId: categoria.categoriaId
+                  }">
+                Descuento
+              </a>
+
+
+              <!-- carga los datos de esta categoria en el formulario para modificarlos -->
+              <button class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      (click)="editar(categoria)">
+                Editar
+              </button>
+
+
+              <!-- cambia entre activa e inactiva sin borrar la categoria -->
+              <button class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      (click)="cambiarEstado(categoria)">
+
+                {{ categoria.activo ? 'Desactivar' : 'Activar' }}
+
+              </button>
+
+            </td>
+
+          </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <!-- ========================= PAGINACION ========================= -->
+
+    <footer class="table-footer">
+
+
+      <!-- permite escoger cuantas categorias se muestran por pagina -->
+      <label>
+
+        Filas
+
+        <!-- $event.target es el select que cambio
+             $any permite tratarlo de una forma mas flexible para poder sacar su value -->
+        <select class="form-select form-select-sm"
+                [value]="tamanoPagina"
+                (change)="cambiarTamano($any($event.target).value)">
+
+          <!-- crea una opcion por cada tamaño permitido -->
+          @for (tamano of tamanos; track tamano) {
+
+            <option [value]="tamano">
+              {{ tamano }}
+            </option>
+
+          }
+
+        </select>
+
+      </label>
+
+
+      <!-- muestra cuantos registros existen y en que pagina estamos -->
+      <span>
+        {{ categorias.length }} registros · Página {{ pagina }} de {{ totalPaginas }}
+      </span>
+
+
+      <!-- botones para moverse entre las paginas -->
+      <div>
+
+        <!-- irPagina(-1) retrocede una pagina
+             si ya estamos en la primera se desactiva -->
+        <button class="btn btn-sm btn-outline-secondary"
+                type="button"
+                [disabled]="pagina === 1"
+                (click)="irPagina(-1)">
+          Anterior
+        </button>
+
+
+        <!-- irPagina(1) avanza una pagina
+             si ya estamos en la ultima se desactiva -->
+        <button class="btn btn-sm btn-outline-secondary"
+                type="button"
+                [disabled]="pagina === totalPaginas"
+                (click)="irPagina(1)">
+          Siguiente
+        </button>
+
+      </div>
+
+    </footer>
+
+  </div>
+
 </section>

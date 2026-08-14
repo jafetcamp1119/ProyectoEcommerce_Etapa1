@@ -1,39 +1,109 @@
+<!-- esta es la estructura principal que se muestra despues de iniciar sesion
+     contiene el menu lateral el encabezado la pantalla actual y el pie de pagina
+     router-outlet es el lugar donde Angular coloca el componente de la ruta actual -->
+<!-- ========================= MENU LATERAL ========================= -->
+
 <c-sidebar #sidebar1="cSidebar"
            class="d-print-none sidebar sidebar-fixed border-end"
            colorScheme="dark"
            id="sidebar1"
            visible>
+
+
+  <!-- ========================= ENCABEZADO DEL MENU ========================= -->
+
   <c-sidebar-header class="border-bottom">
-       <c-sidebar-brand [routerLink]="[]">
-         <c-avatar size="md"
-                   src="SUPERMERCADO.jpg"
-                   status="success"
-                   textColor="primary"
-                   alt="LessPrice" />
-         <span class="ms-2 fw-semibold">LessPrice</span>
-       </c-sidebar-brand>
+
+    <!-- muestra la marca de LessPrice dentro del menu lateral -->
+    <c-sidebar-brand [routerLink]="[]">
+
+      <!-- avatar con la imagen del supermercado -->
+      <c-avatar size="md"
+                src="SUPERMERCADO.jpg"
+                status="success"
+                textColor="primary"
+                alt="LessPrice" />
+
+      <span class="ms-2 fw-semibold">
+        LessPrice
+      </span>
+
+    </c-sidebar-brand>
+
   </c-sidebar-header>
 
-  <ng-scrollbar pointerEventsMethod="scrollbar" visibility="hover">
-    <c-sidebar-nav [navItems]="navItems" dropdownMode="close" compact />
+
+  <!-- ========================= OPCIONES DEL MENU ========================= -->
+  <!-- ng-scrollbar permite hacer scroll dentro del menu cuando hay muchas opciones
+       visibility hover hace que la barra aparezca al pasar el mouse -->
+  <ng-scrollbar pointerEventsMethod="scrollbar"
+                visibility="hover">
+
+    <!-- navItems contiene las opciones que se muestran en el menu
+         dropdownMode close hace que los desplegables se cierren segun el manejo del componente
+         compact mantiene el menu con un diseño mas reducido -->
+    <c-sidebar-nav [navItems]="navItems"
+                   dropdownMode="close"
+                   compact />
+
   </ng-scrollbar>
 
+
+  <!-- ========================= BOTON PARA CONTRAER MENU ========================= -->
+  <!-- narrow indica si el menu ya esta reducido
+       si todavia no lo esta muestra el boton para contraerlo -->
   @if (!sidebar1.narrow) {
-    <c-sidebar-footer cSidebarToggle="sidebar1" class="border-top d-none d-lg-flex" toggle="unfoldable" style="cursor: pointer;">
-      <button cSidebarToggler aria-label="Contraer menú lateral"></button>
-    </c-sidebar-footer>
+
+  <c-sidebar-footer cSidebarToggle="sidebar1"
+                    class="border-top d-none d-lg-flex"
+                    toggle="unfoldable"
+                    style="cursor: pointer;">
+
+    <!-- boton que cambia el tamaño del menu lateral -->
+    <button cSidebarToggler
+            aria-label="Contraer menú lateral">
+    </button>
+
+  </c-sidebar-footer>
+
   }
+
 </c-sidebar>
 
+
+<!-- ========================= CONTENIDO PRINCIPAL ========================= -->
+<!-- wrapper contiene todo lo que aparece al lado del menu
+     min-vh-100 hace que ocupe como minimo toda la altura de la pantalla -->
 <div class="wrapper d-flex flex-column min-vh-100">
+
+
+  <!-- ========================= ENCABEZADO ========================= -->
+  <!-- encabezado principal que queda pegado arriba mientras se hace scroll
+       sidebarId lo conecta con el menu lateral sidebar1 -->
   <app-default-header [cShadowOnScroll]="'sm'"
                       class="mb-4 d-print-none header header-sticky p-0 shadow-sm"
                       position="sticky"
                       sidebarId="sidebar1" />
+
+
+  <!-- ========================= CUERPO DE LA PAGINA ========================= -->
+  <!-- flex-grow-1 hace que esta parte agarre el espacio disponible entre header y footer -->
   <div class="body flex-grow-1">
-    <c-container breakpoint="lg" class="h-auto px-4">
+
+    <!-- container mantiene el contenido acomodado y con espacio a los lados -->
+    <c-container breakpoint="lg"
+                 class="h-auto px-4">
+
+      <!-- Angular coloca aqui el componente que corresponde a la URL actual -->
       <router-outlet />
+
     </c-container>
+
   </div>
+
+
+  <!-- ========================= PIE DE PAGINA ========================= -->
+  <!-- pie general que se mantiene en todas las pantallas de esta estructura -->
   <app-default-footer />
+
 </div>

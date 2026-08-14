@@ -1,4 +1,5 @@
-/** Familia utilizada en mantenimiento y navegación del catálogo. */
+// forma que tiene una familia cuando viaja entre la API y Angular
+// urlImagen puede ser null porque la tarjeta sabe mostrar un placeholder
 export interface IFamiliaProducto {
   familiaId: number;
   nombre: string;

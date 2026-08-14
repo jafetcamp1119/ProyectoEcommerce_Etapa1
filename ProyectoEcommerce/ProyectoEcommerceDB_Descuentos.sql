@@ -11,12 +11,11 @@ SET QUOTED_IDENTIFIER ON;
 SET NUMERIC_ROUNDABORT OFF;
 GO
 
+-- toda la migracion queda en una transaccion para no dejar el esquema a medias
 BEGIN TRANSACTION;
 
-/*
-    Actualiza la tabla existente de descuentos sin recrearla ni perder datos.
-    El bloque admite tanto el esquema antiguo (EsPromocional) como ejecuciones posteriores.
-*/
+-- actualiza Descuentos sin recrear la tabla ni perder datos
+-- acepta el esquema viejo con EsPromocional y tambien una ejecucion repetida
 IF COL_LENGTH(N'dbo.Descuentos', N'TipoDescuento') IS NULL
 BEGIN
     ALTER TABLE dbo.Descuentos ADD TipoDescuento NVARCHAR(20) NULL;
@@ -30,7 +29,7 @@ GO
 
 IF COL_LENGTH(N'dbo.Descuentos', N'EsPromocional') IS NOT NULL
 BEGIN
-    /* SQL dinámico evita que una segunda ejecución compile una referencia a la columna ya retirada. */
+    -- SQL dinamico evita compilar una referencia a EsPromocional despues de haberla quitado
     EXEC sys.sp_executesql N'
         UPDATE dbo.Descuentos
         SET TipoDescuento = CASE
@@ -54,6 +53,7 @@ BEGIN
     WHERE TipoDescuento IS NULL;
 END;
 
+-- se detiene si algun registro viejo no se pudo acomodar en uno de los cuatro tipos
 IF EXISTS (SELECT 1 FROM dbo.Descuentos WHERE TipoDescuento IS NULL)
     THROW 51010, N'No fue posible determinar el tipo de uno o más descuentos existentes.', 1;
 
@@ -63,6 +63,7 @@ IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE parent_object_id = OBJECT_I
 IF COL_LENGTH(N'dbo.Descuentos', N'EsPromocional') IS NOT NULL
 BEGIN
     DECLARE @restriccionEsPromocional sysname;
+    -- busca el nombre real de la restriccion DEFAULT para poder quitarla antes que la columna
     SELECT @restriccionEsPromocional = dc.name
     FROM sys.default_constraints dc
     INNER JOIN sys.columns c ON c.default_object_id = dc.object_id
@@ -86,6 +87,7 @@ BEGIN
         CHECK (TipoDescuento IN (N'PRODUCTO', N'CATEGORIA', N'FAMILIA', N'PROMOCIONAL'));
 END;
 
+-- esta regla obliga a que cada descuento tenga exactamente un destino segun su tipo
 IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE parent_object_id = OBJECT_ID(N'dbo.Descuentos') AND name = N'CK_Descuentos_Destino')
 BEGIN
     ALTER TABLE dbo.Descuentos WITH CHECK ADD CONSTRAINT CK_Descuentos_Destino CHECK
@@ -109,7 +111,7 @@ BEGIN
         CHECK (DescuentoTotal >= 0);
 END;
 
-/* La opción se integra al menú Database First y se asigna únicamente a Administrador. */
+-- agrega la opcion de descuentos al menu y la asigna solamente al Administrador
 IF NOT EXISTS (SELECT 1 FROM dbo.MenuOpciones WHERE Ruta = N'/descuentos')
 BEGIN
     INSERT INTO dbo.MenuOpciones (Nombre, Ruta, Icono, Orden, Activo)
@@ -129,5 +131,6 @@ BEGIN
     VALUES (@rolAdministradorId, @menuDescuentosId);
 END;
 
+-- si llego hasta aqui deja definitivos esquema, datos y permiso de menu
 COMMIT TRANSACTION;
 GO

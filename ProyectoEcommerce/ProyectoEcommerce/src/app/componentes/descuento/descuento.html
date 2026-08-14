@@ -1,61 +1,645 @@
+<!-- esta pagina permite crear editar activar o desactivar descuentos
+     los campos que aparecen cambian dependiendo de si el descuento es para familia categoria o producto -->
 <section class="discount-page">
+
+
+  <!-- ========================= ENCABEZADO ========================= -->
+
   <header class="page-heading">
-    <div><span class="eyebrow">LessPrice · Administración</span><h1>Descuentos</h1><p>Programa beneficios porcentuales sin acumularlos. La API aplica únicamente el mejor.</p></div>
-    <button class="btn btn-primary" type="button" (click)="nuevo()">Nuevo descuento</button>
+
+    <div>
+
+      <span class="eyebrow">
+        LessPrice · Administración
+      </span>
+
+      <h1>
+        Descuentos
+      </h1>
+
+      <p>
+        Programa beneficios porcentuales sin acumularlos. La API aplica únicamente el mejor.
+      </p>
+
+    </div>
+
+    <!-- abre el formulario limpio para crear un descuento nuevo -->
+    <button class="btn btn-primary"
+            type="button"
+            (click)="nuevo()">
+      Nuevo descuento
+    </button>
+
   </header>
 
-  @if (mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
 
+  <!-- ========================= MENSAJES ========================= -->
+  <!-- mensaje que aparece cuando una operacion termina correctamente -->
+  @if (mensaje) {
+
+  <div class="alert alert-success"
+       role="status">
+    {{ mensaje }}
+  </div>
+
+  }
+
+  <!-- mensaje que aparece si ocurre algun error -->
+  @if (error) {
+
+  <div class="alert alert-danger"
+       role="alert">
+    {{ error }}
+  </div>
+
+  }
+
+
+  <!-- ========================= FORMULARIO ========================= -->
+  <!-- el formulario solamente aparece cuando mostrarFormulario es true -->
   @if (mostrarFormulario) {
-    <form class="discount-form" [formGroup]="formulario" (ngSubmit)="guardar()">
-      <header><div><span class="eyebrow">{{ editandoId ? 'Edición' : 'Registro' }}</span><h2>{{ editandoId ? 'Editar descuento' : 'Crear descuento' }}</h2></div><button class="close-form" type="button" aria-label="Cerrar" (click)="cancelar()">×</button></header>
-      <div class="form-grid">
-        <div class="field field-wide"><label for="descuento-nombre">Nombre *</label><input id="descuento-nombre" class="form-control" formControlName="nombre" maxlength="150">@if (formulario.controls.nombre.touched && formulario.controls.nombre.invalid) { <small>El nombre es obligatorio.</small> }</div>
-        <div class="field"><label for="descuento-tipo">Tipo *</label><select id="descuento-tipo" class="form-select" formControlName="tipoDescuento" (change)="cambiarTipo()">@for (item of tipos; track item.valor) { <option [value]="item.valor">{{ item.etiqueta }}</option> }</select></div>
-        <div class="field"><label for="descuento-porcentaje">Porcentaje *</label><div class="percent-input"><input id="descuento-porcentaje" class="form-control" type="number" min="0.01" max="100" step="0.01" formControlName="porcentaje"><span>%</span></div>@if (formulario.controls.porcentaje.touched && formulario.controls.porcentaje.invalid) { <small>Debe ser mayor que 0 y menor o igual que 100.</small> }</div>
-        <div class="field"><label for="descuento-inicio">Fecha de inicio *</label><input id="descuento-inicio" class="form-control" type="datetime-local" formControlName="fechaInicio"></div>
-        <div class="field"><label for="descuento-fin">Fecha de fin *</label><input id="descuento-fin" class="form-control" type="datetime-local" formControlName="fechaFin">@if (errorFechas) { <small>{{ errorFechas }}</small> }</div>
 
-        @if (tipo === 'FAMILIA') {
-          <div class="field field-wide"><label for="descuento-familia">Familia *</label><select id="descuento-familia" class="form-select" formControlName="familiaId"><option [ngValue]="0">Selecciona una familia</option>@for (familia of catalogos.familias; track familia.familiaId) { <option [ngValue]="familia.familiaId">{{ familia.nombre }}</option> }</select></div>
-        } @else {
-          <div class="field"><label for="descuento-filtro-familia">Familia (filtro)</label><select id="descuento-filtro-familia" class="form-select" formControlName="filtroFamiliaId" (change)="cambiarFiltroFamilia()"><option [ngValue]="0">Todas</option>@for (familia of catalogos.familias; track familia.familiaId) { <option [ngValue]="familia.familiaId">{{ familia.nombre }}</option> }</select></div>
-          @if (tipo === 'CATEGORIA') {
-            <div class="field field-wide"><label for="descuento-categoria">Categoría *</label><select id="descuento-categoria" class="form-select" formControlName="categoriaId"><option [ngValue]="0">Selecciona una categoría</option>@for (categoria of categoriasFiltradas; track categoria.categoriaId) { <option [ngValue]="categoria.categoriaId">{{ categoria.nombre }}</option> }</select></div>
-          } @else {
-            <div class="field"><label for="descuento-filtro-categoria">Categoría (filtro)</label><select id="descuento-filtro-categoria" class="form-select" formControlName="filtroCategoriaId" (change)="cambiarFiltroCategoria()"><option [ngValue]="0">Todas</option>@for (categoria of categoriasFiltradas; track categoria.categoriaId) { <option [ngValue]="categoria.categoriaId">{{ categoria.nombre }}</option> }</select></div>
-            <div class="field field-wide"><label for="descuento-producto">Producto *</label><select id="descuento-producto" class="form-select" formControlName="productoId"><option [ngValue]="0">Selecciona un producto</option>@for (producto of productosFiltrados; track producto.productoId) { <option [ngValue]="producto.productoId">{{ producto.nombre }} · {{ producto.categoriaNombre }}</option> }</select></div>
-          }
-        }
-        <label class="active-check"><input type="checkbox" formControlName="activo"> Descuento activo</label>
+  <!-- [formGroup] conecta este formulario con formulario en TypeScript
+       ngSubmit llama guardar cuando se envia -->
+  <form class="discount-form"
+        [formGroup]="formulario"
+        (ngSubmit)="guardar()">
+
+
+    <!-- ========================= TITULO DEL FORMULARIO ========================= -->
+
+    <header>
+
+      <div>
+
+        <!-- cambia entre Edicion y Registro dependiendo de si existe editandoId -->
+        <span class="eyebrow">
+          {{ editandoId ? 'Edición' : 'Registro' }}
+        </span>
+
+        <h2>
+          {{ editandoId ? 'Editar descuento' : 'Crear descuento' }}
+        </h2>
+
       </div>
-      <footer><button class="btn btn-outline-secondary" type="button" (click)="cancelar()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="formulario.invalid || guardando">{{ guardando ? 'Guardando…' : 'Guardar descuento' }}</button></footer>
-    </form>
+
+      <!-- cierra el formulario sin guardar -->
+      <button class="close-form"
+              type="button"
+              aria-label="Cerrar"
+              (click)="cancelar()">
+        ×
+      </button>
+
+    </header>
+
+
+    <!-- ========================= CAMPOS ========================= -->
+
+    <div class="form-grid">
+
+
+      <!-- ========================= NOMBRE ========================= -->
+      <!-- field-wide hace que este campo ocupe mas espacio dentro del grid -->
+      <div class="field field-wide">
+
+        <label for="descuento-nombre">
+          Nombre *
+        </label>
+
+        <input id="descuento-nombre"
+               class="form-control"
+               formControlName="nombre"
+               maxlength="150">
+
+        <!-- muestra el error cuando el campo ya fue tocado y sigue invalido -->
+        @if (
+        formulario.controls.nombre.touched &&
+        formulario.controls.nombre.invalid
+        ) {
+
+        <small>
+          El nombre es obligatorio.
+        </small>
+
+        }
+
+      </div>
+
+
+      <!-- ========================= TIPO DE DESCUENTO ========================= -->
+
+      <div class="field">
+
+        <label for="descuento-tipo">
+          Tipo *
+        </label>
+
+        <!-- cambiarTipo reajusta los campos que dependen del tipo escogido -->
+        <select id="descuento-tipo"
+                class="form-select"
+                formControlName="tipoDescuento"
+                (change)="cambiarTipo()">
+
+          <!-- recorre los tipos disponibles para llenar el select -->
+          @for (item of tipos; track item.valor) {
+
+          <option [value]="item.valor">
+            {{ item.etiqueta }}
+          </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- ========================= PORCENTAJE ========================= -->
+
+      <div class="field">
+
+        <label for="descuento-porcentaje">
+          Porcentaje *
+        </label>
+
+        <div class="percent-input">
+
+          <!-- permite porcentajes desde 0.01 hasta 100 con decimales -->
+          <input id="descuento-porcentaje"
+                 class="form-control"
+                 type="number"
+                 min="0.01"
+                 max="100"
+                 step="0.01"
+                 formControlName="porcentaje">
+
+          <span>
+            %
+          </span>
+
+        </div>
+
+        @if (
+        formulario.controls.porcentaje.touched &&
+        formulario.controls.porcentaje.invalid
+        ) {
+
+        <small>
+          Debe ser mayor que 0 y menor o igual que 100.
+        </small>
+
+        }
+
+      </div>
+
+
+      <!-- ========================= FECHA DE INICIO ========================= -->
+
+      <div class="field">
+
+        <label for="descuento-inicio">
+          Fecha de inicio *
+        </label>
+
+        <!-- datetime-local permite escoger fecha y hora -->
+        <input id="descuento-inicio"
+               class="form-control"
+               type="datetime-local"
+               formControlName="fechaInicio">
+
+      </div>
+
+
+      <!-- ========================= FECHA DE FIN ========================= -->
+
+      <div class="field">
+
+        <label for="descuento-fin">
+          Fecha de fin *
+        </label>
+
+        <input id="descuento-fin"
+               class="form-control"
+               type="datetime-local"
+               formControlName="fechaFin">
+
+        <!-- errorFechas muestra cualquier problema entre fecha inicial y final -->
+        @if (errorFechas) {
+
+        <small>
+          {{ errorFechas }}
+        </small>
+
+        }
+
+      </div>
+
+
+      <!-- ========================================================= -->
+      <!-- ========================= DESTINO ======================== -->
+      <!-- ========================================================= -->
+      <!-- los campos que aparecen aqui dependen del tipo de descuento -->
+      <!-- ========================= FAMILIA ========================= -->
+      <!-- si el descuento es directamente para una familia
+           muestra solamente el selector obligatorio de familia -->
+      @if (tipo === 'FAMILIA') {
+
+      <div class="field field-wide">
+
+        <label for="descuento-familia">
+          Familia *
+        </label>
+
+        <select id="descuento-familia"
+                class="form-select"
+                formControlName="familiaId">
+
+          <!-- ngValue mantiene el valor como numero -->
+          <option [ngValue]="0">
+            Selecciona una familia
+          </option>
+
+          <!-- llena el select con las familias disponibles -->
+          @for (
+          familia of catalogos.familias;
+          track familia.familiaId
+          ) {
+
+          <option [ngValue]="familia.familiaId">
+            {{ familia.nombre }}
+          </option>
+
+          }
+
+        </select>
+
+      </div>
+
+      }
+
+
+      <!-- ========================= CATEGORIA O PRODUCTO ========================= -->
+      <!-- si no es descuento por familia aparece primero un filtro opcional de familia -->
+      @else {
+
+      <div class="field">
+
+        <label for="descuento-filtro-familia">
+          Familia (filtro)
+        </label>
+
+        <!-- cambiarFiltroFamilia actualiza las categorias que se pueden escoger -->
+        <select id="descuento-filtro-familia"
+                class="form-select"
+                formControlName="filtroFamiliaId"
+                (change)="cambiarFiltroFamilia()">
+
+          <option [ngValue]="0">
+            Todas
+          </option>
+
+          @for (
+          familia of catalogos.familias;
+          track familia.familiaId
+          ) {
+
+          <option [ngValue]="familia.familiaId">
+            {{ familia.nombre }}
+          </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- ========================= DESCUENTO POR CATEGORIA ========================= -->
+      <!-- si el tipo es CATEGORIA muestra el selector obligatorio de categoria -->
+      @if (tipo === 'CATEGORIA') {
+
+      <div class="field field-wide">
+
+        <label for="descuento-categoria">
+          Categoría *
+        </label>
+
+        <select id="descuento-categoria"
+                class="form-select"
+                formControlName="categoriaId">
+
+          <option [ngValue]="0">
+            Selecciona una categoría
+          </option>
+
+          <!-- categoriasFiltradas cambia segun la familia usada como filtro -->
+          @for (
+          categoria of categoriasFiltradas;
+          track categoria.categoriaId
+          ) {
+
+          <option [ngValue]="categoria.categoriaId">
+            {{ categoria.nombre }}
+          </option>
+
+          }
+
+        </select>
+
+      </div>
+
+      }
+
+
+      <!-- ========================= DESCUENTO POR PRODUCTO ========================= -->
+      <!-- si no es FAMILIA ni CATEGORIA se muestran los filtros
+           necesarios para escoger un producto -->
+      @else {
+
+      <!-- filtro opcional por categoria -->
+      <div class="field">
+
+        <label for="descuento-filtro-categoria">
+          Categoría (filtro)
+        </label>
+
+        <!-- cambiarFiltroCategoria actualiza los productos disponibles -->
+        <select id="descuento-filtro-categoria"
+                class="form-select"
+                formControlName="filtroCategoriaId"
+                (change)="cambiarFiltroCategoria()">
+
+          <option [ngValue]="0">
+            Todas
+          </option>
+
+          @for (
+          categoria of categoriasFiltradas;
+          track categoria.categoriaId
+          ) {
+
+          <option [ngValue]="categoria.categoriaId">
+            {{ categoria.nombre }}
+          </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- producto final al que se le aplicara el descuento -->
+      <div class="field field-wide">
+
+        <label for="descuento-producto">
+          Producto *
+        </label>
+
+        <select id="descuento-producto"
+                class="form-select"
+                formControlName="productoId">
+
+          <option [ngValue]="0">
+            Selecciona un producto
+          </option>
+
+          <!-- productosFiltrados contiene solamente los productos
+               que cumplen con los filtros seleccionados -->
+          @for (
+          producto of productosFiltrados;
+          track producto.productoId
+          ) {
+
+          <option [ngValue]="producto.productoId">
+            {{ producto.nombre }} · {{ producto.categoriaNombre }}
+          </option>
+
+          }
+
+        </select>
+
+      </div>
+
+      }
+
+      }
+
+
+      <!-- ========================= ESTADO ACTIVO ========================= -->
+      <!-- controla si el descuento queda activo o inactivo -->
+      <label class="active-check">
+
+        <input type="checkbox"
+               formControlName="activo">
+
+        Descuento activo
+
+      </label>
+
+    </div>
+
+
+    <!-- ========================= BOTONES DEL FORMULARIO ========================= -->
+
+    <footer>
+
+      <!-- cierra el formulario sin guardar -->
+      <button class="btn btn-outline-secondary"
+              type="button"
+              (click)="cancelar()">
+        Cancelar
+      </button>
+
+      <!-- se bloquea si el formulario tiene errores o ya se esta guardando -->
+      <button class="btn btn-primary"
+              type="submit"
+              [disabled]="formulario.invalid || guardando">
+
+        <!-- cambia el texto mientras espera respuesta -->
+        {{ guardando ? 'Guardando…' : 'Guardar descuento' }}
+
+      </button>
+
+    </footer>
+
+  </form>
+
   }
 
+
+  <!-- ========================= ESTADO DE CARGA ========================= -->
+  <!-- mientras la API trae los descuentos muestra este estado -->
   @if (cargando) {
-    <div class="state-card" role="status">Cargando descuentos…</div>
-  } @else if (!descuentos.length) {
-    <div class="state-card">No hay descuentos registrados.</div>
-  } @else {
-    <div class="table-responsive discount-table-wrap">
-      <table class="table align-middle">
-        <thead><tr><th>Nombre</th><th>Tipo</th><th>Destino</th><th>Porcentaje</th><th>Vigencia</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
-        <tbody>
-          @for (descuento of descuentos; track descuento.descuentoId) {
-            <tr>
-              <td><strong>{{ descuento.nombre }}</strong></td>
-              <td>{{ etiquetaTipo(descuento.tipoDescuento) }}</td>
-              <td>{{ descuento.destino }}</td>
-              <td><span class="discount-value">-{{ descuento.porcentaje }}%</span></td>
-              <td><span>{{ descuento.fechaInicio | date:'dd/MM/yyyy HH:mm' }}</span><small>{{ descuento.fechaFin | date:'dd/MM/yyyy HH:mm' }}</small></td>
-              <td><span class="status-badge" [class]="claseVigencia(descuento.vigenciaActual)">{{ descuento.vigenciaActual }}</span></td>
-              <td><div class="actions"><button class="btn btn-sm btn-outline-primary" type="button" (click)="editar(descuento)">Editar</button><button class="btn btn-sm btn-outline-secondary" type="button" (click)="cambiarEstado(descuento)">{{ descuento.activo ? 'Desactivar' : 'Activar' }}</button></div></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+
+  <div class="state-card"
+       role="status">
+    Cargando descuentos…
+  </div>
+
   }
+
+
+  <!-- ========================= SIN DESCUENTOS ========================= -->
+  <!-- si termino de cargar y no existe ningun descuento -->
+  @else if (!descuentos.length) {
+
+  <div class="state-card">
+    No hay descuentos registrados.
+  </div>
+
+  }
+
+
+  <!-- ========================= TABLA DE DESCUENTOS ========================= -->
+  @else {
+
+  <!-- table-responsive permite hacer scroll horizontal si la tabla no cabe -->
+  <div class="table-responsive discount-table-wrap">
+
+    <table class="table align-middle">
+
+
+      <!-- ========================= ENCABEZADOS ========================= -->
+
+      <thead>
+
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Destino</th>
+          <th>Porcentaje</th>
+          <th>Vigencia</th>
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+
+      </thead>
+
+
+      <!-- ========================= FILAS ========================= -->
+
+      <tbody>
+
+        <!-- recorre todos los descuentos registrados
+             track usa descuentoId para identificar cada fila -->
+        @for (
+        descuento of descuentos;
+        track descuento.descuentoId
+        ) {
+
+        <tr>
+
+
+          <!-- ========================= NOMBRE ========================= -->
+
+          <td>
+            <strong>
+              {{ descuento.nombre }}
+            </strong>
+          </td>
+
+
+          <!-- ========================= TIPO ========================= -->
+
+          <td>
+
+            <!-- etiquetaTipo convierte el codigo interno
+                 al texto que se quiere mostrar -->
+            {{ etiquetaTipo(descuento.tipoDescuento) }}
+
+          </td>
+
+
+          <!-- ========================= DESTINO ========================= -->
+
+          <td>
+            {{ descuento.destino }}
+          </td>
+
+
+          <!-- ========================= PORCENTAJE ========================= -->
+
+          <td>
+
+            <span class="discount-value">
+              -{{ descuento.porcentaje }}%
+            </span>
+
+          </td>
+
+
+          <!-- ========================= VIGENCIA ========================= -->
+
+          <td>
+
+            <!-- date acomoda las fechas al formato dia mes año hora -->
+            <span>
+              {{ descuento.fechaInicio | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+
+            <small>
+              {{ descuento.fechaFin | date:'dd/MM/yyyy HH:mm' }}
+            </small>
+
+          </td>
+
+
+          <!-- ========================= ESTADO ========================= -->
+
+          <td>
+
+            <!-- claseVigencia devuelve la clase CSS correspondiente
+                 segun el estado actual del descuento -->
+            <span class="status-badge"
+                  [class]="claseVigencia(descuento.vigenciaActual)">
+
+              {{ descuento.vigenciaActual }}
+
+            </span>
+
+          </td>
+
+
+          <!-- ========================= ACCIONES ========================= -->
+
+          <td>
+
+            <div class="actions">
+
+
+              <!-- carga este descuento dentro del formulario para modificarlo -->
+              <button class="btn btn-sm btn-outline-primary"
+                      type="button"
+                      (click)="editar(descuento)">
+                Editar
+              </button>
+
+
+              <!-- cambia el estado actual entre activo e inactivo -->
+              <button class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      (click)="cambiarEstado(descuento)">
+
+                {{ descuento.activo ? 'Desactivar' : 'Activar' }}
+
+              </button>
+
+            </div>
+
+          </td>
+
+        </tr>
+
+        }
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  }
+
 </section>

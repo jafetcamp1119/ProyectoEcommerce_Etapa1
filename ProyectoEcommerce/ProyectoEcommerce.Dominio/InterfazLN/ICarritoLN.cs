@@ -3,17 +3,15 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN;
 
-/// <summary>
-/// Define las reglas disponibles para administrar el carrito activo de un Cliente.
-/// </summary>
+// acciones que puede hacer un Cliente sobre su propio carrito abierto
 public interface ICarritoLN
 {
-    /// <summary>Agrega una cantidad de producto al carrito perteneciente al usuario.</summary>
+    // agrega una cantidad despues de revisar producto, stock y dueño del carrito
     Task<Respuesta<TResultadoAgregarCarrito>> AgregarAsync(TAgregarProductoCarrito datos, int usuarioId);
-    /// <summary>Obtiene o representa el carrito actual del usuario.</summary>
+    // trae el carrito abierto o devuelve uno vacio si todavia no existe
     Task<Respuesta<TCarritoActual>> ObtenerActualAsync(int usuarioId);
-    /// <summary>Modifica una cantidad después de comprobar propiedad y stock.</summary>
+    // cambia la cantidad cuidando que el detalle sea del usuario y alcance el stock
     Task<Respuesta<TCarritoActual>> ActualizarCantidadAsync(TActualizarCantidadCarrito datos, int usuarioId);
-    /// <summary>Retira un detalle que pertenece al carrito del usuario.</summary>
+    // quita un producto solamente del carrito que pertenece al usuario autenticado
     Task<Respuesta<TCarritoActual>> EliminarDetalleAsync(int carritoDetalleId, int usuarioId);
 }

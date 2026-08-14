@@ -1,1 +1,246 @@
-:host { display: block; }.tax-page { padding-bottom: 2rem; }.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; }.page-heading h1 { margin: .15rem 0; font-size: clamp(1.7rem, 3vw, 2.35rem); }.page-heading p { margin: 0; color: var(--cui-secondary-color); }.eyebrow { color: var(--cui-primary); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }.editor,.table-card { border: 0; box-shadow: 0 .35rem 1.2rem rgba(32,56,85,.09); }.editor { margin-bottom: 1.3rem; }.editor-title,.editor-actions,.table-footer,.actions { display: flex; align-items: center; gap: .55rem; }.editor-title { justify-content: space-between; }.editor-title h2 { margin: 0 0 1rem; font-size: 1.15rem; }.form-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1rem; }.editor-actions { justify-content: end; margin-top: 1rem; }.table-card { overflow: hidden; }.table thead th { padding: 1rem; color: var(--cui-secondary-color); font-size: .78rem; text-transform: uppercase; }.table td { padding: .9rem 1rem; }.rate { display: inline-block; min-width: 4rem; padding: .3rem .55rem; color: var(--cui-primary); background: color-mix(in srgb,var(--cui-primary) 12%,transparent); border-radius: .5rem; font-weight: 700; text-align: center; }.inactive { opacity: .65; }.empty { padding: 2.4rem !important; text-align: center; color: var(--cui-secondary-color); }.table-footer { flex-wrap: wrap; justify-content: space-between; padding: .8rem 1rem; border-top: 1px solid var(--cui-border-color); color: var(--cui-secondary-color); font-size: .88rem; }.table-footer label { display: flex; align-items: center; gap: .5rem; }.table-footer .form-select { width: auto; }.table-footer div { display: flex; gap: .4rem; }@media(max-width:720px){.page-heading{align-items:stretch;flex-direction:column}.form-grid{grid-template-columns:1fr}.table-footer{align-items:stretch;flex-direction:column}.table-footer div .btn{flex:1}}
+/* esta pagina acomoda el mantenimiento de impuestos
+   incluye formulario tabla estados y paginacion */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= PAGINA GENERAL ========================= */
+
+/* deja espacio abajo para que el contenido no termine pegado al borde */
+.tax-page {
+  padding-bottom: 2rem;
+}
+
+
+/* ========================= ENCABEZADO ========================= */
+
+/* acomoda el titulo de la pagina y cualquier accion que tenga al lado */
+.page-heading {
+  display: flex;
+  /* alinea el contenido hacia la parte de abajo */
+  align-items: end;
+  /* manda el titulo y las acciones hacia extremos opuestos */
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+}
+
+
+  /* titulo principal de la pagina */
+  .page-heading h1 {
+    margin: 0.15rem 0;
+    /* clamp adapta el tamaño segun la pantalla
+     sin bajar de 1.7rem ni pasar de 2.35rem */
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+  }
+
+
+  /* texto que aparece debajo del titulo */
+  .page-heading p {
+    margin: 0;
+    color: var(--cui-secondary-color);
+  }
+
+
+/* texto pequeño que aparece encima del titulo */
+.eyebrow {
+  color: var(--cui-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  /* separa un poco las letras */
+  letter-spacing: 0.12em;
+  /* pone el texto visualmente en mayusculas */
+  text-transform: uppercase;
+}
+
+
+/* ========================= TARJETAS ========================= */
+
+/* formulario y tabla comparten el mismo estilo base */
+.editor,
+.table-card {
+  border: 0;
+  /* agrega una sombra suave alrededor de las tarjetas */
+  box-shadow: 0 0.35rem 1.2rem rgba(32, 56, 85, 0.09);
+}
+
+
+/* separa el formulario de la tabla */
+.editor {
+  margin-bottom: 1.3rem;
+}
+
+
+/* ========================= PARTES DEL FORMULARIO ========================= */
+
+/* estos bloques comparten flex porque acomodan elementos en una misma linea */
+.editor-title,
+.editor-actions,
+.table-footer,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+
+/* separa el titulo del formulario de la accion que tenga al lado */
+.editor-title {
+  justify-content: space-between;
+}
+
+
+  /* titulo dentro del formulario */
+  .editor-title h2 {
+    margin: 0 0 1rem;
+    font-size: 1.15rem;
+  }
+
+
+/* ========================= CAMPOS DEL FORMULARIO ========================= */
+
+/* distribuye los campos en 2 columnas del mismo tamaño */
+.form-grid {
+  display: grid;
+  /* repeat crea 2 columnas iguales */
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+
+/* ========================= BOTONES DEL FORMULARIO ========================= */
+
+/* acomoda los botones hacia la derecha */
+.editor-actions {
+  justify-content: end;
+  margin-top: 1rem;
+}
+
+
+/* ========================= TABLA ========================= */
+
+/* evita que el contenido se salga de las esquinas de la tarjeta */
+.table-card {
+  overflow: hidden;
+}
+
+
+/* encabezados de las columnas */
+.table thead th {
+  padding: 1rem;
+  color: var(--cui-secondary-color);
+  font-size: 0.78rem;
+  /* pone los encabezados visualmente en mayusculas */
+  text-transform: uppercase;
+}
+
+
+/* espacio interno de las celdas */
+.table td {
+  padding: 0.9rem 1rem;
+}
+
+
+/* ========================= PORCENTAJE DEL IMPUESTO ========================= */
+
+/* muestra la tasa del impuesto dentro de una etiqueta resaltada */
+.rate {
+  display: inline-block;
+  /* evita que el valor quede demasiado pequeño */
+  min-width: 4rem;
+  padding: 0.3rem 0.55rem;
+  color: var(--cui-primary);
+  /* color-mix mezcla un poco del color principal con transparente */
+  background: color-mix( in srgb, var(--cui-primary) 12%, transparent );
+  border-radius: 0.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+
+/* ========================= ESTADOS ========================= */
+
+/* hace que los registros inactivos se vean mas apagados */
+.inactive {
+  opacity: 0.65;
+}
+
+
+/* mensaje que aparece cuando la tabla no tiene datos */
+.empty {
+  /* important hace que este padding tenga prioridad sobre otros estilos de la tabla */
+  padding: 2.4rem !important;
+  text-align: center;
+  color: var(--cui-secondary-color);
+}
+
+
+/* ========================= PIE DE LA TABLA ========================= */
+
+/* contiene paginacion cantidad de filas y controles de navegacion */
+.table-footer {
+  /* permite que los elementos bajen a otra linea si no caben */
+  flex-wrap: wrap;
+  /* reparte los controles hacia los extremos */
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  border-top: 1px solid var(--cui-border-color);
+  color: var(--cui-secondary-color);
+  font-size: 0.88rem;
+}
+
+
+  /* acomoda el texto y el select uno al lado del otro */
+  .table-footer label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+
+  /* evita que el select ocupe todo el ancho disponible */
+  .table-footer .form-select {
+    width: auto;
+  }
+
+
+  /* acomoda juntos los botones de paginacion */
+  .table-footer div {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+
+/* ========================= PANTALLAS PEQUEÑAS ========================= */
+
+/* cuando la pantalla baja de 720px se acomoda todo para celular */
+@media (max-width: 720px) {
+
+  /* el encabezado deja de estar horizontal */
+  .page-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  /* el formulario pasa de 2 columnas a una sola */
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  /* el pie de la tabla pone sus controles uno debajo del otro */
+  .table-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+    /* los botones se reparten el espacio disponible */
+    .table-footer div .btn {
+      flex: 1;
+    }
+}

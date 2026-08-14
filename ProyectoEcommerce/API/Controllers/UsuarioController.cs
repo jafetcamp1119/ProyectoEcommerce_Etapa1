@@ -14,9 +14,8 @@ namespace ProyectoEcommerce.API.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    /// <summary>
-    /// Gestiona registro, autenticación JWT y administración de usuarios y roles.
-    /// </summary>
+    // aqui entran registro, login, configuracion inicial y mantenimiento de usuarios
+    // AllowAnonymous marca las pocas rutas que se usan antes de tener un JWT
     public class UsuarioController : ControllerBase
     {
         private IUsuarioLN _usuarioLN { get; }
@@ -28,7 +27,7 @@ namespace ProyectoEcommerce.API.Controllers
             _configuration = configuration;
         }
 
-        /// <summary>Registra una cuenta de Cliente aplicando las validaciones de la lógica de negocio.</summary>
+        // recibe los datos de registro y la LN crea siempre una cuenta de Cliente
         [AllowAnonymous]
         [HttpPost("Registrar")]
         public async Task<IActionResult> Registrar([FromBody] TRegistroUsuario registro)
@@ -41,7 +40,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Indica si LessPrice aún necesita crear su primer Administrador.</summary>
+        // esta ruta se consulta al abrir la app para saber si falta el Administrador inicial
         [AllowAnonymous]
         [HttpGet("/api/auth/setup-status")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -54,12 +53,13 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(new TEstadoConfiguracionInicial
             {
                 RequiereConfiguracionInicial = resultado.Data,
+                // solo devuelve el correo reservado de configuracion, nunca una contraseña
                 CorreoAdministradorInicial =
                     (_configuration["InitialAdmin:Email"] ?? string.Empty).Trim().ToLowerInvariant()
             });
         }
 
-        /// <summary>Crea una sola vez el Administrador inicial autorizado.</summary>
+        // recibe el formulario inicial y deja que la LN revise correo reservado y que no exista otro Admin
         [AllowAnonymous]
         [HttpPost("/api/auth/setup-admin")]
         public async Task<IActionResult> CrearAdministradorInicial([FromBody] TRegistroUsuario registro)
@@ -75,7 +75,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        /// <summary>Valida las credenciales y, si son correctas, entrega una sesión JWT firmada.</summary>
+        // recibe correo y contraseña, la LN revisa el hash y si todo esta bien aqui crea el JWT
         [AllowAnonymous]
         [HttpPost("IniciarSesion")]
         public async Task<IActionResult> IniciarSesion([FromBody] TLoginUsuario login)
@@ -100,7 +100,7 @@ namespace ProyectoEcommerce.API.Controllers
             var usuario = resultado.Data.Usuario;
             if (usuario == null) return StatusCode(StatusCodes.Status500InternalServerError, resultado);
 
-            // La duración proviene de configuración; el token no modifica el estado del usuario en la base de datos.
+            // la duracion sale de appsettings y si falta usa 60 minutos
             var expiracion = DateTime.UtcNow.AddMinutes(
                 _configuration.GetValue<int?>("Jwt:ExpiresMinutes") ?? 60);
 
@@ -117,6 +117,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(respuesta);
         }
 
+        // lista simple conservada por el patron original del proyecto
         [Authorize(Roles = "Administrador")]
         [HttpGet("Listar")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -127,6 +128,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        // lista usuarios usando texto, rol, estado, pagina y tamaño enviados en el query string
         [Authorize(Roles = "Administrador")]
         [HttpGet("ListarAdministracion")]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -137,6 +139,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        // trae los roles activos que se pueden escoger en administracion
         [Authorize(Roles = "Administrador")]
         [HttpGet("ListarRoles")]
         public async Task<IActionResult> ListarRoles()
@@ -146,6 +149,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        // cambia el rol y manda el ID del Administrador actual para la bitacora
         [Authorize(Roles = "Administrador")]
         [HttpPut("CambiarRol")]
         public async Task<IActionResult> CambiarRol([FromBody] TCambioRolUsuario datos)
@@ -156,6 +160,7 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
+        // activa o desactiva una cuenta despues de revisar las reglas del ultimo Administrador
         [Authorize(Roles = "Administrador")]
         [HttpPut("CambiarEstado")]
         public async Task<IActionResult> CambiarEstado([FromBody] TCambioEstadoUsuario datos)
@@ -215,21 +220,22 @@ namespace ProyectoEcommerce.API.Controllers
             return Ok(resultado);
         }
 
-        // Las operaciones administrativas registran quién las realizó mediante el identificador incluido en el JWT.
+        // FindFirstValue agarra el ID guardado dentro de los Claims del JWT
         private int UsuarioIdActual() =>
             int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
-        /// <summary>
-        /// Genera un JWT con identificador, correo, nombre y rol del usuario autenticado.
-        /// La clave de firma se obtiene de la configuración y no se expone en la respuesta.
-        /// </summary>
+        // recibe el usuario autenticado y la fecha de vencimiento
+        // mete ID, correo, nombre y rol en Claims y devuelve el JWT firmado como texto
         private string GenerarToken(TUsuario usuario, DateTime expiracion)
         {
             var clave = _configuration["Jwt:Key"]!;
+            // HmacSha256 usa la clave privada de configuracion para firmar el token
             var credenciales = new SigningCredentials(
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(clave)),
                 SecurityAlgorithms.HmacSha256);
 
+            // los Claims son los datos pequeños que viajan dentro del token
+            // Jti crea un identificador diferente para cada sesion
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, usuario.UsuarioId.ToString()),
@@ -240,6 +246,7 @@ namespace ProyectoEcommerce.API.Controllers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
+            // aqui junta emisor, audiencia, Claims, vencimiento y firma
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
@@ -247,6 +254,7 @@ namespace ProyectoEcommerce.API.Controllers
                 expires: expiracion,
                 signingCredentials: credenciales);
 
+            // WriteToken convierte el objeto en el texto que Angular guarda y manda en cada solicitud
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }

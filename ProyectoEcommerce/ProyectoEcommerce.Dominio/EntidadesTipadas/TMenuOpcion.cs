@@ -1,6 +1,5 @@
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Opción de navegación autorizada para la sesión del usuario.</summary>
 public class TMenuOpcion
 {
     public int MenuOpcionId { get; set; }

@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Filtros, orden y paginación usados al consultar productos.</summary>
 public class TFiltroProductos
 {
     [MaxLength(120)] public string? Texto { get; set; }
@@ -17,7 +16,6 @@ public class TFiltroProductos
     [MaxLength(30)] public string? Orden { get; set; } = "nombre_asc";
 }
 
-/// <summary>Información segura de producto que se presenta al Cliente.</summary>
 public class TProductoCatalogo
 {
     public int ProductoId { get; set; }
@@ -38,7 +36,6 @@ public class TProductoCatalogo
     public TDescuentoAplicado Descuento { get; set; } = new();
 }
 
-/// <summary>Listas auxiliares de familias, categorías e impuestos.</summary>
 public class TCatalogosProducto
 {
     public IEnumerable<TFamiliaProducto> Familias { get; set; } = [];

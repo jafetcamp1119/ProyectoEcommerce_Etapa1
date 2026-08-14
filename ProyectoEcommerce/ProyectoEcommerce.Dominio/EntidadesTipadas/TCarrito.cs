@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Datos recibidos para agregar un producto al carrito.</summary>
 public class TAgregarProductoCarrito
 {
     [Range(1, int.MaxValue, ErrorMessage = "Selecciona un producto válido.")]
@@ -12,7 +11,6 @@ public class TAgregarProductoCarrito
     public int Cantidad { get; set; } = 1;
 }
 
-/// <summary>Resultado resumido después de agregar o acumular un producto.</summary>
 public class TResultadoAgregarCarrito
 {
     public int CarritoId { get; set; }
@@ -22,7 +20,6 @@ public class TResultadoAgregarCarrito
     public bool ProductoNuevo { get; set; }
 }
 
-/// <summary>Datos necesarios para cambiar la cantidad de un detalle.</summary>
 public class TActualizarCantidadCarrito
 {
     [Range(1, int.MaxValue, ErrorMessage = "Selecciona un detalle de carrito válido.")]
@@ -32,7 +29,6 @@ public class TActualizarCantidadCarrito
     public int Cantidad { get; set; }
 }
 
-/// <summary>Representa el carrito calculado que se muestra al Cliente.</summary>
 public class TCarritoActual
 {
     public int CarritoId { get; set; }
@@ -45,7 +41,6 @@ public class TCarritoActual
     public IEnumerable<TCarritoItem> Items { get; set; } = [];
 }
 
-/// <summary>Representa una línea del carrito con stock y desglose monetario.</summary>
 public class TCarritoItem
 {
     public int CarritoDetalleId { get; set; }

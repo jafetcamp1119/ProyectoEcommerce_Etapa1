@@ -3,30 +3,31 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN
 {
-    /// <summary>Define registro, autenticación y administración de usuarios y roles.</summary>
+    // aqui quedan las acciones de usuarios que los controllers pueden pedirle a la LN
     public interface IUsuarioLN
     {
+        // estas operaciones se conservan porque forman parte del patron comun del proyecto
         Task<Respuesta<TUsuario>> InsertarAsync(TUsuario datos);
         Task<Respuesta<TUsuario>> ModificarAsync(TUsuario datos);
         Task<Respuesta<bool>> EliminarAsync(TUsuario datos);
         Task<Respuesta<IEnumerable<TUsuario>>> BuscarAsync(TUsuario datos);
         Task<Respuesta<TUsuario>> ObtenerAsync(TUsuario datos);
         Task<Respuesta<IEnumerable<TUsuario>>> ListarAsync();
-        /// <summary>Registra una cuenta de Cliente almacenando la contraseña mediante hash.</summary>
+        // registra un Cliente y guarda un hash, nunca la contraseña escrita
         Task<Respuesta<TUsuario>> RegistrarAsync(TRegistroUsuario datos);
-        /// <summary>Indica si todavía no existe un Administrador activo.</summary>
+        // revisa si todavia hace falta crear el primer Administrador
         Task<Respuesta<bool>> RequiereConfiguracionInicialAsync();
-        /// <summary>Crea de forma atómica el primer Administrador autorizado.</summary>
+        // recibe los datos iniciales y crea el Administrador reservado dentro de una transaccion
         Task<Respuesta<TUsuario>> CrearAdministradorInicialAsync(TRegistroUsuario datos);
-        /// <summary>Valida credenciales, bloqueos y estado antes de permitir crear un JWT.</summary>
+        // revisa correo, contraseña, bloqueos y estado antes de dejar que el controller cree el JWT
         Task<Respuesta<TEstadoAutenticacion>> AutenticarAsync(TLoginUsuario datos);
-        /// <summary>Lista usuarios con filtros y paginación administrativa.</summary>
+        // trae una pagina de usuarios usando los filtros de administracion
         Task<Respuesta<TPagina<TUsuario>>> ListarAdministracionAsync(TFiltroUsuarios filtro);
-        /// <summary>Lista los roles activos que pueden asignarse.</summary>
+        // devuelve los roles que todavia se pueden asignar
         Task<Respuesta<IEnumerable<TRol>>> ListarRolesAsync();
-        /// <summary>Cambia el rol y registra al Administrador que realizó la acción.</summary>
+        // cambia el rol y deja en bitacora cual Administrador lo hizo
         Task<Respuesta<TUsuario>> CambiarRolAsync(TCambioRolUsuario datos, int administradorId);
-        /// <summary>Activa o desactiva una cuenta sin permitir que el Administrador se desactive a sí mismo.</summary>
+        // activa o desactiva una cuenta cuidando que el Administrador no se bloquee solo
         Task<Respuesta<TUsuario>> CambiarEstadoAsync(TCambioEstadoUsuario datos, int administradorId);
     }
 }

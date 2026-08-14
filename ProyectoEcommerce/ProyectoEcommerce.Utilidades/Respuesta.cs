@@ -4,10 +4,8 @@ using System.Text;
 
 namespace ProyectoEcommerce.Utilidades
 {
-    /// <summary>
-    /// Envuelve los resultados de las capas con un indicador de éxito, datos y mensaje de error.
-    /// </summary>
-    /// <typeparam name="T">Tipo de información devuelta.</typeparam>
+    // todas las capas usan esta caja para devolver datos o explicar que salio mal
+    // T cambia segun lo que devuelve cada metodo, por ejemplo Usuario, bool o una lista
     public partial class Respuesta<T>
     {
 
@@ -18,6 +16,7 @@ namespace ProyectoEcommerce.Utilidades
 
         public Respuesta()
         {
+            // una respuesta empieza correcta y solo cambia cuando alguna capa encuentra un error
             Success = true;
             Error = "";
         }
@@ -30,6 +29,7 @@ namespace ProyectoEcommerce.Utilidades
             Error = error;
         }
 
+        // estos dos atajos crean una respuesta lista sin repetir las propiedades cada vez
         public static Respuesta<T> Ok(T data) => new(true,  data, null);
 
         public static Respuesta<T> Fail(String error) => new(false, default, error);

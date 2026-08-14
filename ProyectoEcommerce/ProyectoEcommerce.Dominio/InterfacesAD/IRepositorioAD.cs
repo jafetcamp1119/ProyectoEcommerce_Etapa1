@@ -6,28 +6,26 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.Dominio.InterfacesAD
 {
-    /// <summary>
-    /// Define operaciones genéricas de persistencia usadas por las entidades de Entity Framework.
-    /// </summary>
-    /// <typeparam name="TEntity">Entidad Database First que administra el repositorio.</typeparam>
+    // estas son las operaciones comunes que cualquier entidad puede pedirle a la BD
+    // TEntity representa la tabla que se esta trabajando en ese momento
     public interface IRepositorioAD<TEntity> where TEntity : class
     {
-        /// <summary>Agrega una entidad al contexto.</summary>
+        // agrega un registro nuevo y devuelve la entidad ya guardada
         Task<Respuesta<TEntity>> InsertarAsync(TEntity objEntidad);
 
-        /// <summary>Marca una entidad existente como modificada.</summary>
+        // actualiza un registro con los valores que recibe
         Task<Respuesta<TEntity>> ModificarAsync(TEntity objEntidad);
 
-        /// <summary>Elimina la entidad recibida cuando la LN solicita una eliminación física.</summary>
+        // hace un borrado fisico cuando la LN realmente lo necesita
         Task<Respuesta<bool>> EliminarAsync(TEntity objEntidad);
 
-        /// <summary>Lista entidades e incluye relaciones opcionales.</summary>
+        // lista registros y puede traer relaciones con Include
         Task<Respuesta<IEnumerable<TEntity>>> ListarAsync(List<string>? objIncludes = null);
 
-        /// <summary>Busca entidades mediante una expresión ejecutada por Entity Framework.</summary>
+        // aplica una condicion que Entity Framework convierte a WHERE
         Task<Respuesta<IEnumerable<TEntity>>> BuscarAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null);
 
-        /// <summary>Ejecuta búsqueda, ordenamiento y paginación en la base de datos.</summary>
+        // filtra, acomoda y trae solo una pagina para no cargar todo en memoria
         Task<Respuesta<IEnumerable<TEntity>>> BuscarPaginadoAsync(
             Expression<Func<TEntity, bool>> objPredicado,
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> ordenar,
@@ -35,10 +33,10 @@ namespace ProyectoEcommerce.Dominio.InterfacesAD
             int tomar,
             List<string>? objIncludes = null);
 
-        /// <summary>Obtiene la primera entidad que satisface el predicado.</summary>
+        // trae el primer registro que cumpla la condicion o null si no existe
         Task<Respuesta<TEntity>> ObtenerEntidadAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null);
 
-        /// <summary>Cuenta registros que cumplen el filtro.</summary>
+        // cuenta en SQL los registros que cumplen la condicion
         Task<Respuesta<int?>> ContarAsync(Expression<Func<TEntity, bool>> objPredicado, List<string>? objIncludes = null);
     }
 }

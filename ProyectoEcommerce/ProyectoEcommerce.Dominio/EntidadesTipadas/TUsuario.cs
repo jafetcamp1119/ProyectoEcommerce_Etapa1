@@ -1,6 +1,5 @@
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Información de usuario expuesta sin incluir el hash de contraseña.</summary>
 public class TUsuario
 {
     public int UsuarioId { get; set; }

@@ -1,165 +1,416 @@
+<!-- esta pantalla comparte el login y el registro
+     modoRegistro es el que decide cual de los 2 formularios se muestra -->
+
 <main class="auth-shell">
+
+  <!-- aqui va toda la tarjeta donde estan el logo el titulo y los formularios
+       aria-labelledby ayuda a relacionar esta seccion con el titulo principal -->
   <section class="auth-card" aria-labelledby="auth-title">
+
+    <!-- aqui se acomoda el logo de LessPrice junto con el nombre y el titulo -->
     <div class="auth-brand">
+
+      <!-- muestra la imagen que se usa como logo
+           object-fit cover hace que la imagen llene el espacio sin deformarse -->
       <img src="SUPERMERCADO.jpg"
            alt="LessPrice"
            width="70"
            height="70"
            style="object-fit: cover; border-radius: 12px;">
+
       <div>
-        <span class="auth-eyebrow">LessPrice</span>
-        <h1 id="auth-title">{{ modoRegistro ? 'Crear cuenta' : 'Iniciar sesión' }}</h1>
+
+        <!-- este es el nombre pequeño que aparece arriba del titulo -->
+        <span class="auth-eyebrow">
+          LessPrice
+        </span>
+
+        <!-- aqui se cambia el titulo dependiendo de si estamos registrando o iniciando sesion
+             ? : funciona como un if pequeño
+             si modoRegistro es true muestra Crear cuenta y si es false muestra Iniciar sesion -->
+        <h1 id="auth-title">
+          {{ modoRegistro ? 'Crear cuenta' : 'Iniciar sesión' }}
+        </h1>
+
       </div>
     </div>
 
+    <!-- este texto tambien cambia dependiendo del formulario que se este mostrando -->
     <p class="auth-intro">
-      {{ modoRegistro
-        ? 'Completa tus datos para comenzar.'
-        : 'Ingresa con tu correo electrónico para acceder al dashboard.' }}
+      {{
+        modoRegistro
+          ? 'Completa tus datos para comenzar.'
+          : 'Ingresa con tu correo electrónico para acceder al dashboard.'
+      }}
     </p>
 
+    <!-- si TypeScript guarda algun mensaje de exito aqui se muestra en verde
+         si mensajeExito esta vacio Angular simplemente no crea este div -->
     @if (mensajeExito) {
-      <div class="alert alert-success" role="status">{{ mensajeExito }}</div>
+    <div class="alert alert-success" role="status">
+      {{ mensajeExito }}
+    </div>
     }
 
+    <!-- hace lo mismo que el anterior pero para los errores -->
     @if (mensajeError) {
-      <div class="alert alert-danger" role="alert">{{ mensajeError }}</div>
+    <div class="alert alert-danger" role="alert">
+      {{ mensajeError }}
+    </div>
     }
 
-    <!-- Formulario de inicio de sesión -->
+
+    <!-- ========================= LOGIN ========================= -->
+    <!-- si modoRegistro es false entra aqui y muestra el formulario para iniciar sesion -->
     @if (!modoRegistro) {
-      <form [formGroup]="loginForm" (ngSubmit)="iniciarSesion()" novalidate>
-        <div class="auth-field">
-          <label for="login-correo">Correo electrónico</label>
-          <input
-            id="login-correo"
-            class="form-control"
-            type="email"
-            formControlName="correo"
-            autocomplete="email"
-            placeholder="nombre@correo.com">
-          @if (tieneError('login', 'correo', 'required')) {
-            <span class="field-error">El correo electrónico es obligatorio.</span>
-          } @else if (tieneError('login', 'correo', 'email')) {
-            <span class="field-error">Ingresa un correo electrónico válido.</span>
-          }
-        </div>
 
-        <div class="auth-field">
-          <label for="login-contrasena">Contraseña</label>
-          <input
-            id="login-contrasena"
-            class="form-control"
-            type="password"
-            formControlName="contrasena"
-            autocomplete="current-password"
-            placeholder="Tu contraseña">
-          @if (tieneError('login', 'contrasena', 'required')) {
-            <span class="field-error">La contraseña es obligatoria.</span>
-          }
-        </div>
+    <!-- [formGroup] conecta este formulario con loginForm que esta creado en TypeScript
+         ngSubmit llama iniciarSesion cuando la persona envia el formulario
+         novalidate evita usar los mensajes automaticos del navegador porque las validaciones las maneja Angular -->
+    <form [formGroup]="loginForm"
+          (ngSubmit)="iniciarSesion()"
+          novalidate>
 
-        <button
-          class="btn btn-primary auth-submit"
-          type="submit"
-          [disabled]="loginForm.invalid || procesando">
-          {{ procesando ? 'Ingresando…' : 'Iniciar sesión' }}
+      <!-- ========================= CORREO DEL LOGIN ========================= -->
+      <!-- este bloque guarda el nombre del campo el input y sus posibles errores -->
+      <div class="auth-field">
+
+        <label for="login-correo">
+          Correo electrónico
+        </label>
+
+        <!-- formControlName correo conecta este input con el campo correo de loginForm
+             autocomplete email deja que el navegador pueda sugerir correos guardados -->
+        <input id="login-correo"
+               class="form-control"
+               type="email"
+               formControlName="correo"
+               autocomplete="email"
+               placeholder="nombre@correo.com">
+
+        <!-- primero revisa si el correo esta vacio -->
+        @if (tieneError('login', 'correo', 'required')) {
+
+        <span class="field-error">
+          El correo electrónico es obligatorio.
+        </span>
+
+        }
+        <!-- si no esta vacio revisa si realmente tiene formato de correo -->
+        @else if (tieneError('login', 'correo', 'email')) {
+
+        <span class="field-error">
+          Ingresa un correo electrónico válido.
+        </span>
+
+        }
+
+      </div>
+
+
+      <!-- ========================= CONTRASEÑA DEL LOGIN ========================= -->
+
+      <div class="auth-field">
+
+        <label for="login-contrasena">
+          Contraseña
+        </label>
+
+        <!-- type password hace que la contraseña se vea con puntos
+             formControlName conecta este input con contrasena dentro de loginForm
+             current-password le indica al navegador que esta es una contraseña que ya existe -->
+        <input id="login-contrasena"
+               class="form-control"
+               type="password"
+               formControlName="contrasena"
+               autocomplete="current-password"
+               placeholder="Tu contraseña">
+
+        <!-- si la persona intenta continuar sin contraseña se muestra este error -->
+        @if (tieneError('login', 'contrasena', 'required')) {
+
+        <span class="field-error">
+          La contraseña es obligatoria.
+        </span>
+
+        }
+
+      </div>
+
+
+      <!-- ===================== BOTON DE LOGI ================== -->
+      <!-- el boton se desactiva si el formulario tiene algun error o si ya se esta procesando el login
+           esto tambien evita que la persona pueda darle varias veces mientras espera la respuesta -->
+      <button class="btn btn-primary auth-submit"
+              type="submit"
+              [disabled]="loginForm.invalid || procesando">
+
+        <!-- si procesando es true cambia el texto para avisar que esta intentando entrar -->
+        {{ procesando ? 'Ingresando…' : 'Iniciar sesión' }}
+
+      </button>
+
+
+      <!-- permite pasar del login al formulario para crear una cuenta -->
+      <p class="auth-switch">
+
+        ¿No tienes una cuenta?
+
+        <!-- cambiarModo(true) pone modoRegistro en true y por eso cambia al formulario de registro -->
+        <button type="button"
+                (click)="cambiarModo(true)">
+          Crear cuenta
         </button>
 
-        <p class="auth-switch">
-          ¿No tienes una cuenta?
-          <button type="button" (click)="cambiarModo(true)">Crear cuenta</button>
-        </p>
-      </form>
-    } @else {
-      <!-- Formulario de registro de Cliente -->
-      <form [formGroup]="registroForm" (ngSubmit)="crearCuenta()" novalidate>
-        <div class="auth-grid">
-          <div class="auth-field">
-            <label for="registro-nombre">Nombre</label>
-            <input id="registro-nombre" class="form-control" formControlName="nombre" autocomplete="given-name">
-            @if (tieneError('registro', 'nombre', 'required')) {
-              <span class="field-error">El nombre es obligatorio.</span>
-            }
-          </div>
+      </p>
 
-          <div class="auth-field">
-            <label for="registro-apellidos">Apellidos</label>
-            <input id="registro-apellidos" class="form-control" formControlName="apellidos" autocomplete="family-name">
-            @if (tieneError('registro', 'apellidos', 'required')) {
-              <span class="field-error">Los apellidos son obligatorios.</span>
-            }
-          </div>
-        </div>
+    </form>
 
-        <div class="auth-field">
-          <label for="registro-correo">Correo electrónico</label>
-          <input
-            id="registro-correo"
-            class="form-control"
-            type="email"
-            formControlName="correo"
-            autocomplete="email"
-            placeholder="nombre@correo.com">
-          @if (tieneError('registro', 'correo', 'required')) {
-            <span class="field-error">El correo electrónico es obligatorio.</span>
-          } @else if (tieneError('registro', 'correo', 'email')) {
-            <span class="field-error">Ingresa un correo electrónico válido.</span>
-          }
-        </div>
-
-        <div class="auth-field">
-          <label for="registro-telefono">Teléfono</label>
-          <input id="registro-telefono" class="form-control" type="tel" formControlName="telefono" autocomplete="tel">
-          @if (tieneError('registro', 'telefono', 'required')) {
-            <span class="field-error">El teléfono es obligatorio.</span>
-          }
-        </div>
-
-        <div class="auth-grid">
-          <div class="auth-field">
-            <label for="registro-contrasena">Contraseña</label>
-            <input
-              id="registro-contrasena"
-              class="form-control"
-              type="password"
-              formControlName="contrasena"
-              autocomplete="new-password">
-            @if (tieneError('registro', 'contrasena', 'required')) {
-              <span class="field-error">La contraseña es obligatoria.</span>
-            } @else if (tieneError('registro', 'contrasena', 'minlength')) {
-              <span class="field-error">Debe tener al menos 8 caracteres.</span>
-            }
-          </div>
-
-          <div class="auth-field">
-            <label for="registro-confirmacion">Confirmar contraseña</label>
-            <input
-              id="registro-confirmacion"
-              class="form-control"
-              type="password"
-              formControlName="confirmarContrasena"
-              autocomplete="new-password">
-            @if (tieneError('registro', 'confirmarContrasena', 'required')) {
-              <span class="field-error">Confirma la contraseña.</span>
-            } @else if (registroForm.hasError('contrasenasDiferentes') && registroForm.controls.confirmarContrasena.touched) {
-              <span class="field-error">Las contraseñas no coinciden.</span>
-            }
-          </div>
-        </div>
-
-        <button
-          class="btn btn-primary auth-submit"
-          type="submit"
-          [disabled]="registroForm.invalid || procesando">
-          {{ procesando ? 'Creando cuenta…' : 'Crear cuenta' }}
-        </button>
-
-        <p class="auth-switch">
-          ¿Ya tienes una cuenta?
-          <button type="button" (click)="cambiarModo(false)">Iniciar sesión</button>
-        </p>
-      </form>
     }
+
+    <!-- si modoRegistro es true entra aqui en vez del login -->
+    @else {
+
+
+    <!-- ========================= REGISTRO ========================= -->
+    <!-- este formulario se conecta con registroForm
+         cuando se envia llama crearCuenta en TypeScript -->
+    <form [formGroup]="registroForm"
+          (ngSubmit)="crearCuenta()"
+          novalidate>
+
+
+      <!-- auth-grid pone Nombre y Apellidos uno al lado del otro cuando hay suficiente espacio -->
+      <div class="auth-grid">
+
+
+        <!-- ========================= NOMBRE ========================= -->
+
+        <div class="auth-field">
+
+          <label for="registro-nombre">
+            Nombre
+          </label>
+
+          <!-- given-name le indica al navegador que este campo corresponde al nombre de la persona -->
+          <input id="registro-nombre"
+                 class="form-control"
+                 formControlName="nombre"
+                 autocomplete="given-name">
+
+          <!-- revisa si dejaron el nombre vacio -->
+          @if (tieneError('registro', 'nombre', 'required')) {
+
+          <span class="field-error">
+            El nombre es obligatorio.
+          </span>
+
+          }
+
+        </div>
+
+
+        <!-- ========================= APELLIDOS ========================= -->
+
+        <div class="auth-field">
+
+          <label for="registro-apellidos">
+            Apellidos
+          </label>
+
+          <!-- family-name sirve para que el navegador sepa que aqui van los apellidos -->
+          <input id="registro-apellidos"
+                 class="form-control"
+                 formControlName="apellidos"
+                 autocomplete="family-name">
+
+          @if (tieneError('registro', 'apellidos', 'required')) {
+
+          <span class="field-error">
+            Los apellidos son obligatorios.
+          </span>
+
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- ========================= CORREO DEL REGISTRO ========================= -->
+
+      <div class="auth-field">
+
+        <label for="registro-correo">
+          Correo electrónico
+        </label>
+
+        <!-- este correo pertenece a registroForm y es diferente al correo que se usa en loginForm -->
+        <input id="registro-correo"
+               class="form-control"
+               type="email"
+               formControlName="correo"
+               autocomplete="email"
+               placeholder="nombre@correo.com">
+
+        <!-- primero revisa que hayan escrito algo -->
+        @if (tieneError('registro', 'correo', 'required')) {
+
+        <span class="field-error">
+          El correo electrónico es obligatorio.
+        </span>
+
+        }
+        <!-- despues revisa que tenga un formato valido como correo@ejemplo.com -->
+        @else if (tieneError('registro', 'correo', 'email')) {
+
+        <span class="field-error">
+          Ingresa un correo electrónico válido.
+        </span>
+
+        }
+
+      </div>
+
+
+      <!-- ========================= TELEFONO ========================= -->
+
+      <div class="auth-field">
+
+        <label for="registro-telefono">
+          Teléfono
+        </label>
+
+        <!-- type tel indica que este campo se usa para un telefono
+             autocomplete tel permite que el navegador sugiera un numero guardado -->
+        <input id="registro-telefono"
+               class="form-control"
+               type="tel"
+               formControlName="telefono"
+               autocomplete="tel">
+
+        @if (tieneError('registro', 'telefono', 'required')) {
+
+        <span class="field-error">
+          El teléfono es obligatorio.
+        </span>
+
+        }
+
+      </div>
+
+
+      <!-- aqui se ponen la contraseña y la confirmacion una al lado de la otra -->
+      <div class="auth-grid">
+
+
+        <!-- ========================= CONTRASEÑA NUEVA ========================= -->
+
+        <div class="auth-field">
+
+          <label for="registro-contrasena">
+            Contraseña
+          </label>
+
+          <!-- new-password le indica al navegador que se esta creando una contraseña nueva
+               y no usando una contraseña que ya existia -->
+          <input id="registro-contrasena"
+                 class="form-control"
+                 type="password"
+                 formControlName="contrasena"
+                 autocomplete="new-password">
+
+          <!-- revisa primero que haya escrito una contraseña -->
+          @if (tieneError('registro', 'contrasena', 'required')) {
+
+          <span class="field-error">
+            La contraseña es obligatoria.
+          </span>
+
+          }
+          <!-- minlength viene de la validacion del formulario y revisa que tenga minimo 8 caracteres -->
+          @else if (tieneError('registro', 'contrasena', 'minlength')) {
+
+          <span class="field-error">
+            Debe tener al menos 8 caracteres.
+          </span>
+
+          }
+
+        </div>
+
+
+        <!-- ========================= CONFIRMAR CONTRASEÑA ========================= -->
+
+        <div class="auth-field">
+
+          <label for="registro-confirmacion">
+            Confirmar contraseña
+          </label>
+
+          <!-- este campo sirve para volver a escribir la contraseña y comprobar que no hubo un error al escribirla -->
+          <input id="registro-confirmacion"
+                 class="form-control"
+                 type="password"
+                 formControlName="confirmarContrasena"
+                 autocomplete="new-password">
+
+          <!-- primero revisa que no se haya dejado vacio -->
+          @if (tieneError('registro', 'confirmarContrasena', 'required')) {
+
+          <span class="field-error">
+            Confirma la contraseña.
+          </span>
+
+          }
+          <!-- hasError revisa el error general contrasenasDiferentes que se crea cuando las 2 contraseñas no son iguales
+               touched evita mostrar el error antes de que la persona haya tocado este campo -->
+          @else if (
+          registroForm.hasError('contrasenasDiferentes')
+          && registroForm.controls.confirmarContrasena.touched
+          ) {
+
+          <span class="field-error">
+            Las contraseñas no coinciden.
+          </span>
+
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- ========================= BOTON CREAR CUENTA ========================= -->
+      <!-- no deja crear la cuenta mientras haya errores en registroForm
+           tampoco deja volver a presionar mientras la solicitud ya se esta procesando -->
+      <button class="btn btn-primary auth-submit"
+              type="submit"
+              [disabled]="registroForm.invalid || procesando">
+
+        <!-- cambia el texto del boton mientras espera que el backend termine de crear la cuenta -->
+        {{ procesando ? 'Creando cuenta…' : 'Crear cuenta' }}
+
+      </button>
+
+
+      <!-- permite regresar al login si la persona ya tiene una cuenta -->
+      <p class="auth-switch">
+
+        ¿Ya tienes una cuenta?
+
+        <!-- cambiarModo(false) vuelve modoRegistro a false y por eso se muestra otra vez el login -->
+        <button type="button"
+                (click)="cambiarModo(false)">
+          Iniciar sesión
+        </button>
+
+      </p>
+
+    </form>
+
+    }
+
   </section>
+
 </main>

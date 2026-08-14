@@ -3,21 +3,20 @@ using ProyectoEcommerce.Dominio.Entidades;
 
 namespace ProyectoEcommerce.AccesoDatos.Contexto;
 
-/// <summary>
-/// Contexto Entity Framework generado a partir del modelo existente de ProyectoEcommerceDB.
-/// Expone las tablas y conserva sus relaciones, índices, restricciones y tipos Database First.
-/// </summary>
+
 public partial class ProyectoEcommerceContext : DbContext
 {
     public ProyectoEcommerceContext()
     {
     }
 
+    // recibe la configuracion del contexto, por ejemplo la conexion que se registra en Program.cs
     public ProyectoEcommerceContext(DbContextOptions<ProyectoEcommerceContext> options)
         : base(options)
     {
     }
 
+    // cada DbSet representa una tabla que Entity Framework puede consultar o modificar
     public virtual DbSet<FamiliaProducto> FamiliasProducto { get; set; }
     public virtual DbSet<Categoria> Categorias { get; set; }
     public virtual DbSet<Impuesto> Impuestos { get; set; }
@@ -39,9 +38,10 @@ public partial class ProyectoEcommerceContext : DbContext
     {
     }
 
-    /// <summary>Configura el mapeo exacto entre las entidades y el esquema actual de SQL Server.</summary>
+    // aqui Database First acomoda cada entidad con su tabla, columnas, indices y relaciones reales
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // define como SQL Server compara y ordena los textos
         modelBuilder.UseCollation("SQL_Latin1_General_CP1_CI_AS");
 
         modelBuilder.Entity<FamiliaProducto>(entity =>
@@ -51,6 +51,7 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.HasIndex(e => e.Nombre, "UQ_FamiliasProducto_Nombre").IsUnique();
             entity.Property(e => e.Nombre).HasMaxLength(80);
             entity.Property(e => e.Descripcion).HasMaxLength(250);
+            // coincide con NVARCHAR(500) NULL del script y por eso la propiedad acepta null
             entity.Property(e => e.UrlImagen).HasMaxLength(500);
             entity.Property(e => e.Activo).HasDefaultValue(true, "DF_FamiliasProducto_Activo");
         });
@@ -60,11 +61,17 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.HasKey(e => e.CategoriaId).HasName("PK_Categorias");
             entity.ToTable("Categorias");
             entity.HasIndex(e => e.FamiliaId, "IX_Categorias_FamiliaId");
+
+            // esta combinacion debe ser unica para no repetir una categoria dentro de la misma familia
             entity.HasIndex(e => new { e.FamiliaId, e.Nombre }, "UQ_Categorias_Familia_Nombre").IsUnique();
+
             entity.Property(e => e.Nombre).HasMaxLength(80);
             entity.Property(e => e.Descripcion).HasMaxLength(250);
+            // la categoria usa la misma longitud opcional que la familia
             entity.Property(e => e.UrlImagen).HasMaxLength(500);
             entity.Property(e => e.Activo).HasDefaultValue(true, "DF_Categorias_Activo");
+
+            // una familia puede tener muchas categorias y FamiliaId funciona como llave foranea
             entity.HasOne(d => d.Familia).WithMany(p => p.Categorias)
                 .HasForeignKey(d => d.FamiliaId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -99,10 +106,12 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.Property(e => e.StockMinimo).HasDefaultValue(5, "DF_Productos_StockMinimo");
             entity.Property(e => e.Activo).HasDefaultValue(true, "DF_Productos_Activo");
             entity.Property(e => e.FechaCreacion).HasPrecision(3).HasDefaultValueSql("(sysdatetime())", "DF_Productos_FechaCreacion");
+
             entity.HasOne(d => d.Categoria).WithMany(p => p.Productos)
                 .HasForeignKey(d => d.CategoriaId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Productos_Categorias");
+
             entity.HasOne(d => d.Impuesto).WithMany(p => p.Productos)
                 .HasForeignKey(d => d.ImpuestoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -126,6 +135,7 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.Property(e => e.IntentosFallidos).HasDefaultValue(0, "DF_Usuarios_IntentosFallidos");
             entity.Property(e => e.BloqueadoHasta).HasPrecision(3);
             entity.Property(e => e.UltimoIntentoFallido).HasPrecision(3);
+
             entity.HasOne(d => d.Rol).WithMany(p => p.Usuarios)
                 .HasForeignKey(d => d.RolId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -156,7 +166,9 @@ public partial class ProyectoEcommerceContext : DbContext
 
         modelBuilder.Entity<RolMenuOpcion>(entity =>
         {
+            // esta tabla usa una llave primaria compuesta por RolId y MenuOpcionId
             entity.HasKey(e => new { e.RolId, e.MenuOpcionId }).HasName("PK_RolMenuOpciones");
+
             entity.ToTable("RolMenuOpciones");
             entity.HasIndex(e => e.MenuOpcionId, "IX_RolMenuOpciones_MenuOpcionId");
             entity.HasOne(e => e.Rol).WithMany(r => r.RolMenuOpciones).HasForeignKey(e => e.RolId).HasConstraintName("FK_RolMenuOpciones_Roles");
@@ -185,6 +197,7 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.HasIndex(e => new { e.CorreoIntentado, e.Fecha }, "IX_HistorialAccesos_Correo_Fecha");
             entity.Property(e => e.CorreoIntentado).HasMaxLength(120);
             entity.Property(e => e.Fecha).HasPrecision(3).HasDefaultValueSql("(sysdatetime())", "DF_HistorialAccesos_Fecha");
+
             entity.HasOne(d => d.Usuario).WithMany(p => p.HistorialAccesos)
                 .HasForeignKey(d => d.UsuarioId)
                 .HasConstraintName("FK_HistorialAccesos_Usuarios");
@@ -196,14 +209,18 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.ToTable("ProductoImagenes");
             entity.HasIndex(e => new { e.ProductoId, e.UrlImagen }, "UQ_ProductoImagenes_Producto_Url").IsUnique();
             entity.HasIndex(e => new { e.ProductoId, e.EsPrincipal, e.Orden }, "IX_ProductoImagenes_Producto_Orden");
+
+            // este indice filtrado permite que un producto tenga solamente una imagen principal activa
             entity.HasIndex(e => e.ProductoId, "UX_ProductoImagenes_PrincipalActiva")
                 .IsUnique()
                 .HasFilter("[EsPrincipal] = 1 AND [Activo] = 1");
+
             entity.Property(e => e.UrlImagen).HasMaxLength(500);
             entity.Property(e => e.TextoAlternativo).HasMaxLength(180);
             entity.Property(e => e.EsPrincipal).HasDefaultValue(false, "DF_ProductoImagenes_EsPrincipal");
             entity.Property(e => e.Orden).HasDefaultValue(0, "DF_ProductoImagenes_Orden");
             entity.Property(e => e.Activo).HasDefaultValue(true, "DF_ProductoImagenes_Activo");
+
             entity.HasOne(d => d.Producto).WithMany(p => p.Imagenes)
                 .HasForeignKey(d => d.ProductoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -223,6 +240,7 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.Property(e => e.Moneda).HasMaxLength(3).IsUnicode(false).IsFixedLength().HasDefaultValue("CRC", "DF_Ordenes_Moneda");
             entity.Property(e => e.Total).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.DescuentoTotal).HasColumnType("decimal(18, 2)").HasDefaultValue(0m, "DF_Ordenes_DescuentoTotal");
+
             entity.HasOne(d => d.Usuario).WithMany(p => p.Ordenes)
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -240,9 +258,11 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.Property(e => e.PorcentajeDescuento).HasColumnType("decimal(5, 2)").HasDefaultValue(0m, "DF_OrdenDetalle_PorcentajeDescuento");
             entity.Property(e => e.Subtotal).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TotalLinea).HasColumnType("decimal(18, 2)");
+
             entity.HasOne(d => d.Orden).WithMany(p => p.OrdenDetalles)
                 .HasForeignKey(d => d.OrdenId)
                 .HasConstraintName("FK_OrdenDetalle_Ordenes");
+
             entity.HasOne(d => d.Producto).WithMany(p => p.OrdenDetalles)
                 .HasForeignKey(d => d.ProductoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -254,11 +274,15 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.HasKey(e => e.CarritoId).HasName("PK_Carritos");
             entity.ToTable("Carritos");
             entity.HasIndex(e => new { e.UsuarioId, e.Estado }, "IX_Carritos_Usuario_Estado");
+
+            // este indice evita que un mismo usuario tenga dos carritos activos al mismo tiempo
             entity.HasIndex(e => e.UsuarioId, "UX_Carritos_Usuario_Activo")
                 .IsUnique()
                 .HasFilter("[Estado] = N'ACTIVO'");
+
             entity.Property(e => e.FechaCreacion).HasPrecision(3).HasDefaultValueSql("(sysdatetime())", "DF_Carritos_FechaCreacion");
             entity.Property(e => e.Estado).HasMaxLength(20).HasDefaultValue("ACTIVO", "DF_Carritos_Estado");
+
             entity.HasOne(e => e.Usuario).WithMany(e => e.Carritos)
                 .HasForeignKey(e => e.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -270,11 +294,16 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.HasKey(e => e.CarritoDetalleId).HasName("PK_CarritoDetalle");
             entity.ToTable("CarritoDetalle");
             entity.HasIndex(e => e.ProductoId, "IX_CarritoDetalle_ProductoId");
+
+            // no permite repetir el mismo producto como dos filas diferentes dentro del mismo carrito
             entity.HasIndex(e => new { e.CarritoId, e.ProductoId }, "UQ_CarritoDetalle_Carrito_Producto").IsUnique();
+
             entity.Property(e => e.PrecioUnitario).HasColumnType("decimal(18, 2)");
+
             entity.HasOne(e => e.Carrito).WithMany(e => e.Detalles)
                 .HasForeignKey(e => e.CarritoId)
                 .HasConstraintName("FK_CarritoDetalle_Carritos");
+
             entity.HasOne(e => e.Producto).WithMany(e => e.CarritoDetalles)
                 .HasForeignKey(e => e.ProductoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -285,9 +314,12 @@ public partial class ProyectoEcommerceContext : DbContext
         {
             entity.HasKey(e => e.DescuentoId).HasName("PK_Descuentos");
             entity.ToTable("Descuentos");
+
+            // estos indices solamente aplican cuando el descuento tiene ese tipo de destino relacionado
             entity.HasIndex(e => e.ProductoId, "IX_Descuentos_ProductoId").HasFilter("[ProductoId] IS NOT NULL");
             entity.HasIndex(e => e.CategoriaId, "IX_Descuentos_CategoriaId").HasFilter("[CategoriaId] IS NOT NULL");
             entity.HasIndex(e => e.FamiliaId, "IX_Descuentos_FamiliaId").HasFilter("[FamiliaId] IS NOT NULL");
+
             entity.Property(e => e.Nombre).HasMaxLength(150);
             entity.Property(e => e.TipoDescuento).HasMaxLength(20);
             entity.Property(e => e.Porcentaje).HasColumnType("decimal(5, 2)");
@@ -295,14 +327,18 @@ public partial class ProyectoEcommerceContext : DbContext
             entity.Property(e => e.FechaInicio).HasPrecision(3);
             entity.Property(e => e.FechaFin).HasPrecision(3);
             entity.Property(e => e.Activo).HasDefaultValue(true, "DF_Descuentos_Activo");
+
             entity.HasOne(e => e.Producto).WithMany(e => e.Descuentos)
                 .HasForeignKey(e => e.ProductoId).HasConstraintName("FK_Descuentos_Productos");
+
             entity.HasOne(e => e.Categoria).WithMany(e => e.Descuentos)
                 .HasForeignKey(e => e.CategoriaId).HasConstraintName("FK_Descuentos_Categorias");
+
             entity.HasOne(e => e.Familia).WithMany(e => e.Descuentos)
                 .HasForeignKey(e => e.FamiliaId).HasConstraintName("FK_Descuentos_Familias");
         });
 
+        // deja un punto para agregar configuracion adicional sin tocar esta parte generada
         OnModelCreatingPartial(modelBuilder);
     }
 

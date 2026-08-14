@@ -1,49 +1,92 @@
+/* esta tarjeta se usa para navegar entre partes como familias o categorias
+   mantiene la imagen arriba y abajo deja el texto junto con los botones */
 :host {
+  /* representa todo el componente de Angular */
   display: block;
+  /* hace que el componente pueda ocupar toda la altura que le de su contenedor */
   height: 100%;
 }
 
+
+/* ========================= TARJETA COMPLETA ========================= */
+
+/* organiza todo el contenido de la tarjeta de arriba hacia abajo */
 .navigation-card {
   display: flex;
+  /* pone la imagen arriba y el contenido debajo */
   flex-direction: column;
+  /* hace que todas las tarjetas puedan mantener la misma altura */
   height: 100%;
 }
 
+
+/* ========================= PARTE VISUAL ========================= */
+
+/* reserva el espacio donde va la imagen o el placeholder
+   asi la tarjeta no cambia de tamaño aunque no tenga imagen */
 .navigation-visual {
   min-height: 165px;
 }
 
+
+/* controla la imagen que aparece arriba de la tarjeta */
 .navigation-image {
+  /* ocupa todo el ancho disponible */
   width: 100%;
+  /* mantiene una altura fija para que todas las tarjetas se vean iguales */
   height: 165px;
+  /* cover hace que la imagen llene todo el espacio sin deformarse
+     si sobra una parte de la imagen simplemente la recorta */
   object-fit: cover;
+  /* evita espacios raros que a veces quedan debajo de las imagenes */
   display: block;
 }
 
+
+/* ========================= CONTENIDO ========================= */
+
+/* aqui se acomoda el titulo descripcion y botones de la tarjeta */
 .navigation-content {
   display: flex;
+  /* flex 1 hace que esta parte agarre todo el espacio que queda disponible
+     esto ayuda a que los botones puedan quedarse abajo aunque una descripcion sea mas corta */
   flex: 1;
   flex-direction: column;
 }
 
+
+  /* titulo de la tarjeta */
   .navigation-content h2 {
     margin: 0;
     font-size: 1.12rem;
   }
 
+
+  /* descripcion que aparece debajo del titulo */
   .navigation-content p {
+    /* reserva un minimo de espacio para que las tarjetas no cambien mucho de altura
+     aunque una descripcion tenga menos texto que otra */
     min-height: 3rem;
-    margin: .7rem 0 1rem;
+    margin: 0.7rem 0 1rem;
     color: var(--cui-secondary-color);
   }
 
+
+/* ========================= BOTONES ========================= */
+
+/* aqui se acomodan los botones que aparecen al final de la tarjeta */
 .card-actions {
   display: flex;
+  /* si no caben todos los botones en una misma linea permite que bajen a otra */
   flex-wrap: wrap;
-  gap: .45rem;
+  gap: 0.45rem;
+  /* auto agarra el espacio disponible y empuja los botones hasta abajo de la tarjeta */
   margin-top: auto;
 }
 
+
+  /* hace que los botones tengan como minimo este ancho
+   asi no quedan unos demasiado pequeños comparados con otros */
   .card-actions .btn {
     min-width: 132px;
   }

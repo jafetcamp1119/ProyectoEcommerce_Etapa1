@@ -1,4 +1,4 @@
-﻿
+
 
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 
@@ -17,7 +17,7 @@ import { IconSetService } from '@coreui/icons-angular';
 import { iconSubset } from './icons/icon-subset';
 
 
-/** Componente raíz que inicializa el título, tema e infraestructura visual de LessPrice. */
+// este es el componente raiz que prepara titulo, tema e iconos antes de mostrar las rutas
 @Component({
 
   selector: 'app-root',
@@ -50,7 +50,7 @@ export class App implements OnInit {
 
     this.#titleService.setTitle(this.title);
 
-    // iconSet singleton
+    // carga una sola vez los iconos que usa CoreUI en el menu
 
     this.#iconSetService.icons = { ...iconSubset };
 
@@ -60,6 +60,7 @@ export class App implements OnInit {
 
   }
 
+  // escucha cambios de ruta y tambien permite escoger tema con ?theme=dark, light o auto
   ngOnInit(): void {
 
     this.#router.events.pipe(
@@ -82,6 +83,7 @@ export class App implements OnInit {
 
         delay(1),
 
+        // map transforma el parametro, filter deja solo temas validos y tap aplica el valor
         map(params => <string>params['theme']?.match(/^[A-Za-z0-9\s]+/)?.[0]),
 
         filter(theme => ['dark', 'light', 'auto'].includes(theme)),
@@ -96,6 +98,7 @@ export class App implements OnInit {
 
       )
 
+      // subscribe pone en marcha el observable y takeUntilDestroyed lo cierra con el componente
       .subscribe();
 
   }

@@ -8,9 +8,7 @@ using ProyectoEcommerce.Dominio.InterfazLN;
 
 namespace ProyectoEcommerce.LogicaNegocio.Implementaciones;
 
-/// <summary>
-/// Envía por SMTP la factura PDF generada después de una compra confirmada.
-/// </summary>
+// manda por SMTP el PDF que se genero despues de confirmar una compra
 public class CorreoFacturaLN : ICorreoFacturaLN
 {
     private readonly IConfiguration _configuration;
@@ -22,14 +20,15 @@ public class CorreoFacturaLN : ICorreoFacturaLN
         _logger = logger;
     }
 
-    /// <summary>Construye el correo de LessPrice, adjunta el PDF y realiza el envío configurado.</summary>
+    // recibe los datos de factura y la ruta del PDF
+    // arma el mensaje, conecta al servidor configurado y devuelve si el envio salio bien
     public async Task<TResultadoCorreoFactura> EnviarAsync(
         TFacturaDatos factura,
         string rutaPdf,
         CancellationToken cancellationToken = default)
     {
-        // Host identifica el servidor; Port el puerto; FromEmail y FromName forman el remitente.
-        // Enabled permite desactivar el envío cuando SMTP no está preparado en el entorno.
+        // Host es el servidor, Port el puerto y FromEmail y FromName forman el remitente
+        // Enabled deja apagar correos cuando SMTP no esta preparado en el entorno
         var seccion = _configuration.GetSection("Smtp");
         var habilitado = seccion.GetValue<bool>("Enabled");
         var servidor = seccion["Host"]?.Trim();
@@ -39,6 +38,7 @@ public class CorreoFacturaLN : ICorreoFacturaLN
 
         try
         {
+            // MimeMessage guarda remitente, destino, asunto y contenido del correo
             var mensaje = new MimeMessage();
             var nombreRemitente = (seccion["FromName"] ?? seccion["SenderName"])?.Trim();
             mensaje.From.Add(new MailboxAddress(
@@ -47,9 +47,12 @@ public class CorreoFacturaLN : ICorreoFacturaLN
             mensaje.To.Add(MailboxAddress.Parse(factura.Correo));
             mensaje.Subject = $"Factura de tu compra en LessPrice - Orden #{factura.NumeroOrden}";
 
+            // BodyBuilder arma el texto y permite adjuntar el PDF desde su ruta
             var cuerpo = new BodyBuilder
             {
-                TextBody = $"Hola {factura.Cliente}:\n\nGracias por comprar en LessPrice.\n\nAdjuntamos la factura correspondiente a tu orden #{factura.NumeroOrden}.\n\nTotal: CRC {factura.Total:N2}\n\nGracias por tu compra.\n\nLessPrice"
+                TextBody =
+                $"Hola {factura.Cliente}:\n\nGracias por comprar en LessPrice.\n\nAdjuntamos la factura correspondiente a tu orden #{
+                factura.NumeroOrden}.\n\nTotal: CRC {factura.Total:N2}\n\nGracias por tu compra.\n\nLessPrice"
             };
             cuerpo.Attachments.Add(rutaPdf, new ContentType("application", "pdf"));
             mensaje.Body = cuerpo.ToMessageBody();
@@ -59,20 +62,24 @@ public class CorreoFacturaLN : ICorreoFacturaLN
             var habilitarSsl = seccion.GetValue<bool?>("EnableSsl")
                 ?? seccion.GetValue<bool?>("UseStartTls")
                 ?? true;
+            // escoge SSL directo, StartTls o sin cifrado segun la configuracion
             var seguridad = seccion.GetValue<bool>("UseSsl")
                 ? SecureSocketOptions.SslOnConnect
                 : habilitarSsl
                     ? SecureSocketOptions.StartTls
                     : SecureSocketOptions.None;
 
+            // abre la conexion SMTP usando la seguridad escogida
             await cliente.ConnectAsync(servidor, puerto, seguridad, cancellationToken);
-            // Password llega mediante IConfiguration desde User Secrets, una variable de entorno
-            // u otro proveedor seguro; no se almacena ni se muestra en el código.
+
+            // Password llega desde User Secrets, variable de entorno u otro proveedor configurado
+            // no se guarda ni se muestra dentro del codigo
             var usuario = seccion["Username"]?.Trim();
             var contrasena = seccion["Password"];
             if (!string.IsNullOrWhiteSpace(usuario))
                 await cliente.AuthenticateAsync(usuario, contrasena ?? string.Empty, cancellationToken);
 
+            // manda el mensaje completo y cierra la conexion de forma ordenada
             await cliente.SendAsync(mensaje, cancellationToken);
             await cliente.DisconnectAsync(true, cancellationToken);
             return new TResultadoCorreoFactura { Enviado = true };

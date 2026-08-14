@@ -1,6 +1,5 @@
 namespace ProyectoEcommerce.Dominio.EntidadesTipadas;
 
-/// <summary>Modelo de un producto registrado históricamente en una orden.</summary>
 public class TOrdenDetalle
 {
     public int OrdenDetalleId { get; set; }

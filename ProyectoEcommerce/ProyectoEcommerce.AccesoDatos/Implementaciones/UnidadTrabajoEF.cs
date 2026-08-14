@@ -8,16 +8,15 @@ using ProyectoEcommerce.Dominio.InterfacesAD;
 
 namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 {
-    /// <summary>
-    /// Implementa la unidad de trabajo que comparte un DbContext entre repositorios
-    /// y permite confirmar o revertir operaciones que deben ser atómicas.
-    /// </summary>
+    // esta clase guarda un solo contexto para todos los repositorios de la misma solicitud
+    // tambien sirve para confirmar o deshacer procesos que usan una transaccion
     public class UnidadTrabajoEF : IUnidadTrabajoEF
     {
         #region "Atributos y Variables"
 
         private ProyectoEcommerceContext _Contexto { get; set; }
         private IConfiguration _configuration { get; set; }
+        // aqui se guarda la transaccion activa para poder hacer Commit o Rollback despues
         private IDbContextTransaction? _transaction = null;
 
         private RepositorioAD<FamiliaProducto>? _TFamiliaProducto;
@@ -43,11 +42,13 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
         public UnidadTrabajoEF(ProyectoEcommerceContext Contexto, IConfiguration configuration)
         {
+            // el contexto llega configurado desde Program.cs y se reutiliza en toda esta unidad
             _Contexto = Contexto;
             _configuration = configuration;
         }
 
-        // Cada repositorio se crea bajo demanda y reutiliza el mismo contexto de la solicitud.
+        // ??= crea cada repositorio solamente la primera vez que se pide
+        // todos reciben el mismo contexto para que los cambios pertenezcan a la misma operacion
         public IRepositorioAD<FamiliaProducto> TFamiliaProducto =>
             _TFamiliaProducto ??= new RepositorioAD<FamiliaProducto>(_Contexto);
 
@@ -100,6 +101,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
         {
             try
             {
+                // SaveChanges manda a SQL los cambios que Entity Framework tiene pendientes
                 return _Contexto.SaveChanges();
             }
             catch
@@ -108,16 +110,19 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
             }
         }
 
-        /// <summary>Guarda cambios y confirma la transacción; ante un error realiza rollback.</summary>
+        // guarda lo pendiente y hace Commit para dejar fija la transaccion
+        // si algo falla hace Rollback para no guardar el proceso a medias
         public void CompletarTran()
         {
             try
             {
                 _Contexto.SaveChanges();
+                // Commit confirma de forma definitiva todos los cambios de la transaccion
                 _transaction!.Commit();
             }
             catch
             {
+                // Rollback regresa la BD al estado que tenia antes de empezar
                 _transaction?.Rollback();
                 throw;
             }
@@ -125,6 +130,7 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
         public void EmpezarTransaccion(IsolationLevel nivelAislamiento = IsolationLevel.ReadCommitted)
         {
+            // ReadCommitted evita leer cambios que otra transaccion todavia no ha confirmado
             _transaction = _Contexto.Database.BeginTransaction(nivelAislamiento);
         }
 
@@ -135,11 +141,13 @@ namespace ProyectoEcommerce.AccesoDatos.Implementaciones
 
         public void CerrarConexion()
         {
+            // cierra la conexion manualmente cuando un proceso largo ya termino de usarla
             _Contexto.Database.CloseConnection();
         }
 
         public void Dispose()
         {
+            // libera la transaccion y el contexto para no dejar conexiones abiertas
             _transaction?.Dispose();
             _Contexto.Dispose();
         }

@@ -1,15 +1,21 @@
 <article class="navigation-card catalog-tile">
 
+  <!-- este bloque muestra la imagen de la familia o categoria
+       si no hay URL o la imagen falla se conserva el placeholder con iniciales -->
   <div class="navigation-visual catalog-tile-visual">
-    @if (imagen()) {
+    @if (mostrarImagen()) {
+    <!-- [src] agarra la URL que vino de la API y error avisa si el navegador no pudo cargarla -->
     <img [src]="imagen()"
          [alt]="titulo()"
+         (error)="usarPlaceholder()"
          class="navigation-image">
     } @else {
+    <!-- la interpolacion muestra las iniciales calculadas por el componente -->
     <span>{{ iniciales() }}</span>
     }
   </div>
 
+  <!-- aqui van los datos y el enlace que lleva al siguiente nivel del catalogo -->
   <div class="navigation-content catalog-tile-content">
     <h2>{{ titulo() }}</h2>
 

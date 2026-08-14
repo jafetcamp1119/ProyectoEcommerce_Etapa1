@@ -1,3 +1,38 @@
-:host { display: block; }
-.cart-link { position: relative; text-decoration: none; }
-.cart-count { display: grid; place-items: center; min-width: 1.45rem; height: 1.45rem; padding: 0 .3rem; color: #fff; background: var(--cui-primary); border-radius: 999px; font-size: .72rem; font-weight: 800; }
+/* mantiene alineados el menu el usuario y el carrito dentro del encabezado */
+
+:host {
+  /* representa todo el componente de Angular */
+  display: block;
+}
+
+
+/* ========================= ENLACE DEL CARRITO ========================= */
+
+/* este enlace necesita position relative porque el contador del carrito
+   se puede acomodar tomando este elemento como referencia */
+.cart-link {
+  position: relative;
+  /* quita el subrayado normal de los enlaces */
+  text-decoration: none;
+}
+
+
+/* ========================= CONTADOR DEL CARRITO ========================= */
+
+/* muestra la cantidad de productos o unidades dentro del carrito */
+.cart-count {
+  display: grid;
+  /* centra el numero horizontal y verticalmente */
+  place-items: center;
+  /* evita que el circulo se haga demasiado pequeño */
+  min-width: 1.45rem;
+  height: 1.45rem;
+  /* deja espacio a los lados por si el contador tiene 2 o mas digitos */
+  padding: 0 0.3rem;
+  color: #fff;
+  background: var(--cui-primary);
+  /* un valor muy alto deja el contador completamente redondeado */
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}

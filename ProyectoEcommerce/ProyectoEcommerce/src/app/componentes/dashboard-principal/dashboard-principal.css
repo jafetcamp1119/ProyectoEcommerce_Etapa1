@@ -1,1 +1,2 @@
+/* deja que el contenedor principal ocupe el espacio disponible del dashboard */
 :host { display: block; }

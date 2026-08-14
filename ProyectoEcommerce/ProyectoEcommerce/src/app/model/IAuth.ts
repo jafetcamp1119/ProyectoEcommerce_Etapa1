@@ -1,4 +1,4 @@
-/** Contrato genérico de las respuestas enviadas por la API. */
+// caja comun que usa la API para mandar datos o un mensaje de error
 export interface IRespuesta<T> {
   success: boolean;
   data: T | null;

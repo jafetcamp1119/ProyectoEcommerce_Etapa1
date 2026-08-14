@@ -1,1 +1,2 @@
+/* hace que el pie use su propio bloque dentro del dashboard */
 :host { display: block; }

@@ -3,30 +3,30 @@ using ProyectoEcommerce.Utilidades;
 
 namespace ProyectoEcommerce.Dominio.InterfazLN
 {
-    /// <summary>
-    /// Define operaciones administrativas de órdenes y el flujo completo de venta del Cliente.
-    /// </summary>
+    // aqui se agrupan las operaciones viejas de ordenes y el flujo completo de compra del Cliente
     public interface IOrdenLN
     {
+        // estas operaciones se mantienen por la arquitectura original del proyecto
         Task<Respuesta<TOrden>> InsertarAsync(TOrden datos);
         Task<Respuesta<TOrden>> ModificarAsync(TOrden datos);
         Task<Respuesta<bool>> EliminarAsync(TOrden datos);
         Task<Respuesta<IEnumerable<TOrden>>> BuscarAsync(TOrden datos);
         Task<Respuesta<TOrden>> ObtenerAsync(TOrden datos);
         Task<Respuesta<IEnumerable<TOrden>>> ListarAsync();
-        /// <summary>Prepara checkout usando el carrito y los datos del usuario autenticado.</summary>
+        // arma el resumen del checkout con el carrito y los datos del usuario
         Task<Respuesta<TCheckoutPreparacion>> PrepararCheckoutAsync(int usuarioId);
-        /// <summary>Confirma la venta, registra sus detalles y genera la factura posterior al commit.</summary>
-        Task<Respuesta<TCompraCompletada>> ConfirmarCompraAsync(TConfirmarCompra datos, int usuarioId, CancellationToken cancellationToken = default);
-        /// <summary>Lista órdenes limitadas al propietario identificado por JWT.</summary>
+        // confirma stock y totales, guarda la venta y genera la factura despues del Commit
+        Task<Respuesta<TCompraCompletada>> ConfirmarCompraAsync(TConfirmarCompra datos, int usuarioId,
+        CancellationToken cancellationToken = default);
+        // lista solamente las ordenes del usuario que viene en el JWT
         Task<Respuesta<TPagina<TOrdenResumen>>> ListarClienteAsync(TFiltroOrdenes filtro, int usuarioId);
-        /// <summary>Lista órdenes de todos los usuarios para el Administrador.</summary>
+        // deja que el Administrador vea las ordenes de todos los clientes
         Task<Respuesta<TPagina<TOrdenResumen>>> ListarAdministracionAsync(TFiltroOrdenes filtro);
-        /// <summary>Obtiene el detalle validando propiedad o rol administrativo.</summary>
+        // trae el detalle si la orden es del Cliente o si quien consulta es Administrador
         Task<Respuesta<TOrdenDetalleConsulta>> ObtenerDetalleAsync(int ordenId, int usuarioId, bool administrador);
-        /// <summary>Localiza el documento de factura vinculado con una orden autorizada.</summary>
+        // busca el PDF de una orden que el usuario tiene permiso de ver
         Task<Respuesta<TArchivoFactura>> ObtenerFacturaAsync(int ordenId, int usuarioId, bool administrador);
-        /// <summary>Cancela una orden pendiente del Cliente cuando la regla de estado lo permite.</summary>
+        // cancela una orden propia solamente mientras siga pendiente
         Task<Respuesta<bool>> CancelarPendienteAsync(int ordenId, int usuarioId);
     }
 }

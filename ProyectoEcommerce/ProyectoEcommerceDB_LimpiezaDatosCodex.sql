@@ -8,6 +8,7 @@ USE ProyectoEcommerceDB;
 GO
 
 SET NOCOUNT ON;
+-- XACT_ABORT hace rollback si SQL Server encuentra un error que corta la instruccion.
 SET XACT_ABORT ON;
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
@@ -15,6 +16,8 @@ SET ANSI_NULLS ON;
 BEGIN TRY
     BEGIN TRANSACTION;
 
+    -- Estas tablas viven solo durante el script y guardan los IDs encontrados.
+    -- Asi cada DELETE trabaja con IDs exactos y no con coincidencias amplias de texto.
     DECLARE @UsuariosPrueba TABLE
     (
         UsuarioId INT NOT NULL PRIMARY KEY,
@@ -47,7 +50,7 @@ BEGIN TRY
         N'CODEX-PROD-QA-D'
     );
 
-    /* Dependencias exactas de los carritos de las cuentas de prueba. */
+    /* Primero salen los detalles y despues el carrito porque la clave foranea apunta al encabezado. */
     DELETE detalle
     FROM dbo.CarritoDetalle AS detalle
     INNER JOIN dbo.Carritos AS carrito ON carrito.CarritoId = detalle.CarritoId
@@ -57,7 +60,7 @@ BEGIN TRY
     FROM dbo.Carritos AS carrito
     INNER JOIN @UsuariosPrueba AS objetivo ON objetivo.UsuarioId = carrito.UsuarioId;
 
-    /* Dependencias exactas de los cuatro productos QA confirmados. */
+    /* Se quitan todas las filas hijas antes de borrar los cuatro productos QA confirmados. */
     DELETE registro FROM dbo.ProductoImagenes AS registro INNER JOIN @ProductosPrueba AS objetivo ON objetivo.ProductoId = registro.ProductoId;
     DELETE registro FROM dbo.CarritoDetalle AS registro INNER JOIN @ProductosPrueba AS objetivo ON objetivo.ProductoId = registro.ProductoId;
     DELETE registro FROM dbo.OrdenDetalle AS registro INNER JOIN @ProductosPrueba AS objetivo ON objetivo.ProductoId = registro.ProductoId;
@@ -78,7 +81,7 @@ BEGIN TRY
     FROM dbo.Productos AS producto
     INNER JOIN @ProductosPrueba AS objetivo ON objetivo.ProductoId = producto.ProductoId;
 
-    /* Dependencias exactas de las dos cuentas Codex. */
+    /* Luego se limpian las referencias directas de las dos cuentas Codex. */
     DELETE registro FROM dbo.Calificaciones AS registro INNER JOIN @UsuariosPrueba AS objetivo ON objetivo.UsuarioId = registro.UsuarioId;
     DELETE registro FROM dbo.ListaDeseos AS registro INNER JOIN @UsuariosPrueba AS objetivo ON objetivo.UsuarioId = registro.UsuarioId;
     DELETE registro FROM dbo.MovimientosInventario AS registro INNER JOIN @UsuariosPrueba AS objetivo ON objetivo.UsuarioId = registro.UsuarioId;
@@ -129,12 +132,14 @@ BEGIN TRY
     DECLARE @CuentasEliminadas INT = (SELECT COUNT(*) FROM @UsuariosPrueba);
     DECLARE @ProductosEliminados INT = (SELECT COUNT(*) FROM @ProductosPrueba);
 
+    -- Solo confirma cuando cuentas, productos y todas sus dependencias ya salieron bien.
     COMMIT TRANSACTION;
 
     SELECT @CuentasEliminadas AS CuentasCodexEliminadas,
            @ProductosEliminados AS ProductosQaEliminados;
 END TRY
 BEGIN CATCH
+    -- Si cualquier paso falla, deja la base exactamente como estaba al empezar.
     IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
     THROW;
 END CATCH;
