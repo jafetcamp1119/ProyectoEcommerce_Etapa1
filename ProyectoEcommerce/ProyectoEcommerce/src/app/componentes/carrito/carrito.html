@@ -22,7 +22,17 @@
       <div class="cart-items">
         @for (item of carrito.items; track item.carritoDetalleId) {
           <article class="cart-item" [class.unavailable]="!item.productoActivo || !item.stockSuficiente">
-            <div class="item-visual" aria-hidden="true">{{ iniciales(item.nombre) }}</div>
+            <div class="item-visual">
+              @if (item.imagenPrincipal) {
+              <img [src]="item.imagenPrincipal"
+                   [alt]="item.nombre"
+                   class="item-image">
+              } @else {
+              <span aria-hidden="true">
+                {{ iniciales(item.nombre) }}
+              </span>
+              }
+            </div>
             <div class="item-info">
               <h2><a [routerLink]="['/productos', item.productoId]">{{ item.nombre }}</a></h2>
               @if (item.porcentajeDescuento > 0) {
