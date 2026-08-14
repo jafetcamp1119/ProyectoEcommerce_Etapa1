@@ -141,7 +141,8 @@ public class CarritoLN : ICarritoLN
             // este Include trae cada detalle con su producto e impuesto en la misma consulta
             var respuesta = await _unidadDeTrabajo.TCarrito.ObtenerEntidadAsync(
                 x => x.UsuarioId == usuarioId && x.Estado == EstadoActivo,
-                ["Detalles.Producto.Impuesto"]);
+                ["Detalles.Producto.Impuesto",
+                "Detalles.Producto.Imagenes"]);
             if (!string.IsNullOrEmpty(respuesta.Error)) return Error<TCarritoActual>(Mensajes.ErrorCarrito);
             if (respuesta.Data == null)
                 return new Respuesta<TCarritoActual> { Data = new TCarritoActual() };
@@ -177,6 +178,13 @@ public class CarritoLN : ICarritoLN
                         CarritoDetalleId = x.CarritoDetalleId,
                         ProductoId = x.ProductoId,
                         Nombre = x.Producto.Nombre,
+                        ImagenPrincipal = x.Producto.Imagenes
+                        .Where(i => i.Activo)
+                        .OrderByDescending(i => i.EsPrincipal)
+                        .ThenBy(i => i.Orden)
+                        .ThenBy(i => i.ImagenId)
+                        .Select(i => i.UrlImagen)
+                        .FirstOrDefault(),
                         Cantidad = x.Cantidad,
                         StockDisponible = x.Producto.Stock,
                         PrecioOriginal = precio,

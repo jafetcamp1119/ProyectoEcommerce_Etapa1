@@ -282,6 +282,43 @@
       }
 
     </div>
+  } @else if (carrito) {
+    <div class="cart-layout">
+      <div class="cart-items">
+        @for (item of carrito.items; track item.carritoDetalleId) {
+          <article class="cart-item" [class.unavailable]="!item.productoActivo || !item.stockSuficiente">
+            <div class="item-visual">
+              @if (item.imagenPrincipal) {
+              <img [src]="item.imagenPrincipal"
+                   [alt]="item.nombre"
+                   class="item-image">
+              } @else {
+              <span aria-hidden="true">
+                {{ iniciales(item.nombre) }}
+              </span>
+              }
+            </div>
+            <div class="item-info">
+              <h2><a [routerLink]="['/productos', item.productoId]">{{ item.nombre }}</a></h2>
+              @if (item.porcentajeDescuento > 0) {
+                <p class="cart-price"><del>{{ item.precioOriginal | currency:'CRC':'symbol':'1.2-2' }}</del><strong>{{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }} por unidad</strong><span>{{ item.tipoDescuento === 'PROMOCIONAL' ? 'PROMO ' : '' }}-{{ item.porcentajeDescuento }}%</span></p>
+              } @else {
+                <p>{{ item.precioUnitario | currency:'CRC':'symbol':'1.2-2' }} por unidad</p>
+              }
+              @if (!item.productoActivo || !item.stockSuficiente) { <span class="status-warning">Requiere revisión de disponibilidad</span> }
+            </div>
+            <div class="quantity-actions">
+              <div class="quantity-control" [attr.aria-label]="'Cantidad de ' + item.nombre">
+                <button type="button" aria-label="Disminuir cantidad" [disabled]="item.cantidad <= 1 || procesando.has(item.carritoDetalleId)" (click)="cambiarCantidad(item, item.cantidad - 1)">−</button>
+                <input #cantidadInput type="number" inputmode="numeric" min="1" [max]="item.stockDisponible" step="1" [value]="item.cantidad" [disabled]="procesando.has(item.carritoDetalleId)" (change)="escribirCantidad(item, cantidadInput)" (keydown.enter)="cantidadInput.blur()">
+                <button type="button" aria-label="Aumentar cantidad" [disabled]="item.cantidad >= item.stockDisponible || procesando.has(item.carritoDetalleId)" (click)="cambiarCantidad(item, item.cantidad + 1)">+</button>
+              </div>
+              <button class="remove-button" type="button" [disabled]="procesando.has(item.carritoDetalleId)" (click)="eliminar(item)">Eliminar</button>
+            </div>
+            <div class="line-total"><small>Total</small><strong>{{ item.totalLinea | currency:'CRC':'symbol':'1.2-2' }}</strong></div>
+          </article>
+        }
+      </div>
 
 
     <!-- ========================= RESUMEN ========================= -->
