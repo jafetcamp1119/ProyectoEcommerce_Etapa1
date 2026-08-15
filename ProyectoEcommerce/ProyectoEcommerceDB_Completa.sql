@@ -1,0 +1,2326 @@
+/* ============================================================================
+   LessPrice / ProyectoEcommerceDB - instalación completa
+   Fuente estructural: ProyectoEcommerceDB local (SQL Server), 2026-08-14.
+   Crea una base nueva; no elimina ni reemplaza una base existente.
+   Codificación del archivo: UTF-8.
+   ============================================================================ */
+
+USE [master];
+GO
+
+IF DB_ID(N'ProyectoEcommerceDB') IS NULL
+BEGIN
+    CREATE DATABASE [ProyectoEcommerceDB] COLLATE Modern_Spanish_CI_AS;
+END;
+GO
+
+ALTER DATABASE [ProyectoEcommerceDB] SET RECOVERY SIMPLE;
+GO
+
+USE [ProyectoEcommerceDB];
+GO
+
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
+IF EXISTS (SELECT 1 FROM sys.tables WHERE is_ms_shipped = 0)
+    THROW 52000, N'La base ya contiene tablas. Ejecute este instalador únicamente sobre una base nueva y vacía.', 1;
+GO
+
+/* ============================================================================
+   Secuencias
+   ============================================================================ */
+GO
+
+CREATE SEQUENCE [dbo].[SecuenciaCodigoProducto] 
+ AS [bigint]
+ START WITH 1
+ INCREMENT BY 1
+ MINVALUE -9223372036854775808
+ MAXVALUE 9223372036854775807
+ CACHE
+GO
+
+CREATE SEQUENCE [dbo].[SecuenciaCompraProveedor] 
+ AS [bigint]
+ START WITH 1
+ INCREMENT BY 1
+ MINVALUE -9223372036854775808
+ MAXVALUE 9223372036854775807
+ CACHE
+GO
+
+
+/* ============================================================================
+   Tablas (padres antes que dependientes)
+   ============================================================================ */
+GO
+
+CREATE TABLE [dbo].[Roles](
+	[RolId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](50) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Descripcion] [nvarchar](200) COLLATE Modern_Spanish_CI_AS NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_Roles] PRIMARY KEY CLUSTERED 
+(
+	[RolId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Roles_Nombre] UNIQUE NONCLUSTERED 
+(
+	[Nombre] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[FamiliasProducto](
+	[FamiliaId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](80) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Descripcion] [nvarchar](250) COLLATE Modern_Spanish_CI_AS NULL,
+	[Activo] [bit] NOT NULL,
+	[UrlImagen] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NULL,
+ CONSTRAINT [PK_FamiliasProducto] PRIMARY KEY CLUSTERED 
+(
+	[FamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_FamiliasProducto_Nombre] UNIQUE NONCLUSTERED 
+(
+	[Nombre] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Impuestos](
+	[ImpuestoId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](80) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Porcentaje] [decimal](5, 2) NOT NULL,
+	[FechaInicio] [date] NOT NULL,
+	[FechaFin] [date] NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_Impuestos] PRIMARY KEY CLUSTERED 
+(
+	[ImpuestoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Impuestos_Nombre] UNIQUE NONCLUSTERED 
+(
+	[Nombre] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Usuarios](
+	[UsuarioId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](80) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Apellidos] [nvarchar](120) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Correo] [nvarchar](120) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[Telefono] [nvarchar](30) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[PasswordHash] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Direccion] [nvarchar](250) COLLATE Modern_Spanish_CI_AS NULL,
+	[Activo] [bit] NOT NULL,
+	[FechaRegistro] [datetime2](3) NOT NULL,
+	[RolId] [int] NOT NULL,
+	[IntentosFallidos] [int] NOT NULL,
+	[BloqueadoHasta] [datetime2](3) NULL,
+	[UltimoIntentoFallido] [datetime2](3) NULL,
+ CONSTRAINT [PK_Usuarios] PRIMARY KEY CLUSTERED 
+(
+	[UsuarioId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Usuarios_Correo] UNIQUE NONCLUSTERED 
+(
+	[Correo] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Categorias](
+	[CategoriaId] [int] IDENTITY(1,1) NOT NULL,
+	[FamiliaId] [int] NOT NULL,
+	[Nombre] [nvarchar](80) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Descripcion] [nvarchar](250) COLLATE Modern_Spanish_CI_AS NULL,
+	[Activo] [bit] NOT NULL,
+	[UrlImagen] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NULL,
+ CONSTRAINT [PK_Categorias] PRIMARY KEY CLUSTERED 
+(
+	[CategoriaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Categorias_Familia_Nombre] UNIQUE NONCLUSTERED 
+(
+	[FamiliaId] ASC,
+	[Nombre] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[MenuOpciones](
+	[MenuOpcionId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](80) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Ruta] [nvarchar](160) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Icono] [nvarchar](60) COLLATE Modern_Spanish_CI_AS NULL,
+	[Orden] [int] NOT NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_MenuOpciones] PRIMARY KEY CLUSTERED 
+(
+	[MenuOpcionId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_MenuOpciones_Ruta] UNIQUE NONCLUSTERED 
+(
+	[Ruta] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Proveedores](
+	[ProveedorId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](150) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Correo] [nvarchar](150) COLLATE Modern_Spanish_CI_AS NULL,
+	[Telefono] [nvarchar](30) COLLATE Modern_Spanish_CI_AS NULL,
+	[Direccion] [nvarchar](250) COLLATE Modern_Spanish_CI_AS NULL,
+	[Activo] [bit] NOT NULL,
+	[UrlImagen] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NULL,
+	[FechaRegistro] [datetime2](3) NOT NULL,
+ CONSTRAINT [PK_Proveedores] PRIMARY KEY CLUSTERED 
+(
+	[ProveedorId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Productos](
+	[ProductoId] [int] IDENTITY(1,1) NOT NULL,
+	[CategoriaId] [int] NOT NULL,
+	[ImpuestoId] [int] NOT NULL,
+	[Codigo] [nvarchar](50) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Nombre] [nvarchar](120) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Descripcion] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NULL,
+	[PrecioVenta] [decimal](18, 2) NOT NULL,
+	[Costo] [decimal](18, 2) NOT NULL,
+	[Stock] [int] NOT NULL,
+	[StockMinimo] [int] NOT NULL,
+	[Activo] [bit] NOT NULL,
+	[FechaCreacion] [datetime2](3) NOT NULL,
+ CONSTRAINT [PK_Productos] PRIMARY KEY CLUSTERED 
+(
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Productos_Codigo] UNIQUE NONCLUSTERED 
+(
+	[Codigo] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[HistorialAccesos](
+	[HistorialAccesoId] [bigint] IDENTITY(1,1) NOT NULL,
+	[UsuarioId] [int] NULL,
+	[CorreoIntentado] [nvarchar](120) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Fecha] [datetime2](3) NOT NULL,
+	[Exitoso] [bit] NOT NULL,
+ CONSTRAINT [PK_HistorialAccesos] PRIMARY KEY CLUSTERED 
+(
+	[HistorialAccesoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[RolMenuOpciones](
+	[RolId] [int] NOT NULL,
+	[MenuOpcionId] [int] NOT NULL,
+ CONSTRAINT [PK_RolMenuOpciones] PRIMARY KEY CLUSTERED 
+(
+	[RolId] ASC,
+	[MenuOpcionId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[ProductoImagenes](
+	[ImagenId] [int] IDENTITY(1,1) NOT NULL,
+	[ProductoId] [int] NOT NULL,
+	[UrlImagen] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[TextoAlternativo] [nvarchar](180) COLLATE Modern_Spanish_CI_AS NULL,
+	[EsPrincipal] [bit] NOT NULL,
+	[Orden] [int] NOT NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_ProductoImagenes] PRIMARY KEY CLUSTERED 
+(
+	[ImagenId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_ProductoImagenes_Producto_Url] UNIQUE NONCLUSTERED 
+(
+	[ProductoId] ASC,
+	[UrlImagen] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[ProveedorFamilias](
+	[ProveedorFamiliaId] [int] IDENTITY(1,1) NOT NULL,
+	[ProveedorId] [int] NOT NULL,
+	[FamiliaId] [int] NOT NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_ProveedorFamilias] PRIMARY KEY CLUSTERED 
+(
+	[ProveedorFamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_ProveedorFamilias_Proveedor_Familia] UNIQUE NONCLUSTERED 
+(
+	[ProveedorId] ASC,
+	[FamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[ProveedorCategorias](
+	[ProveedorCategoriaId] [int] IDENTITY(1,1) NOT NULL,
+	[ProveedorId] [int] NOT NULL,
+	[CategoriaId] [int] NOT NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_ProveedorCategorias] PRIMARY KEY CLUSTERED 
+(
+	[ProveedorCategoriaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_ProveedorCategorias_Proveedor_Categoria] UNIQUE NONCLUSTERED 
+(
+	[ProveedorId] ASC,
+	[CategoriaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[ProductoProveedor](
+	[ProductoId] [int] NOT NULL,
+	[ProveedorId] [int] NOT NULL,
+	[PrecioCompra] [decimal](18, 2) NOT NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_ProductoProveedor] PRIMARY KEY CLUSTERED 
+(
+	[ProductoId] ASC,
+	[ProveedorId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[ProductosProveedorCatalogo](
+	[ProductoProveedorCatalogoId] [int] IDENTITY(1,1) NOT NULL,
+	[ProveedorCategoriaId] [int] NOT NULL,
+	[Nombre] [nvarchar](120) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[PrecioCompra] [decimal](18, 2) NOT NULL,
+	[ProductoId] [int] NULL,
+	[Activo] [bit] NOT NULL,
+	[FechaActualizacion] [datetime2](3) NOT NULL,
+	[ImpuestoId] [int] NOT NULL,
+ CONSTRAINT [PK_ProductosProveedorCatalogo] PRIMARY KEY CLUSTERED 
+(
+	[ProductoProveedorCatalogoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_ProductosProveedorCatalogo_Categoria_Nombre] UNIQUE NONCLUSTERED 
+(
+	[ProveedorCategoriaId] ASC,
+	[Nombre] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[ComprasProveedor](
+	[CompraProveedorId] [int] IDENTITY(1,1) NOT NULL,
+	[ProveedorId] [int] NOT NULL,
+	[Fecha] [datetime2](3) NOT NULL,
+	[Estado] [nvarchar](20) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Total] [decimal](18, 2) NOT NULL,
+	[Numero] [nvarchar](40) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[UsuarioId] [int] NULL,
+	[FechaConfirmacion] [datetime2](3) NULL,
+	[ClaveConfirmacion] [uniqueidentifier] NOT NULL,
+ CONSTRAINT [PK_ComprasProveedor] PRIMARY KEY CLUSTERED 
+(
+	[CompraProveedorId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Carritos](
+	[CarritoId] [int] IDENTITY(1,1) NOT NULL,
+	[UsuarioId] [int] NOT NULL,
+	[FechaCreacion] [datetime2](3) NOT NULL,
+	[Estado] [nvarchar](20) COLLATE Modern_Spanish_CI_AS NOT NULL,
+ CONSTRAINT [PK_Carritos] PRIMARY KEY CLUSTERED 
+(
+	[CarritoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Ordenes](
+	[OrdenId] [int] IDENTITY(1,1) NOT NULL,
+	[UsuarioId] [int] NOT NULL,
+	[FechaOrden] [datetime2](3) NOT NULL,
+	[Estado] [nvarchar](20) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Moneda] [char](3) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Total] [decimal](18, 2) NULL,
+	[DescuentoTotal] [decimal](18, 2) NOT NULL,
+	[TipoOrden] [nvarchar](10) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[DireccionEnvio] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NULL,
+ CONSTRAINT [PK_Ordenes] PRIMARY KEY CLUSTERED 
+(
+	[OrdenId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Descuentos](
+	[DescuentoId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](150) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[ProductoId] [int] NULL,
+	[CategoriaId] [int] NULL,
+	[FamiliaId] [int] NULL,
+	[TipoDescuento] [nvarchar](20) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Porcentaje] [decimal](5, 2) NOT NULL,
+	[MontoFijo] [decimal](18, 2) NULL,
+	[FechaInicio] [datetime2](3) NOT NULL,
+	[FechaFin] [datetime2](3) NOT NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_Descuentos] PRIMARY KEY CLUSTERED 
+(
+	[DescuentoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Calificaciones](
+	[CalificacionId] [int] IDENTITY(1,1) NOT NULL,
+	[ProductoId] [int] NOT NULL,
+	[UsuarioId] [int] NOT NULL,
+	[Puntuacion] [tinyint] NOT NULL,
+	[Comentario] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NULL,
+	[Fecha] [datetime2](3) NOT NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_Calificaciones] PRIMARY KEY CLUSTERED 
+(
+	[CalificacionId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Calificaciones_Producto_Usuario] UNIQUE NONCLUSTERED 
+(
+	[ProductoId] ASC,
+	[UsuarioId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[ListaDeseos](
+	[ListaDeseoId] [int] IDENTITY(1,1) NOT NULL,
+	[UsuarioId] [int] NOT NULL,
+	[ProductoId] [int] NOT NULL,
+	[Fecha] [datetime2](3) NOT NULL,
+ CONSTRAINT [PK_ListaDeseos] PRIMARY KEY CLUSTERED 
+(
+	[ListaDeseoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_ListaDeseos_Usuario_Producto] UNIQUE NONCLUSTERED 
+(
+	[UsuarioId] ASC,
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[BitacoraSistema](
+	[BitacoraId] [bigint] IDENTITY(1,1) NOT NULL,
+	[UsuarioId] [int] NULL,
+	[Fecha] [datetime2](3) NOT NULL,
+	[Accion] [nvarchar](80) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Entidad] [nvarchar](80) COLLATE Modern_Spanish_CI_AS NULL,
+	[EntidadId] [nvarchar](80) COLLATE Modern_Spanish_CI_AS NULL,
+	[Detalle] [nvarchar](1000) COLLATE Modern_Spanish_CI_AS NULL,
+ CONSTRAINT [PK_BitacoraSistema] PRIMARY KEY CLUSTERED 
+(
+	[BitacoraId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[CarritoDetalle](
+	[CarritoDetalleId] [int] IDENTITY(1,1) NOT NULL,
+	[CarritoId] [int] NOT NULL,
+	[ProductoId] [int] NOT NULL,
+	[Cantidad] [int] NOT NULL,
+	[PrecioUnitario] [decimal](18, 2) NOT NULL,
+ CONSTRAINT [PK_CarritoDetalle] PRIMARY KEY CLUSTERED 
+(
+	[CarritoDetalleId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_CarritoDetalle_Carrito_Producto] UNIQUE NONCLUSTERED 
+(
+	[CarritoId] ASC,
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[OrdenDetalle](
+	[OrdenDetalleId] [int] IDENTITY(1,1) NOT NULL,
+	[OrdenId] [int] NOT NULL,
+	[ProductoId] [int] NOT NULL,
+	[Cantidad] [int] NOT NULL,
+	[PrecioUnitario] [decimal](18, 2) NOT NULL,
+	[PorcentajeImpuesto] [decimal](5, 2) NOT NULL,
+	[Subtotal] [decimal](18, 2) NOT NULL,
+	[TotalLinea] [decimal](18, 2) NOT NULL,
+	[PorcentajeDescuento] [decimal](5, 2) NOT NULL,
+ CONSTRAINT [PK_OrdenDetalle] PRIMARY KEY CLUSTERED 
+(
+	[OrdenDetalleId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_OrdenDetalle_Orden_Producto] UNIQUE NONCLUSTERED 
+(
+	[OrdenId] ASC,
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Pagos](
+	[PagoId] [int] IDENTITY(1,1) NOT NULL,
+	[OrdenId] [int] NOT NULL,
+	[Fecha] [datetime2](3) NOT NULL,
+	[Monto] [decimal](18, 2) NOT NULL,
+	[Metodo] [nvarchar](30) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Estado] [nvarchar](20) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Referencia] [nvarchar](120) COLLATE Modern_Spanish_CI_AS NULL,
+ CONSTRAINT [PK_Pagos] PRIMARY KEY CLUSTERED 
+(
+	[PagoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[Documentos](
+	[DocumentoId] [int] IDENTITY(1,1) NOT NULL,
+	[OrdenId] [int] NULL,
+	[CompraProveedorId] [int] NULL,
+	[Tipo] [nvarchar](20) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Numero] [nvarchar](40) COLLATE Modern_Spanish_CI_AS NULL,
+	[Ruta] [nvarchar](500) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[FechaCreacion] [datetime2](3) NOT NULL,
+	[CorreoDestino] [nvarchar](120) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[EnviadoCorreo] [bit] NOT NULL,
+ CONSTRAINT [PK_Documentos] PRIMARY KEY CLUSTERED 
+(
+	[DocumentoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[CompraProveedorDetalle](
+	[CompraProveedorDetalleId] [int] IDENTITY(1,1) NOT NULL,
+	[CompraProveedorId] [int] NOT NULL,
+	[ProductoId] [int] NOT NULL,
+	[Cantidad] [int] NOT NULL,
+	[PrecioUnitario] [decimal](18, 2) NOT NULL,
+	[ProductoProveedorCatalogoId] [int] NULL,
+	[NombreProducto] [nvarchar](120) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Subtotal] [decimal](18, 2) NOT NULL,
+ CONSTRAINT [PK_CompraProveedorDetalle] PRIMARY KEY CLUSTERED 
+(
+	[CompraProveedorDetalleId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_CompraProveedorDetalle] UNIQUE NONCLUSTERED 
+(
+	[CompraProveedorId] ASC,
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[MovimientosInventario](
+	[MovimientoInventarioId] [bigint] IDENTITY(1,1) NOT NULL,
+	[ProductoId] [int] NOT NULL,
+	[Tipo] [nvarchar](10) COLLATE Modern_Spanish_CI_AS NOT NULL,
+	[Cantidad] [int] NOT NULL,
+	[Motivo] [nvarchar](200) COLLATE Modern_Spanish_CI_AS NULL,
+	[Fecha] [datetime2](3) NOT NULL,
+	[UsuarioId] [int] NULL,
+	[CompraProveedorId] [int] NULL,
+	[StockAnterior] [int] NULL,
+	[StockNuevo] [int] NULL,
+ CONSTRAINT [PK_MovimientosInventario] PRIMARY KEY CLUSTERED 
+(
+	[MovimientoInventarioId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+
+/* ============================================================================
+   Índices
+   ============================================================================ */
+GO
+
+CREATE NONCLUSTERED INDEX [IX_BitacoraSistema_Fecha] ON [dbo].[BitacoraSistema]
+(
+	[Fecha] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_BitacoraSistema_UsuarioId] ON [dbo].[BitacoraSistema]
+(
+	[UsuarioId] ASC,
+	[Fecha] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Calificaciones_UsuarioId] ON [dbo].[Calificaciones]
+(
+	[UsuarioId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_CarritoDetalle_ProductoId] ON [dbo].[CarritoDetalle]
+(
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Carritos_Usuario_Estado] ON [dbo].[Carritos]
+(
+	[UsuarioId] ASC,
+	[Estado] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [UX_Carritos_Usuario_Activo] ON [dbo].[Carritos]
+(
+	[UsuarioId] ASC
+)
+WHERE ([Estado]=N'ACTIVO')
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Categorias_FamiliaId] ON [dbo].[Categorias]
+(
+	[FamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_CompraProveedorDetalle_ProductoId] ON [dbo].[CompraProveedorDetalle]
+(
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ComprasProveedor_Proveedor_Fecha] ON [dbo].[ComprasProveedor]
+(
+	[ProveedorId] ASC,
+	[Fecha] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [UX_ComprasProveedor_ClaveConfirmacion] ON [dbo].[ComprasProveedor]
+(
+	[ClaveConfirmacion] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [UX_ComprasProveedor_Numero] ON [dbo].[ComprasProveedor]
+(
+	[Numero] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Descuentos_CategoriaId] ON [dbo].[Descuentos]
+(
+	[CategoriaId] ASC
+)
+WHERE ([CategoriaId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Descuentos_FamiliaId] ON [dbo].[Descuentos]
+(
+	[FamiliaId] ASC
+)
+WHERE ([FamiliaId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Descuentos_ProductoId] ON [dbo].[Descuentos]
+(
+	[ProductoId] ASC
+)
+WHERE ([ProductoId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Documentos_CompraId] ON [dbo].[Documentos]
+(
+	[CompraProveedorId] ASC
+)
+WHERE ([CompraProveedorId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Documentos_OrdenId] ON [dbo].[Documentos]
+(
+	[OrdenId] ASC
+)
+WHERE ([OrdenId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [UX_Documentos_Numero] ON [dbo].[Documentos]
+(
+	[Numero] ASC
+)
+WHERE ([Numero] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_HistorialAccesos_Correo_Fecha] ON [dbo].[HistorialAccesos]
+(
+	[CorreoIntentado] ASC,
+	[Fecha] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_HistorialAccesos_UsuarioId_Fecha] ON [dbo].[HistorialAccesos]
+(
+	[UsuarioId] ASC,
+	[Fecha] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ListaDeseos_ProductoId] ON [dbo].[ListaDeseos]
+(
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_MovimientosInventario_Producto_Fecha] ON [dbo].[MovimientosInventario]
+(
+	[ProductoId] ASC,
+	[Fecha] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_MovimientosInventario_UsuarioId] ON [dbo].[MovimientosInventario]
+(
+	[UsuarioId] ASC
+)
+WHERE ([UsuarioId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_OrdenDetalle_ProductoId] ON [dbo].[OrdenDetalle]
+(
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Ordenes_FechaOrden] ON [dbo].[Ordenes]
+(
+	[FechaOrden] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Ordenes_UsuarioId] ON [dbo].[Ordenes]
+(
+	[UsuarioId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Pagos_OrdenId] ON [dbo].[Pagos]
+(
+	[OrdenId] ASC,
+	[Fecha] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ProductoImagenes_Producto_Orden] ON [dbo].[ProductoImagenes]
+(
+	[ProductoId] ASC,
+	[EsPrincipal] DESC,
+	[Orden] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [UX_ProductoImagenes_PrincipalActiva] ON [dbo].[ProductoImagenes]
+(
+	[ProductoId] ASC
+)
+WHERE ([EsPrincipal]=(1) AND [Activo]=(1))
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ProductoProveedor_ProveedorId] ON [dbo].[ProductoProveedor]
+(
+	[ProveedorId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Productos_CategoriaId] ON [dbo].[Productos]
+(
+	[CategoriaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Productos_ImpuestoId] ON [dbo].[Productos]
+(
+	[ImpuestoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Productos_Nombre] ON [dbo].[Productos]
+(
+	[Nombre] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ProductosProveedorCatalogo_Disponibles] ON [dbo].[ProductosProveedorCatalogo]
+(
+	[ProveedorCategoriaId] ASC,
+	[Activo] ASC,
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ProductosProveedorCatalogo_ImpuestoId] ON [dbo].[ProductosProveedorCatalogo]
+(
+	[ImpuestoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ProductosProveedorCatalogo_ProductoId] ON [dbo].[ProductosProveedorCatalogo]
+(
+	[ProductoId] ASC
+)
+WHERE ([ProductoId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ProveedorCategorias_CategoriaId] ON [dbo].[ProveedorCategorias]
+(
+	[CategoriaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [UX_Proveedores_Correo] ON [dbo].[Proveedores]
+(
+	[Correo] ASC
+)
+WHERE ([Correo] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [UX_Proveedores_Nombre] ON [dbo].[Proveedores]
+(
+	[Nombre] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_ProveedorFamilias_FamiliaId] ON [dbo].[ProveedorFamilias]
+(
+	[FamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_RolMenuOpciones_MenuOpcionId] ON [dbo].[RolMenuOpciones]
+(
+	[MenuOpcionId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Usuarios_RolId] ON [dbo].[Usuarios]
+(
+	[RolId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+
+
+/* ============================================================================
+   DEFAULT, CHECK y FOREIGN KEY
+   ============================================================================ */
+GO
+
+ALTER TABLE [dbo].[BitacoraSistema] ADD  CONSTRAINT [DF_BitacoraSistema_Fecha]  DEFAULT (sysdatetime()) FOR [Fecha]
+GO
+
+ALTER TABLE [dbo].[Calificaciones] ADD  CONSTRAINT [DF_Calificaciones_Fecha]  DEFAULT (sysdatetime()) FOR [Fecha]
+GO
+
+ALTER TABLE [dbo].[Calificaciones] ADD  CONSTRAINT [DF_Calificaciones_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Carritos] ADD  CONSTRAINT [DF_Carritos_Fecha]  DEFAULT (sysdatetime()) FOR [FechaCreacion]
+GO
+
+ALTER TABLE [dbo].[Carritos] ADD  CONSTRAINT [DF_Carritos_Estado]  DEFAULT (N'ACTIVO') FOR [Estado]
+GO
+
+ALTER TABLE [dbo].[Categorias] ADD  CONSTRAINT [DF_Categorias_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor] ADD  CONSTRAINT [DF_ComprasProveedor_Fecha]  DEFAULT (sysdatetime()) FOR [Fecha]
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor] ADD  CONSTRAINT [DF_ComprasProveedor_Estado]  DEFAULT (N'PENDIENTE') FOR [Estado]
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor] ADD  CONSTRAINT [DF_ComprasProveedor_Total]  DEFAULT ((0)) FOR [Total]
+GO
+
+ALTER TABLE [dbo].[Descuentos] ADD  CONSTRAINT [DF_Descuentos_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Documentos] ADD  CONSTRAINT [DF_Documentos_Fecha]  DEFAULT (sysdatetime()) FOR [FechaCreacion]
+GO
+
+ALTER TABLE [dbo].[Documentos] ADD  CONSTRAINT [DF_Documentos_EnviadoCorreo]  DEFAULT ((0)) FOR [EnviadoCorreo]
+GO
+
+ALTER TABLE [dbo].[FamiliasProducto] ADD  CONSTRAINT [DF_FamiliasProducto_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[HistorialAccesos] ADD  CONSTRAINT [DF_HistorialAccesos_Fecha]  DEFAULT (sysdatetime()) FOR [Fecha]
+GO
+
+ALTER TABLE [dbo].[Impuestos] ADD  CONSTRAINT [DF_Impuestos_FechaInicio]  DEFAULT (CONVERT([date],getdate())) FOR [FechaInicio]
+GO
+
+ALTER TABLE [dbo].[Impuestos] ADD  CONSTRAINT [DF_Impuestos_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[ListaDeseos] ADD  CONSTRAINT [DF_ListaDeseos_Fecha]  DEFAULT (sysdatetime()) FOR [Fecha]
+GO
+
+ALTER TABLE [dbo].[MenuOpciones] ADD  CONSTRAINT [DF_MenuOpciones_Orden]  DEFAULT ((0)) FOR [Orden]
+GO
+
+ALTER TABLE [dbo].[MenuOpciones] ADD  CONSTRAINT [DF_MenuOpciones_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario] ADD  CONSTRAINT [DF_MovimientosInventario_Fecha]  DEFAULT (sysdatetime()) FOR [Fecha]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] ADD  CONSTRAINT [DF_OrdenDetalle_PorcentajeImpuesto]  DEFAULT ((0)) FOR [PorcentajeImpuesto]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] ADD  CONSTRAINT [DF_OrdenDetalle_PorcentajeDescuento]  DEFAULT ((0)) FOR [PorcentajeDescuento]
+GO
+
+ALTER TABLE [dbo].[Ordenes] ADD  CONSTRAINT [DF_Ordenes_FechaOrden]  DEFAULT (sysdatetime()) FOR [FechaOrden]
+GO
+
+ALTER TABLE [dbo].[Ordenes] ADD  CONSTRAINT [DF_Ordenes_Estado]  DEFAULT (N'PENDIENTE') FOR [Estado]
+GO
+
+ALTER TABLE [dbo].[Ordenes] ADD  CONSTRAINT [DF_Ordenes_Moneda]  DEFAULT ('CRC') FOR [Moneda]
+GO
+
+ALTER TABLE [dbo].[Ordenes] ADD  CONSTRAINT [DF_Ordenes_DescuentoTotal]  DEFAULT ((0)) FOR [DescuentoTotal]
+GO
+
+ALTER TABLE [dbo].[Ordenes] ADD  CONSTRAINT [DF_Ordenes_TipoOrden]  DEFAULT (N'VENTA') FOR [TipoOrden]
+GO
+
+ALTER TABLE [dbo].[Pagos] ADD  CONSTRAINT [DF_Pagos_Fecha]  DEFAULT (sysdatetime()) FOR [Fecha]
+GO
+
+ALTER TABLE [dbo].[Pagos] ADD  CONSTRAINT [DF_Pagos_Estado]  DEFAULT (N'PENDIENTE') FOR [Estado]
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes] ADD  CONSTRAINT [DF_ProductoImagenes_EsPrincipal]  DEFAULT ((0)) FOR [EsPrincipal]
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes] ADD  CONSTRAINT [DF_ProductoImagenes_Orden]  DEFAULT ((0)) FOR [Orden]
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes] ADD  CONSTRAINT [DF_ProductoImagenes_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[ProductoProveedor] ADD  CONSTRAINT [DF_ProductoProveedor_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Productos] ADD  CONSTRAINT [DF_Productos_Stock]  DEFAULT ((0)) FOR [Stock]
+GO
+
+ALTER TABLE [dbo].[Productos] ADD  CONSTRAINT [DF_Productos_StockMinimo]  DEFAULT ((5)) FOR [StockMinimo]
+GO
+
+ALTER TABLE [dbo].[Productos] ADD  CONSTRAINT [DF_Productos_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Productos] ADD  CONSTRAINT [DF_Productos_FechaCreacion]  DEFAULT (sysdatetime()) FOR [FechaCreacion]
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo] ADD  CONSTRAINT [DF_ProductosProveedorCatalogo_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo] ADD  CONSTRAINT [DF_ProductosProveedorCatalogo_Fecha]  DEFAULT (sysdatetime()) FOR [FechaActualizacion]
+GO
+
+ALTER TABLE [dbo].[ProveedorCategorias] ADD  CONSTRAINT [DF_ProveedorCategorias_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Proveedores] ADD  CONSTRAINT [DF_Proveedores_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Proveedores] ADD  CONSTRAINT [DF_Proveedores_FechaRegistro]  DEFAULT (sysdatetime()) FOR [FechaRegistro]
+GO
+
+ALTER TABLE [dbo].[ProveedorFamilias] ADD  CONSTRAINT [DF_ProveedorFamilias_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Roles] ADD  CONSTRAINT [DF_Roles_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Usuarios] ADD  CONSTRAINT [DF_Usuarios_Activo]  DEFAULT ((1)) FOR [Activo]
+GO
+
+ALTER TABLE [dbo].[Usuarios] ADD  CONSTRAINT [DF_Usuarios_FechaRegistro]  DEFAULT (sysdatetime()) FOR [FechaRegistro]
+GO
+
+ALTER TABLE [dbo].[Usuarios] ADD  CONSTRAINT [DF_Usuarios_IntentosFallidos]  DEFAULT ((0)) FOR [IntentosFallidos]
+GO
+
+ALTER TABLE [dbo].[BitacoraSistema]  WITH CHECK ADD  CONSTRAINT [FK_BitacoraSistema_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+GO
+
+ALTER TABLE [dbo].[BitacoraSistema] CHECK CONSTRAINT [FK_BitacoraSistema_Usuarios]
+GO
+
+ALTER TABLE [dbo].[Calificaciones]  WITH CHECK ADD  CONSTRAINT [FK_Calificaciones_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[Calificaciones] CHECK CONSTRAINT [FK_Calificaciones_Productos]
+GO
+
+ALTER TABLE [dbo].[Calificaciones]  WITH CHECK ADD  CONSTRAINT [FK_Calificaciones_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+GO
+
+ALTER TABLE [dbo].[Calificaciones] CHECK CONSTRAINT [FK_Calificaciones_Usuarios]
+GO
+
+ALTER TABLE [dbo].[CarritoDetalle]  WITH CHECK ADD  CONSTRAINT [FK_CarritoDetalle_Carritos] FOREIGN KEY([CarritoId])
+REFERENCES [dbo].[Carritos] ([CarritoId])
+GO
+
+ALTER TABLE [dbo].[CarritoDetalle] CHECK CONSTRAINT [FK_CarritoDetalle_Carritos]
+GO
+
+ALTER TABLE [dbo].[CarritoDetalle]  WITH CHECK ADD  CONSTRAINT [FK_CarritoDetalle_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[CarritoDetalle] CHECK CONSTRAINT [FK_CarritoDetalle_Productos]
+GO
+
+ALTER TABLE [dbo].[Carritos]  WITH CHECK ADD  CONSTRAINT [FK_Carritos_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+GO
+
+ALTER TABLE [dbo].[Carritos] CHECK CONSTRAINT [FK_Carritos_Usuarios]
+GO
+
+ALTER TABLE [dbo].[Categorias]  WITH CHECK ADD  CONSTRAINT [FK_Categorias_FamiliasProducto] FOREIGN KEY([FamiliaId])
+REFERENCES [dbo].[FamiliasProducto] ([FamiliaId])
+GO
+
+ALTER TABLE [dbo].[Categorias] CHECK CONSTRAINT [FK_Categorias_FamiliasProducto]
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle]  WITH CHECK ADD  CONSTRAINT [FK_CompraProveedorDetalle_Compra] FOREIGN KEY([CompraProveedorId])
+REFERENCES [dbo].[ComprasProveedor] ([CompraProveedorId])
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle] CHECK CONSTRAINT [FK_CompraProveedorDetalle_Compra]
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle]  WITH CHECK ADD  CONSTRAINT [FK_CompraProveedorDetalle_Oferta] FOREIGN KEY([ProductoProveedorCatalogoId])
+REFERENCES [dbo].[ProductosProveedorCatalogo] ([ProductoProveedorCatalogoId])
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle] CHECK CONSTRAINT [FK_CompraProveedorDetalle_Oferta]
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle]  WITH CHECK ADD  CONSTRAINT [FK_CompraProveedorDetalle_Producto] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle] CHECK CONSTRAINT [FK_CompraProveedorDetalle_Producto]
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor]  WITH CHECK ADD  CONSTRAINT [FK_ComprasProveedor_Proveedores] FOREIGN KEY([ProveedorId])
+REFERENCES [dbo].[Proveedores] ([ProveedorId])
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor] CHECK CONSTRAINT [FK_ComprasProveedor_Proveedores]
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor]  WITH CHECK ADD  CONSTRAINT [FK_ComprasProveedor_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor] CHECK CONSTRAINT [FK_ComprasProveedor_Usuarios]
+GO
+
+ALTER TABLE [dbo].[Descuentos]  WITH CHECK ADD  CONSTRAINT [FK_Descuentos_Categorias] FOREIGN KEY([CategoriaId])
+REFERENCES [dbo].[Categorias] ([CategoriaId])
+GO
+
+ALTER TABLE [dbo].[Descuentos] CHECK CONSTRAINT [FK_Descuentos_Categorias]
+GO
+
+ALTER TABLE [dbo].[Descuentos]  WITH CHECK ADD  CONSTRAINT [FK_Descuentos_Familias] FOREIGN KEY([FamiliaId])
+REFERENCES [dbo].[FamiliasProducto] ([FamiliaId])
+GO
+
+ALTER TABLE [dbo].[Descuentos] CHECK CONSTRAINT [FK_Descuentos_Familias]
+GO
+
+ALTER TABLE [dbo].[Descuentos]  WITH CHECK ADD  CONSTRAINT [FK_Descuentos_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[Descuentos] CHECK CONSTRAINT [FK_Descuentos_Productos]
+GO
+
+ALTER TABLE [dbo].[Documentos]  WITH CHECK ADD  CONSTRAINT [FK_Documentos_Compras] FOREIGN KEY([CompraProveedorId])
+REFERENCES [dbo].[ComprasProveedor] ([CompraProveedorId])
+GO
+
+ALTER TABLE [dbo].[Documentos] CHECK CONSTRAINT [FK_Documentos_Compras]
+GO
+
+ALTER TABLE [dbo].[Documentos]  WITH CHECK ADD  CONSTRAINT [FK_Documentos_Ordenes] FOREIGN KEY([OrdenId])
+REFERENCES [dbo].[Ordenes] ([OrdenId])
+GO
+
+ALTER TABLE [dbo].[Documentos] CHECK CONSTRAINT [FK_Documentos_Ordenes]
+GO
+
+ALTER TABLE [dbo].[HistorialAccesos]  WITH CHECK ADD  CONSTRAINT [FK_HistorialAccesos_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+GO
+
+ALTER TABLE [dbo].[HistorialAccesos] CHECK CONSTRAINT [FK_HistorialAccesos_Usuarios]
+GO
+
+ALTER TABLE [dbo].[ListaDeseos]  WITH CHECK ADD  CONSTRAINT [FK_ListaDeseos_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[ListaDeseos] CHECK CONSTRAINT [FK_ListaDeseos_Productos]
+GO
+
+ALTER TABLE [dbo].[ListaDeseos]  WITH CHECK ADD  CONSTRAINT [FK_ListaDeseos_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+GO
+
+ALTER TABLE [dbo].[ListaDeseos] CHECK CONSTRAINT [FK_ListaDeseos_Usuarios]
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario]  WITH CHECK ADD  CONSTRAINT [FK_MovimientosInventario_ComprasProveedor] FOREIGN KEY([CompraProveedorId])
+REFERENCES [dbo].[ComprasProveedor] ([CompraProveedorId])
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario] CHECK CONSTRAINT [FK_MovimientosInventario_ComprasProveedor]
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario]  WITH CHECK ADD  CONSTRAINT [FK_MovimientosInventario_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario] CHECK CONSTRAINT [FK_MovimientosInventario_Productos]
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario]  WITH CHECK ADD  CONSTRAINT [FK_MovimientosInventario_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario] CHECK CONSTRAINT [FK_MovimientosInventario_Usuarios]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle]  WITH CHECK ADD  CONSTRAINT [FK_OrdenDetalle_Ordenes] FOREIGN KEY([OrdenId])
+REFERENCES [dbo].[Ordenes] ([OrdenId])
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] CHECK CONSTRAINT [FK_OrdenDetalle_Ordenes]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle]  WITH CHECK ADD  CONSTRAINT [FK_OrdenDetalle_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] CHECK CONSTRAINT [FK_OrdenDetalle_Productos]
+GO
+
+ALTER TABLE [dbo].[Ordenes]  WITH CHECK ADD  CONSTRAINT [FK_Ordenes_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+GO
+
+ALTER TABLE [dbo].[Ordenes] CHECK CONSTRAINT [FK_Ordenes_Usuarios]
+GO
+
+ALTER TABLE [dbo].[Pagos]  WITH CHECK ADD  CONSTRAINT [FK_Pagos_Ordenes] FOREIGN KEY([OrdenId])
+REFERENCES [dbo].[Ordenes] ([OrdenId])
+GO
+
+ALTER TABLE [dbo].[Pagos] CHECK CONSTRAINT [FK_Pagos_Ordenes]
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes]  WITH CHECK ADD  CONSTRAINT [FK_ProductoImagenes_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes] CHECK CONSTRAINT [FK_ProductoImagenes_Productos]
+GO
+
+ALTER TABLE [dbo].[ProductoProveedor]  WITH CHECK ADD  CONSTRAINT [FK_ProductoProveedor_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[ProductoProveedor] CHECK CONSTRAINT [FK_ProductoProveedor_Productos]
+GO
+
+ALTER TABLE [dbo].[ProductoProveedor]  WITH CHECK ADD  CONSTRAINT [FK_ProductoProveedor_Proveedores] FOREIGN KEY([ProveedorId])
+REFERENCES [dbo].[Proveedores] ([ProveedorId])
+GO
+
+ALTER TABLE [dbo].[ProductoProveedor] CHECK CONSTRAINT [FK_ProductoProveedor_Proveedores]
+GO
+
+ALTER TABLE [dbo].[Productos]  WITH CHECK ADD  CONSTRAINT [FK_Productos_Categorias] FOREIGN KEY([CategoriaId])
+REFERENCES [dbo].[Categorias] ([CategoriaId])
+GO
+
+ALTER TABLE [dbo].[Productos] CHECK CONSTRAINT [FK_Productos_Categorias]
+GO
+
+ALTER TABLE [dbo].[Productos]  WITH CHECK ADD  CONSTRAINT [FK_Productos_Impuestos] FOREIGN KEY([ImpuestoId])
+REFERENCES [dbo].[Impuestos] ([ImpuestoId])
+GO
+
+ALTER TABLE [dbo].[Productos] CHECK CONSTRAINT [FK_Productos_Impuestos]
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo]  WITH CHECK ADD  CONSTRAINT [FK_ProductosProveedorCatalogo_Impuestos] FOREIGN KEY([ImpuestoId])
+REFERENCES [dbo].[Impuestos] ([ImpuestoId])
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo] CHECK CONSTRAINT [FK_ProductosProveedorCatalogo_Impuestos]
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo]  WITH CHECK ADD  CONSTRAINT [FK_ProductosProveedorCatalogo_Productos] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo] CHECK CONSTRAINT [FK_ProductosProveedorCatalogo_Productos]
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo]  WITH CHECK ADD  CONSTRAINT [FK_ProductosProveedorCatalogo_ProveedorCategorias] FOREIGN KEY([ProveedorCategoriaId])
+REFERENCES [dbo].[ProveedorCategorias] ([ProveedorCategoriaId])
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo] CHECK CONSTRAINT [FK_ProductosProveedorCatalogo_ProveedorCategorias]
+GO
+
+ALTER TABLE [dbo].[ProveedorCategorias]  WITH CHECK ADD  CONSTRAINT [FK_ProveedorCategorias_Categorias] FOREIGN KEY([CategoriaId])
+REFERENCES [dbo].[Categorias] ([CategoriaId])
+GO
+
+ALTER TABLE [dbo].[ProveedorCategorias] CHECK CONSTRAINT [FK_ProveedorCategorias_Categorias]
+GO
+
+ALTER TABLE [dbo].[ProveedorCategorias]  WITH CHECK ADD  CONSTRAINT [FK_ProveedorCategorias_Proveedores] FOREIGN KEY([ProveedorId])
+REFERENCES [dbo].[Proveedores] ([ProveedorId])
+GO
+
+ALTER TABLE [dbo].[ProveedorCategorias] CHECK CONSTRAINT [FK_ProveedorCategorias_Proveedores]
+GO
+
+ALTER TABLE [dbo].[ProveedorFamilias]  WITH CHECK ADD  CONSTRAINT [FK_ProveedorFamilias_Familias] FOREIGN KEY([FamiliaId])
+REFERENCES [dbo].[FamiliasProducto] ([FamiliaId])
+GO
+
+ALTER TABLE [dbo].[ProveedorFamilias] CHECK CONSTRAINT [FK_ProveedorFamilias_Familias]
+GO
+
+ALTER TABLE [dbo].[ProveedorFamilias]  WITH CHECK ADD  CONSTRAINT [FK_ProveedorFamilias_Proveedores] FOREIGN KEY([ProveedorId])
+REFERENCES [dbo].[Proveedores] ([ProveedorId])
+GO
+
+ALTER TABLE [dbo].[ProveedorFamilias] CHECK CONSTRAINT [FK_ProveedorFamilias_Proveedores]
+GO
+
+ALTER TABLE [dbo].[RolMenuOpciones]  WITH CHECK ADD  CONSTRAINT [FK_RolMenuOpciones_Menu] FOREIGN KEY([MenuOpcionId])
+REFERENCES [dbo].[MenuOpciones] ([MenuOpcionId])
+GO
+
+ALTER TABLE [dbo].[RolMenuOpciones] CHECK CONSTRAINT [FK_RolMenuOpciones_Menu]
+GO
+
+ALTER TABLE [dbo].[RolMenuOpciones]  WITH CHECK ADD  CONSTRAINT [FK_RolMenuOpciones_Roles] FOREIGN KEY([RolId])
+REFERENCES [dbo].[Roles] ([RolId])
+GO
+
+ALTER TABLE [dbo].[RolMenuOpciones] CHECK CONSTRAINT [FK_RolMenuOpciones_Roles]
+GO
+
+ALTER TABLE [dbo].[Usuarios]  WITH CHECK ADD  CONSTRAINT [FK_Usuarios_Roles] FOREIGN KEY([RolId])
+REFERENCES [dbo].[Roles] ([RolId])
+GO
+
+ALTER TABLE [dbo].[Usuarios] CHECK CONSTRAINT [FK_Usuarios_Roles]
+GO
+
+ALTER TABLE [dbo].[Calificaciones]  WITH CHECK ADD  CONSTRAINT [CK_Calificaciones_Puntuacion] CHECK  (([Puntuacion]>=(1) AND [Puntuacion]<=(5)))
+GO
+
+ALTER TABLE [dbo].[Calificaciones] CHECK CONSTRAINT [CK_Calificaciones_Puntuacion]
+GO
+
+ALTER TABLE [dbo].[CarritoDetalle]  WITH CHECK ADD  CONSTRAINT [CK_CarritoDetalle_Cantidad] CHECK  (([Cantidad]>(0)))
+GO
+
+ALTER TABLE [dbo].[CarritoDetalle] CHECK CONSTRAINT [CK_CarritoDetalle_Cantidad]
+GO
+
+ALTER TABLE [dbo].[CarritoDetalle]  WITH CHECK ADD  CONSTRAINT [CK_CarritoDetalle_Precio] CHECK  (([PrecioUnitario]>=(0)))
+GO
+
+ALTER TABLE [dbo].[CarritoDetalle] CHECK CONSTRAINT [CK_CarritoDetalle_Precio]
+GO
+
+ALTER TABLE [dbo].[Carritos]  WITH CHECK ADD  CONSTRAINT [CK_Carritos_Estado] CHECK  (([Estado]=N'ABANDONADO' OR [Estado]=N'CONVERTIDO' OR [Estado]=N'ACTIVO'))
+GO
+
+ALTER TABLE [dbo].[Carritos] CHECK CONSTRAINT [CK_Carritos_Estado]
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle]  WITH CHECK ADD  CONSTRAINT [CK_CompraProveedorDetalle_Cantidad] CHECK  (([Cantidad]>(0)))
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle] CHECK CONSTRAINT [CK_CompraProveedorDetalle_Cantidad]
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle]  WITH CHECK ADD  CONSTRAINT [CK_CompraProveedorDetalle_Precio] CHECK  (([PrecioUnitario]>=(0)))
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle] CHECK CONSTRAINT [CK_CompraProveedorDetalle_Precio]
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle]  WITH CHECK ADD  CONSTRAINT [CK_CompraProveedorDetalle_Subtotal] CHECK  (([Subtotal]>=(0)))
+GO
+
+ALTER TABLE [dbo].[CompraProveedorDetalle] CHECK CONSTRAINT [CK_CompraProveedorDetalle_Subtotal]
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor]  WITH CHECK ADD  CONSTRAINT [CK_ComprasProveedor_Estado] CHECK  (([Estado]=N'CANCELADA' OR [Estado]=N'CONFIRMADA' OR [Estado]=N'PENDIENTE'))
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor] CHECK CONSTRAINT [CK_ComprasProveedor_Estado]
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor]  WITH CHECK ADD  CONSTRAINT [CK_ComprasProveedor_Total] CHECK  (([Total]>=(0)))
+GO
+
+ALTER TABLE [dbo].[ComprasProveedor] CHECK CONSTRAINT [CK_ComprasProveedor_Total]
+GO
+
+ALTER TABLE [dbo].[Descuentos]  WITH CHECK ADD  CONSTRAINT [CK_Descuentos_Destino] CHECK  (([TipoDescuento]=N'FAMILIA' AND [FamiliaId] IS NOT NULL AND [CategoriaId] IS NULL AND [ProductoId] IS NULL OR [TipoDescuento]=N'CATEGORIA' AND [FamiliaId] IS NULL AND [CategoriaId] IS NOT NULL AND [ProductoId] IS NULL OR ([TipoDescuento]=N'PROMOCIONAL' OR [TipoDescuento]=N'PRODUCTO') AND [FamiliaId] IS NULL AND [CategoriaId] IS NULL AND [ProductoId] IS NOT NULL))
+GO
+
+ALTER TABLE [dbo].[Descuentos] CHECK CONSTRAINT [CK_Descuentos_Destino]
+GO
+
+ALTER TABLE [dbo].[Descuentos]  WITH CHECK ADD  CONSTRAINT [CK_Descuentos_Fechas] CHECK  (([FechaFin]>=[FechaInicio]))
+GO
+
+ALTER TABLE [dbo].[Descuentos] CHECK CONSTRAINT [CK_Descuentos_Fechas]
+GO
+
+ALTER TABLE [dbo].[Descuentos]  WITH CHECK ADD  CONSTRAINT [CK_Descuentos_Porcentaje] CHECK  (([Porcentaje]>(0) AND [Porcentaje]<=(100)))
+GO
+
+ALTER TABLE [dbo].[Descuentos] CHECK CONSTRAINT [CK_Descuentos_Porcentaje]
+GO
+
+ALTER TABLE [dbo].[Descuentos]  WITH CHECK ADD  CONSTRAINT [CK_Descuentos_Tipo] CHECK  (([TipoDescuento]=N'PROMOCIONAL' OR [TipoDescuento]=N'FAMILIA' OR [TipoDescuento]=N'CATEGORIA' OR [TipoDescuento]=N'PRODUCTO'))
+GO
+
+ALTER TABLE [dbo].[Descuentos] CHECK CONSTRAINT [CK_Descuentos_Tipo]
+GO
+
+ALTER TABLE [dbo].[Documentos]  WITH CHECK ADD  CONSTRAINT [CK_Documentos_Origen] CHECK  (((case when [OrdenId] IS NULL then (0) else (1) end+case when [CompraProveedorId] IS NULL then (0) else (1) end)=(1)))
+GO
+
+ALTER TABLE [dbo].[Documentos] CHECK CONSTRAINT [CK_Documentos_Origen]
+GO
+
+ALTER TABLE [dbo].[Impuestos]  WITH CHECK ADD  CONSTRAINT [CK_Impuestos_Fechas] CHECK  (([FechaFin] IS NULL OR [FechaFin]>=[FechaInicio]))
+GO
+
+ALTER TABLE [dbo].[Impuestos] CHECK CONSTRAINT [CK_Impuestos_Fechas]
+GO
+
+ALTER TABLE [dbo].[Impuestos]  WITH CHECK ADD  CONSTRAINT [CK_Impuestos_Porcentaje] CHECK  (([Porcentaje]>=(0) AND [Porcentaje]<=(100)))
+GO
+
+ALTER TABLE [dbo].[Impuestos] CHECK CONSTRAINT [CK_Impuestos_Porcentaje]
+GO
+
+ALTER TABLE [dbo].[MenuOpciones]  WITH CHECK ADD  CONSTRAINT [CK_MenuOpciones_Orden] CHECK  (([Orden]>=(0)))
+GO
+
+ALTER TABLE [dbo].[MenuOpciones] CHECK CONSTRAINT [CK_MenuOpciones_Orden]
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario]  WITH CHECK ADD  CONSTRAINT [CK_MovimientosInventario_Cantidad] CHECK  (([Cantidad]>(0)))
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario] CHECK CONSTRAINT [CK_MovimientosInventario_Cantidad]
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario]  WITH CHECK ADD  CONSTRAINT [CK_MovimientosInventario_Tipo] CHECK  (([Tipo]=N'AJUSTE' OR [Tipo]=N'SALIDA' OR [Tipo]=N'ENTRADA'))
+GO
+
+ALTER TABLE [dbo].[MovimientosInventario] CHECK CONSTRAINT [CK_MovimientosInventario_Tipo]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle]  WITH CHECK ADD  CONSTRAINT [CK_OrdenDetalle_Cantidad] CHECK  (([Cantidad]>(0)))
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] CHECK CONSTRAINT [CK_OrdenDetalle_Cantidad]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle]  WITH CHECK ADD  CONSTRAINT [CK_OrdenDetalle_PorcentajeDescuento] CHECK  (([PorcentajeDescuento]>=(0) AND [PorcentajeDescuento]<=(100)))
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] CHECK CONSTRAINT [CK_OrdenDetalle_PorcentajeDescuento]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle]  WITH CHECK ADD  CONSTRAINT [CK_OrdenDetalle_PorcentajeImpuesto] CHECK  (([PorcentajeImpuesto]>=(0) AND [PorcentajeImpuesto]<=(100)))
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] CHECK CONSTRAINT [CK_OrdenDetalle_PorcentajeImpuesto]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle]  WITH CHECK ADD  CONSTRAINT [CK_OrdenDetalle_PrecioUnitario] CHECK  (([PrecioUnitario]>=(0)))
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] CHECK CONSTRAINT [CK_OrdenDetalle_PrecioUnitario]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle]  WITH CHECK ADD  CONSTRAINT [CK_OrdenDetalle_Subtotal] CHECK  (([Subtotal]>=(0)))
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] CHECK CONSTRAINT [CK_OrdenDetalle_Subtotal]
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle]  WITH CHECK ADD  CONSTRAINT [CK_OrdenDetalle_TotalLinea] CHECK  (([TotalLinea]>=(0)))
+GO
+
+ALTER TABLE [dbo].[OrdenDetalle] CHECK CONSTRAINT [CK_OrdenDetalle_TotalLinea]
+GO
+
+ALTER TABLE [dbo].[Ordenes]  WITH CHECK ADD  CONSTRAINT [CK_Ordenes_DescuentoTotal] CHECK  (([DescuentoTotal]>=(0)))
+GO
+
+ALTER TABLE [dbo].[Ordenes] CHECK CONSTRAINT [CK_Ordenes_DescuentoTotal]
+GO
+
+ALTER TABLE [dbo].[Ordenes]  WITH CHECK ADD  CONSTRAINT [CK_Ordenes_Estado] CHECK  (([Estado]=N'CANCELADA' OR [Estado]=N'FACTURADA' OR [Estado]=N'CONFIRMADA' OR [Estado]=N'PENDIENTE' OR [Estado]=N'PROFORMA'))
+GO
+
+ALTER TABLE [dbo].[Ordenes] CHECK CONSTRAINT [CK_Ordenes_Estado]
+GO
+
+ALTER TABLE [dbo].[Ordenes]  WITH CHECK ADD  CONSTRAINT [CK_Ordenes_TipoOrden] CHECK  (([TipoOrden]=N'COMPRA' OR [TipoOrden]=N'VENTA'))
+GO
+
+ALTER TABLE [dbo].[Ordenes] CHECK CONSTRAINT [CK_Ordenes_TipoOrden]
+GO
+
+ALTER TABLE [dbo].[Ordenes]  WITH CHECK ADD  CONSTRAINT [CK_Ordenes_Total] CHECK  (([Total] IS NULL OR [Total]>=(0)))
+GO
+
+ALTER TABLE [dbo].[Ordenes] CHECK CONSTRAINT [CK_Ordenes_Total]
+GO
+
+ALTER TABLE [dbo].[Pagos]  WITH CHECK ADD  CONSTRAINT [CK_Pagos_Estado] CHECK  (([Estado]=N'ANULADO' OR [Estado]=N'RECHAZADO' OR [Estado]=N'APROBADO' OR [Estado]=N'PENDIENTE'))
+GO
+
+ALTER TABLE [dbo].[Pagos] CHECK CONSTRAINT [CK_Pagos_Estado]
+GO
+
+ALTER TABLE [dbo].[Pagos]  WITH CHECK ADD  CONSTRAINT [CK_Pagos_Monto] CHECK  (([Monto]>(0)))
+GO
+
+ALTER TABLE [dbo].[Pagos] CHECK CONSTRAINT [CK_Pagos_Monto]
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes]  WITH CHECK ADD  CONSTRAINT [CK_ProductoImagenes_Orden] CHECK  (([Orden]>=(0)))
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes] CHECK CONSTRAINT [CK_ProductoImagenes_Orden]
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes]  WITH CHECK ADD  CONSTRAINT [CK_ProductoImagenes_Url] CHECK  ((len(ltrim(rtrim([UrlImagen])))>(0)))
+GO
+
+ALTER TABLE [dbo].[ProductoImagenes] CHECK CONSTRAINT [CK_ProductoImagenes_Url]
+GO
+
+ALTER TABLE [dbo].[ProductoProveedor]  WITH CHECK ADD  CONSTRAINT [CK_ProductoProveedor_Precio] CHECK  (([PrecioCompra]>=(0)))
+GO
+
+ALTER TABLE [dbo].[ProductoProveedor] CHECK CONSTRAINT [CK_ProductoProveedor_Precio]
+GO
+
+ALTER TABLE [dbo].[Productos]  WITH CHECK ADD  CONSTRAINT [CK_Productos_Costo] CHECK  (([Costo]>=(0)))
+GO
+
+ALTER TABLE [dbo].[Productos] CHECK CONSTRAINT [CK_Productos_Costo]
+GO
+
+ALTER TABLE [dbo].[Productos]  WITH CHECK ADD  CONSTRAINT [CK_Productos_PrecioVenta] CHECK  (([PrecioVenta]>=(0)))
+GO
+
+ALTER TABLE [dbo].[Productos] CHECK CONSTRAINT [CK_Productos_PrecioVenta]
+GO
+
+ALTER TABLE [dbo].[Productos]  WITH CHECK ADD  CONSTRAINT [CK_Productos_Stock] CHECK  (([Stock]>=(0)))
+GO
+
+ALTER TABLE [dbo].[Productos] CHECK CONSTRAINT [CK_Productos_Stock]
+GO
+
+ALTER TABLE [dbo].[Productos]  WITH CHECK ADD  CONSTRAINT [CK_Productos_StockMinimo] CHECK  (([StockMinimo]>=(0)))
+GO
+
+ALTER TABLE [dbo].[Productos] CHECK CONSTRAINT [CK_Productos_StockMinimo]
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo]  WITH CHECK ADD  CONSTRAINT [CK_ProductosProveedorCatalogo_Nombre] CHECK  ((len(ltrim(rtrim([Nombre])))>(0)))
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo] CHECK CONSTRAINT [CK_ProductosProveedorCatalogo_Nombre]
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo]  WITH CHECK ADD  CONSTRAINT [CK_ProductosProveedorCatalogo_Precio] CHECK  (([PrecioCompra]>=(0)))
+GO
+
+ALTER TABLE [dbo].[ProductosProveedorCatalogo] CHECK CONSTRAINT [CK_ProductosProveedorCatalogo_Precio]
+GO
+
+ALTER TABLE [dbo].[Proveedores]  WITH CHECK ADD  CONSTRAINT [CK_Proveedores_Nombre] CHECK  ((len(ltrim(rtrim([Nombre])))>(0)))
+GO
+
+ALTER TABLE [dbo].[Proveedores] CHECK CONSTRAINT [CK_Proveedores_Nombre]
+GO
+
+ALTER TABLE [dbo].[Roles]  WITH CHECK ADD  CONSTRAINT [CK_Roles_Nombre] CHECK  ((len(ltrim(rtrim([Nombre])))>(0)))
+GO
+
+ALTER TABLE [dbo].[Roles] CHECK CONSTRAINT [CK_Roles_Nombre]
+GO
+
+ALTER TABLE [dbo].[Usuarios]  WITH CHECK ADD  CONSTRAINT [CK_Usuarios_CorreoNormalizado] CHECK  (([Correo]=lower(ltrim(rtrim([Correo])))))
+GO
+
+ALTER TABLE [dbo].[Usuarios] CHECK CONSTRAINT [CK_Usuarios_CorreoNormalizado]
+GO
+
+ALTER TABLE [dbo].[Usuarios]  WITH CHECK ADD  CONSTRAINT [CK_Usuarios_IntentosFallidos] CHECK  (([IntentosFallidos]>=(0)))
+GO
+
+ALTER TABLE [dbo].[Usuarios] CHECK CONSTRAINT [CK_Usuarios_IntentosFallidos]
+GO
+
+
+/* ============================================================================
+   Vistas
+   ============================================================================ */
+GO
+
+
+/* Vistas corregidas del documento de referencia */
+CREATE   VIEW dbo.VentasPorFecha
+AS
+    SELECT CONVERT(DATE, FechaOrden) AS Fecha,
+           COUNT_BIG(*) AS CantidadOrdenes,
+           SUM(COALESCE(Total, 0)) AS TotalVentas
+    FROM dbo.Ordenes
+    WHERE Estado <> N'CANCELADA'
+    GROUP BY CONVERT(DATE, FechaOrden);
+GO
+
+
+CREATE   VIEW dbo.ProductosMasVendidos
+AS
+    SELECT p.ProductoId,
+           p.Nombre,
+           SUM(od.Cantidad) AS UnidadesVendidas
+    FROM dbo.OrdenDetalle od
+    INNER JOIN dbo.Productos p ON p.ProductoId = od.ProductoId
+    INNER JOIN dbo.Ordenes o ON o.OrdenId = od.OrdenId
+    WHERE o.Estado <> N'CANCELADA'
+    GROUP BY p.ProductoId, p.Nombre;
+GO
+
+
+CREATE   VIEW dbo.PromedioCalificaciones
+AS
+    SELECT ProductoId,
+           AVG(CONVERT(DECIMAL(4,2), Puntuacion)) AS Promedio,
+           COUNT_BIG(*) AS TotalCalificaciones
+    FROM dbo.Calificaciones
+    WHERE Activo = 1
+    GROUP BY ProductoId;
+GO
+
+
+/* ============================================================================
+   Funciones
+   ============================================================================ */
+GO
+
+
+/* ============================================================================
+   Triggers
+   ============================================================================ */
+GO
+
+
+/* ============================================================================
+   Procedimientos almacenados
+   ============================================================================ */
+GO
+
+
+CREATE   PROCEDURE dbo.sp_ConfirmarCompraProveedor
+    @ClaveConfirmacion UNIQUEIDENTIFIER,
+    @ProveedorId INT,
+    @UsuarioId INT,
+    @DetalleJson NVARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @ProveedorId <= 0 OR @UsuarioId <= 0 OR ISJSON(@DetalleJson) <> 1
+        THROW 51101, 'Los datos de la compra no son válidos.', 1;
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        DECLARE @CompraExistenteId INT;
+        SELECT @CompraExistenteId = CompraProveedorId
+        FROM dbo.ComprasProveedor WITH (UPDLOCK, HOLDLOCK)
+        WHERE ClaveConfirmacion = @ClaveConfirmacion;
+
+        IF @CompraExistenteId IS NOT NULL
+        BEGIN
+            COMMIT TRANSACTION;
+            SELECT CompraProveedorId, Numero, Total, Estado, Fecha
+            FROM dbo.ComprasProveedor WHERE CompraProveedorId = @CompraExistenteId;
+            RETURN;
+        END;
+
+        IF NOT EXISTS
+        (
+            SELECT 1 FROM dbo.Proveedores WITH (UPDLOCK, HOLDLOCK)
+            WHERE ProveedorId = @ProveedorId AND Activo = 1
+        )
+            THROW 51102, 'El proveedor está inactivo o no existe.', 1;
+
+        DECLARE @Detalle TABLE
+        (
+            ProductoProveedorCatalogoId INT NOT NULL PRIMARY KEY,
+            Cantidad INT NOT NULL
+        );
+
+        IF EXISTS
+        (
+            SELECT ProductoProveedorCatalogoId
+            FROM OPENJSON(@DetalleJson)
+            WITH (ProductoProveedorCatalogoId INT '$.productoProveedorCatalogoId')
+            GROUP BY ProductoProveedorCatalogoId
+            HAVING COUNT(*) > 1
+        )
+            THROW 51103, 'La compra contiene productos repetidos.', 1;
+
+        INSERT @Detalle (ProductoProveedorCatalogoId, Cantidad)
+        SELECT ProductoProveedorCatalogoId, Cantidad
+        FROM OPENJSON(@DetalleJson)
+        WITH
+        (
+            ProductoProveedorCatalogoId INT '$.productoProveedorCatalogoId',
+            Cantidad INT '$.cantidad'
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM @Detalle)
+            THROW 51104, 'Debe agregar al menos un producto a la compra.', 1;
+        IF EXISTS (SELECT 1 FROM @Detalle WHERE Cantidad <= 0)
+            THROW 51105, 'La cantidad debe ser mayor que cero.', 1;
+
+        IF EXISTS
+        (
+            SELECT 1
+            FROM @Detalle detalle
+            LEFT JOIN dbo.ProductosProveedorCatalogo oferta
+                ON oferta.ProductoProveedorCatalogoId = detalle.ProductoProveedorCatalogoId
+            LEFT JOIN dbo.ProveedorCategorias relacion
+                ON relacion.ProveedorCategoriaId = oferta.ProveedorCategoriaId
+            LEFT JOIN dbo.Productos producto
+                ON producto.ProductoId = oferta.ProductoId
+            LEFT JOIN dbo.ProductoProveedor productoProveedor
+                ON productoProveedor.ProductoId = oferta.ProductoId
+               AND productoProveedor.ProveedorId = relacion.ProveedorId
+            WHERE oferta.ProductoProveedorCatalogoId IS NULL
+               OR oferta.Activo = 0
+               OR oferta.ProductoId IS NULL
+               OR relacion.Activo = 0
+               OR relacion.ProveedorId <> @ProveedorId
+               OR producto.ProductoId IS NULL
+               OR producto.Activo = 0
+               OR productoProveedor.ProductoId IS NULL
+               OR productoProveedor.Activo = 0
+        )
+            THROW 51106, 'Uno de los productos no pertenece al proveedor o aún no fue incorporado.', 1;
+
+        DECLARE @Total DECIMAL(18,2);
+        SELECT @Total = ROUND(SUM(oferta.PrecioCompra * detalle.Cantidad), 2)
+        FROM @Detalle detalle
+        INNER JOIN dbo.ProductosProveedorCatalogo oferta
+            ON oferta.ProductoProveedorCatalogoId = detalle.ProductoProveedorCatalogoId;
+
+        DECLARE @NumeroSecuencia BIGINT = NEXT VALUE FOR dbo.SecuenciaCompraProveedor;
+        DECLARE @Numero NVARCHAR(40) =
+            CONCAT(N'COMP-', RIGHT(CONCAT(N'000000', @NumeroSecuencia), 6));
+
+        INSERT dbo.ComprasProveedor
+        (
+            ProveedorId, UsuarioId, Numero, Fecha, FechaConfirmacion,
+            Estado, Total, ClaveConfirmacion
+        )
+        VALUES
+        (
+            @ProveedorId, @UsuarioId, @Numero, SYSDATETIME(), SYSDATETIME(),
+            N'CONFIRMADA', @Total, @ClaveConfirmacion
+        );
+
+        DECLARE @CompraProveedorId INT = CONVERT(INT, SCOPE_IDENTITY());
+
+        INSERT dbo.CompraProveedorDetalle
+        (
+            CompraProveedorId, ProductoId, ProductoProveedorCatalogoId,
+            NombreProducto, Cantidad, PrecioUnitario, Subtotal
+        )
+        SELECT @CompraProveedorId,
+               oferta.ProductoId,
+               oferta.ProductoProveedorCatalogoId,
+               oferta.Nombre,
+               detalle.Cantidad,
+               oferta.PrecioCompra,
+               ROUND(oferta.PrecioCompra * detalle.Cantidad, 2)
+        FROM @Detalle detalle
+        INNER JOIN dbo.ProductosProveedorCatalogo oferta
+            ON oferta.ProductoProveedorCatalogoId = detalle.ProductoProveedorCatalogoId;
+
+        DECLARE @Movimientos TABLE
+        (
+            ProductoId INT,
+            Cantidad INT,
+            StockAnterior INT,
+            StockNuevo INT
+        );
+
+        UPDATE producto WITH (UPDLOCK)
+        SET Stock = producto.Stock + detalle.Cantidad,
+            Costo = oferta.PrecioCompra,
+            PrecioVenta = ROUND(oferta.PrecioCompra * 1.30, 2)
+        OUTPUT inserted.ProductoId,
+               detalle.Cantidad,
+               deleted.Stock,
+               inserted.Stock
+        INTO @Movimientos (ProductoId, Cantidad, StockAnterior, StockNuevo)
+        FROM dbo.Productos producto
+        INNER JOIN dbo.ProductosProveedorCatalogo oferta
+            ON oferta.ProductoId = producto.ProductoId
+        INNER JOIN @Detalle detalle
+            ON detalle.ProductoProveedorCatalogoId = oferta.ProductoProveedorCatalogoId;
+
+        INSERT dbo.MovimientosInventario
+        (
+            ProductoId, Tipo, Cantidad, Motivo, Fecha, UsuarioId,
+            CompraProveedorId, StockAnterior, StockNuevo
+        )
+        SELECT ProductoId,
+               N'ENTRADA',
+               Cantidad,
+               CONCAT(N'Compra a proveedor ', @Numero),
+               SYSDATETIME(),
+               @UsuarioId,
+               @CompraProveedorId,
+               StockAnterior,
+               StockNuevo
+        FROM @Movimientos;
+
+        UPDATE relacion
+        SET PrecioCompra = oferta.PrecioCompra,
+            Activo = 1
+        FROM dbo.ProductoProveedor relacion
+        INNER JOIN dbo.ProductosProveedorCatalogo oferta
+            ON oferta.ProductoId = relacion.ProductoId
+        INNER JOIN @Detalle detalle
+            ON detalle.ProductoProveedorCatalogoId = oferta.ProductoProveedorCatalogoId
+        WHERE relacion.ProveedorId = @ProveedorId;
+
+        INSERT dbo.BitacoraSistema (UsuarioId, Fecha, Accion, Entidad, EntidadId, Detalle)
+        VALUES
+        (
+            @UsuarioId, SYSDATETIME(), N'CONFIRMAR_COMPRA_PROVEEDOR', N'CompraProveedor',
+            CONVERT(NVARCHAR(80), @CompraProveedorId), CONCAT(@Numero, N' - Total CRC ', @Total)
+        );
+
+        COMMIT TRANSACTION;
+
+        SELECT @CompraProveedorId CompraProveedorId,
+               @Numero Numero,
+               @Total Total,
+               N'CONFIRMADA' Estado,
+               SYSDATETIME() Fecha;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
+
+
+/*
+   Único punto que descuenta inventario para una venta.
+   Verifica que la orden esté pendiente y tenga stock, bloquea los productos
+   para evitar sobreventa, descuenta existencias, registra movimientos de
+   inventario y cambia la orden a CONFIRMADA.
+   Funciona dentro de una transacción exterior o crea la suya si se invoca directamente.
+*/
+CREATE   PROCEDURE dbo.sp_ConfirmarOrdenVenta
+    @OrdenId INT,
+    @UsuarioId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @TransaccionPropia BIT = CASE WHEN @@TRANCOUNT = 0 THEN 1 ELSE 0 END;
+
+    IF @TransaccionPropia = 1 BEGIN TRANSACTION;
+
+    BEGIN TRY
+        IF NOT EXISTS
+        (
+            SELECT 1
+            FROM dbo.Ordenes WITH (UPDLOCK, HOLDLOCK)
+            WHERE OrdenId = @OrdenId
+              AND UsuarioId = @UsuarioId
+              AND TipoOrden = N'VENTA'
+              AND Estado = N'PENDIENTE'
+        )
+            THROW 51000, N'La orden de venta no existe o no está pendiente.', 1;
+
+        IF NOT EXISTS (SELECT 1 FROM dbo.OrdenDetalle WHERE OrdenId = @OrdenId)
+            THROW 51002, N'La orden no contiene productos.', 1;
+
+        DECLARE @ProductosSinStock INT;
+        SELECT @ProductosSinStock = COUNT(*)
+        FROM dbo.OrdenDetalle od
+        INNER JOIN dbo.Productos p WITH (UPDLOCK, HOLDLOCK) ON p.ProductoId = od.ProductoId
+        WHERE od.OrdenId = @OrdenId
+          AND (p.Activo = 0 OR p.Stock < od.Cantidad);
+
+        IF @ProductosSinStock > 0
+            THROW 51001, N'Uno o más productos ya no tienen stock suficiente. Revisa tu carrito.', 1;
+
+        UPDATE p
+           SET p.Stock = p.Stock - od.Cantidad
+        FROM dbo.Productos p
+        INNER JOIN dbo.OrdenDetalle od ON od.ProductoId = p.ProductoId
+        WHERE od.OrdenId = @OrdenId;
+
+        INSERT INTO dbo.MovimientosInventario (ProductoId, Tipo, Cantidad, Motivo, Fecha, UsuarioId)
+        SELECT od.ProductoId, N'SALIDA', od.Cantidad,
+               CONCAT(N'Venta confirmada - Orden #', @OrdenId), SYSDATETIME(), @UsuarioId
+        FROM dbo.OrdenDetalle od
+        WHERE od.OrdenId = @OrdenId;
+
+        UPDATE dbo.Ordenes
+           SET Estado = N'CONFIRMADA'
+         WHERE OrdenId = @OrdenId;
+
+        INSERT INTO dbo.BitacoraSistema (UsuarioId, Fecha, Accion, Entidad, EntidadId, Detalle)
+        VALUES (@UsuarioId, SYSDATETIME(), N'CONFIRMAR_ORDEN_VENTA', N'Orden',
+                CONVERT(NVARCHAR(80), @OrdenId), N'Inventario descontado mediante sp_ConfirmarOrdenVenta.');
+
+        IF @TransaccionPropia = 1 COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @TransaccionPropia = 1 AND XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
+
+
+CREATE   PROCEDURE dbo.sp_IncorporarProductoProveedor
+    @ProductoProveedorCatalogoId INT,
+    @Descripcion NVARCHAR(500) = NULL,
+    @StockMinimo INT = 5,
+    @UsuarioId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @ProductoProveedorCatalogoId <= 0 OR @UsuarioId <= 0
+        THROW 51001, 'Los datos para incorporar el producto no son válidos.', 1;
+    IF @StockMinimo < 0
+        THROW 51002, 'El stock mínimo no puede ser negativo.', 1;
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        DECLARE @ProveedorId INT;
+        DECLARE @CategoriaId INT;
+        DECLARE @Nombre NVARCHAR(120);
+        DECLARE @PrecioCompra DECIMAL(18,2);
+        DECLARE @ImpuestoId INT;
+        DECLARE @ProductoId INT;
+
+        SELECT @ProveedorId = relacion.ProveedorId,
+               @CategoriaId = relacion.CategoriaId,
+               @Nombre = oferta.Nombre,
+               @PrecioCompra = oferta.PrecioCompra,
+               @ImpuestoId = oferta.ImpuestoId,
+               @ProductoId = oferta.ProductoId
+        FROM dbo.ProductosProveedorCatalogo oferta WITH (UPDLOCK, HOLDLOCK)
+        INNER JOIN dbo.ProveedorCategorias relacion
+            ON relacion.ProveedorCategoriaId = oferta.ProveedorCategoriaId
+        INNER JOIN dbo.Proveedores proveedor ON proveedor.ProveedorId = relacion.ProveedorId
+        INNER JOIN dbo.Categorias categoria ON categoria.CategoriaId = relacion.CategoriaId
+        INNER JOIN dbo.FamiliasProducto familia ON familia.FamiliaId = categoria.FamiliaId
+        WHERE oferta.ProductoProveedorCatalogoId = @ProductoProveedorCatalogoId
+          AND oferta.Activo = 1
+          AND relacion.Activo = 1
+          AND proveedor.Activo = 1
+          AND categoria.Activo = 1
+          AND familia.Activo = 1;
+
+        IF @ProveedorId IS NULL
+            THROW 51003, 'La oferta del proveedor no está disponible.', 1;
+        IF @ProductoId IS NOT NULL
+            THROW 51004, 'El producto ya fue incorporado a LessPrice.', 1;
+        IF NOT EXISTS (SELECT 1 FROM dbo.Impuestos WHERE ImpuestoId = @ImpuestoId AND Activo = 1)
+            THROW 51005, 'El impuesto seleccionado no está disponible.', 1;
+
+        DECLARE @Codigo NVARCHAR(50);
+        DECLARE @CodigoNumero BIGINT = NEXT VALUE FOR dbo.SecuenciaCodigoProducto;
+        SET @Codigo = CONCAT(N'PROD-', RIGHT(CONCAT(N'000000', @CodigoNumero), 6));
+
+        WHILE EXISTS (SELECT 1 FROM dbo.Productos WITH (UPDLOCK, HOLDLOCK) WHERE Codigo = @Codigo)
+        BEGIN
+            SET @CodigoNumero = NEXT VALUE FOR dbo.SecuenciaCodigoProducto;
+            SET @Codigo = CONCAT(N'PROD-', RIGHT(CONCAT(N'000000', @CodigoNumero), 6));
+        END;
+
+        INSERT dbo.Productos
+        (
+            CategoriaId, ImpuestoId, Codigo, Nombre, Descripcion,
+            PrecioVenta, Costo, Stock, StockMinimo, Activo, FechaCreacion
+        )
+        VALUES
+        (
+            @CategoriaId, @ImpuestoId, @Codigo, @Nombre, NULLIF(LTRIM(RTRIM(@Descripcion)), N''),
+            ROUND(@PrecioCompra * 1.30, 2), @PrecioCompra, 0, @StockMinimo, 1, SYSDATETIME()
+        );
+
+        SET @ProductoId = CONVERT(INT, SCOPE_IDENTITY());
+
+        UPDATE dbo.ProductosProveedorCatalogo
+        SET ProductoId = @ProductoId,
+            FechaActualizacion = SYSDATETIME()
+        WHERE ProductoProveedorCatalogoId = @ProductoProveedorCatalogoId;
+
+        INSERT dbo.ProductoProveedor (ProductoId, ProveedorId, PrecioCompra, Activo)
+        VALUES (@ProductoId, @ProveedorId, @PrecioCompra, 1);
+
+        INSERT dbo.BitacoraSistema (UsuarioId, Fecha, Accion, Entidad, EntidadId, Detalle)
+        VALUES
+        (
+            @UsuarioId, SYSDATETIME(), N'INCORPORAR_PRODUCTO', N'Producto',
+            CONVERT(NVARCHAR(80), @ProductoId), CONCAT(N'Oferta del proveedor: ', @ProductoProveedorCatalogoId)
+        );
+
+        COMMIT TRANSACTION;
+
+        SELECT @ProductoId ProductoId,
+               @Codigo Codigo,
+               @Nombre Nombre,
+               @PrecioCompra PrecioCompra,
+               ROUND(@PrecioCompra * 1.30, 2) PrecioVenta,
+               0 Stock;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
+
+
+/* ============================================================================
+   Datos iniciales oficiales
+   No incluye usuarios, administradores, hashes, carritos, órdenes, pagos,
+   compras, movimientos, bitácora, historial ni datos QA/temporales.
+   ============================================================================ */
+
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    DECLARE @Roles TABLE (Nombre nvarchar(50), Descripcion nvarchar(200), Activo bit);
+    INSERT @Roles VALUES
+    (N'Administrador', N'Acceso administrativo al sistema.', 1),
+    (N'Cliente', N'Cuenta registrada para compras.', 1);
+    INSERT dbo.Roles (Nombre,Descripcion,Activo)
+    SELECT s.Nombre,s.Descripcion,s.Activo FROM @Roles s
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Roles d WHERE d.Nombre=s.Nombre);
+
+    DECLARE @Menu TABLE (Nombre nvarchar(80), Ruta nvarchar(160), Icono nvarchar(60), Orden int, Activo bit);
+    INSERT @Menu VALUES
+    (N'Inicio', N'/', N'cil-home', 1, 1),
+    (N'Familias de producto', N'/familias-producto', N'cil-list', 10, 1),
+    (N'Categorías', N'/categorias', N'cil-list', 20, 1),
+    (N'Impuestos', N'/impuestos', N'cil-calculator', 30, 1),
+    (N'Productos', N'/productos', N'cil-basket', 40, 1),
+    (N'Descuentos', N'/descuentos', N'cil-tags', 45, 1),
+    (N'Carrito', N'/carrito', N'cil-basket', 45, 1),
+    (N'Proveedores', N'/proveedores', N'cil-basket', 45, 1),
+    (N'Roles', N'/roles', N'cil-people', 50, 1),
+    (N'Órdenes', N'/ordenes', N'cil-basket', 60, 1);
+    INSERT dbo.MenuOpciones (Nombre,Ruta,Icono,Orden,Activo)
+    SELECT s.Nombre,s.Ruta,s.Icono,s.Orden,s.Activo FROM @Menu s
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.MenuOpciones d WHERE d.Ruta=s.Ruta);
+
+    DECLARE @RolMenu TABLE (Rol nvarchar(50), Ruta nvarchar(160));
+    INSERT @RolMenu VALUES
+    (N'Administrador', N'/'),
+    (N'Administrador', N'/familias-producto'),
+    (N'Administrador', N'/categorias'),
+    (N'Administrador', N'/impuestos'),
+    (N'Administrador', N'/productos'),
+    (N'Administrador', N'/descuentos'),
+    (N'Administrador', N'/proveedores'),
+    (N'Administrador', N'/roles'),
+    (N'Administrador', N'/ordenes'),
+    (N'Cliente', N'/'),
+    (N'Cliente', N'/productos'),
+    (N'Cliente', N'/carrito'),
+    (N'Cliente', N'/ordenes');
+    INSERT dbo.RolMenuOpciones (RolId,MenuOpcionId)
+    SELECT r.RolId,m.MenuOpcionId FROM @RolMenu s
+    JOIN dbo.Roles r ON r.Nombre=s.Rol JOIN dbo.MenuOpciones m ON m.Ruta=s.Ruta
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.RolMenuOpciones d WHERE d.RolId=r.RolId AND d.MenuOpcionId=m.MenuOpcionId);
+
+    DECLARE @Familias TABLE (Nombre nvarchar(80), Descripcion nvarchar(250), UrlImagen nvarchar(500), Activo bit);
+    INSERT @Familias VALUES
+    (N'Alimentos y bebidas', N'Productos alimenticios, ingredientes y bebidas de consumo diario.', NULL, 1),
+    (N'Hogar y limpieza', N'Artículos para limpieza, cocina, baño y organización del hogar.', NULL, 1),
+    (N'Ropa y accesorios', N'Prendas, calzado y accesorios para toda la familia.', NULL, 1),
+    (N'Electrónica', N'Dispositivos, equipos y accesorios electrónicos.', NULL, 1),
+    (N'Cuidado personal', N'Productos de higiene y cuidado personal diario.', NULL, 1);
+    INSERT dbo.FamiliasProducto (Nombre,Descripcion,UrlImagen,Activo)
+    SELECT s.Nombre,s.Descripcion,s.UrlImagen,s.Activo FROM @Familias s
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.FamiliasProducto d WHERE d.Nombre=s.Nombre);
+
+    DECLARE @Categorias TABLE (Familia nvarchar(80), Nombre nvarchar(80), Descripcion nvarchar(250), UrlImagen nvarchar(500), Activo bit);
+    INSERT @Categorias VALUES
+    (N'Alimentos y bebidas', N'Frutas', N'Frutas frescas y productos relacionados.', NULL, 1),
+    (N'Alimentos y bebidas', N'Verduras', N'Verduras y hortalizas.', NULL, 1),
+    (N'Alimentos y bebidas', N'Carnes', N'Carnes y cortes para consumo.', NULL, 1),
+    (N'Alimentos y bebidas', N'Lácteos y huevos', N'Leche, derivados lácteos y huevos.', NULL, 1),
+    (N'Alimentos y bebidas', N'Granos y pastas', N'Granos, cereales y pastas.', NULL, 1),
+    (N'Alimentos y bebidas', N'Condimentos y básicos de cocina', N'Condimentos e ingredientes esenciales.', NULL, 1),
+    (N'Alimentos y bebidas', N'Enlatados', N'Alimentos conservados y enlatados.', NULL, 1),
+    (N'Alimentos y bebidas', N'Panadería', N'Panes y productos de panadería.', NULL, 1),
+    (N'Alimentos y bebidas', N'Bebidas', N'Bebidas para consumo diario.', NULL, 1),
+    (N'Alimentos y bebidas', N'Embutidos', N'Jamones, salchichas y otros productos cárnicos preparados.', NULL, 1),
+    (N'Hogar y limpieza', N'Productos de limpieza', N'Productos para limpieza general.', NULL, 1),
+    (N'Hogar y limpieza', N'Lavandería', N'Productos para lavado y cuidado de ropa.', NULL, 1),
+    (N'Hogar y limpieza', N'Cocina', N'Articulos de uso en cocina.', NULL, 1),
+    (N'Hogar y limpieza', N'Baño', N'Artículos para el baño.', NULL, 1),
+    (N'Hogar y limpieza', N'Utensilios', N'Utensilios de uso doméstico.', NULL, 1),
+    (N'Hogar y limpieza', N'Organización del hogar', N'Soluciones para ordenar espacios.', NULL, 1),
+    (N'Ropa y accesorios', N'Ropa para mujer', N'Prendas para mujer.', NULL, 1),
+    (N'Ropa y accesorios', N'Ropa para hombre', N'Prendas para hombre.', NULL, 1),
+    (N'Ropa y accesorios', N'Ropa infantil', N'Prendas para niñas y niños.', NULL, 1),
+    (N'Ropa y accesorios', N'Calzado', N'Calzado para diferentes edades.', NULL, 1),
+    (N'Ropa y accesorios', N'Ropa interior', N'Ropa interior y prendas basicas.', NULL, 1),
+    (N'Ropa y accesorios', N'Accesorios', N'Accesorios de vestir.', NULL, 1),
+    (N'Electrónica', N'Celulares', N'Teléfonos celulares.', NULL, 1),
+    (N'Electrónica', N'Computadoras', N'Computadoras y equipos relacionados.', NULL, 1),
+    (N'Electrónica', N'Audio', N'Equipos y accesorios de audio.', NULL, 1),
+    (N'Electrónica', N'Accesorios electrónicos', N'Complementos para dispositivos electrónicos.', NULL, 1),
+    (N'Electrónica', N'Electrodomésticos pequeños', N'Electrodomésticos compactos para el hogar.', NULL, 1),
+    (N'Cuidado personal', N'Higiene personal', N'Articulos de higiene diaria.', NULL, 1),
+    (N'Cuidado personal', N'Cuidado del cabello', N'Productos para el cabello.', NULL, 1),
+    (N'Cuidado personal', N'Cuidado de la piel', N'Productos para el cuidado de la piel.', NULL, 1),
+    (N'Cuidado personal', N'Cuidado dental', N'Productos de higiene bucal.', NULL, 1),
+    (N'Cuidado personal', N'Higiene femenina', N'Productos de higiene femenina.', NULL, 1);
+    INSERT dbo.Categorias (FamiliaId,Nombre,Descripcion,UrlImagen,Activo)
+    SELECT f.FamiliaId,s.Nombre,s.Descripcion,s.UrlImagen,s.Activo FROM @Categorias s
+    JOIN dbo.FamiliasProducto f ON f.Nombre=s.Familia
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Categorias d WHERE d.FamiliaId=f.FamiliaId AND d.Nombre=s.Nombre);
+
+    DECLARE @Impuestos TABLE (Nombre nvarchar(80), Porcentaje decimal(5,2), FechaInicio date, FechaFin date, Activo bit);
+    INSERT @Impuestos VALUES
+    (N'IVA 13%', 13.00, CONVERT(datetime2(3), N'2026-08-11T00:00:00.000', 126), NULL, 1),
+    (N'Exento', 0.00, CONVERT(datetime2(3), N'2026-08-11T00:00:00.000', 126), NULL, 1),
+    (N'IVA 1%', 1.00, CONVERT(datetime2(3), N'2026-08-14T00:00:00.000', 126), NULL, 1);
+    INSERT dbo.Impuestos (Nombre,Porcentaje,FechaInicio,FechaFin,Activo)
+    SELECT s.Nombre,s.Porcentaje,s.FechaInicio,s.FechaFin,s.Activo FROM @Impuestos s
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Impuestos d WHERE d.Nombre=s.Nombre);
+
+    DECLARE @Proveedores TABLE (Nombre nvarchar(150), Correo nvarchar(150), Telefono nvarchar(30), Direccion nvarchar(250), Activo bit, UrlImagen nvarchar(500), FechaRegistro datetime2(3));
+    INSERT @Proveedores VALUES
+    (N'Suministros Casa Tica', N'pedidos@casatica.cr', N'2202-2202', N'Alajuela, Costa Rica', 1, N'proveedores/hogar.svg', CONVERT(datetime2(3), N'2026-08-14T02:02:55.770', 126)),
+    (N'Textiles y Calzado del Istmo', N'comercial@textilesistmo.cr', N'2203-3303', N'San José, Costa Rica', 1, N'proveedores/ropa.svg', CONVERT(datetime2(3), N'2026-08-14T02:02:55.770', 126)),
+    (N'Bienestar Costarricense', N'ventas@bienestarcr.cr', N'2205-5505', N'Puntarenas, Costa Rica', 1, N'proveedores/cuidado.svg', CONVERT(datetime2(3), N'2026-08-14T02:02:55.770', 126)),
+    (N'Tecnología Pura Vida', N'pedidos@tecnologiapuravida.cr', N'2204-4404', N'Cartago, Costa Rica', 1, N'proveedores/electronica.svg', CONVERT(datetime2(3), N'2026-08-14T02:04:58.943', 126)),
+    (N'Dos Pinos', N'ventas@dospinos.com', N'2437-3000', N'Alajuela, Costa Rica', 1, N'proveedores/alimentos.svg', CONVERT(datetime2(3), N'2026-08-14T12:27:41.344', 126));
+    INSERT dbo.Proveedores (Nombre,Correo,Telefono,Direccion,Activo,UrlImagen,FechaRegistro)
+    SELECT s.Nombre,s.Correo,s.Telefono,s.Direccion,s.Activo,s.UrlImagen,s.FechaRegistro FROM @Proveedores s
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Proveedores d WHERE d.Nombre=s.Nombre);
+
+    DECLARE @ProveedorFamilias TABLE (Proveedor nvarchar(150), Familia nvarchar(80), Activo bit);
+    INSERT @ProveedorFamilias VALUES
+    (N'Bienestar Costarricense', N'Cuidado personal', 1),
+    (N'Dos Pinos', N'Alimentos y bebidas', 1),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', 1),
+    (N'Tecnología Pura Vida', N'Electrónica', 1),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', 1);
+    INSERT dbo.ProveedorFamilias (ProveedorId,FamiliaId,Activo)
+    SELECT p.ProveedorId,f.FamiliaId,s.Activo FROM @ProveedorFamilias s
+    JOIN dbo.Proveedores p ON p.Nombre=s.Proveedor JOIN dbo.FamiliasProducto f ON f.Nombre=s.Familia
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.ProveedorFamilias d WHERE d.ProveedorId=p.ProveedorId AND d.FamiliaId=f.FamiliaId);
+
+    DECLARE @ProveedorCategorias TABLE (Proveedor nvarchar(150), Familia nvarchar(80), Categoria nvarchar(80), Activo bit);
+    INSERT @ProveedorCategorias VALUES
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado de la piel', 1),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado del cabello', 1),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado dental', 1),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene femenina', 1),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene personal', 1),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Bebidas', 1),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Embutidos', 1),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Lácteos y huevos', 1),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Baño', 1),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Cocina', 1),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Lavandería', 1),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Organización del hogar', 1),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Productos de limpieza', 1),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Utensilios', 1),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Accesorios electrónicos', 1),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Audio', 1),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Celulares', 1),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Computadoras', 1),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Electrodomésticos pequeños', 1),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Accesorios', 1),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Calzado', 1),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa infantil', 1),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa interior', 1),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para hombre', 1),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para mujer', 1);
+    INSERT dbo.ProveedorCategorias (ProveedorId,CategoriaId,Activo)
+    SELECT p.ProveedorId,c.CategoriaId,s.Activo FROM @ProveedorCategorias s
+    JOIN dbo.Proveedores p ON p.Nombre=s.Proveedor JOIN dbo.FamiliasProducto f ON f.Nombre=s.Familia
+    JOIN dbo.Categorias c ON c.FamiliaId=f.FamiliaId AND c.Nombre=s.Categoria
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.ProveedorCategorias d WHERE d.ProveedorId=p.ProveedorId AND d.CategoriaId=c.CategoriaId);
+
+    DECLARE @Productos TABLE (Codigo nvarchar(50), Familia nvarchar(80), Categoria nvarchar(80), Impuesto nvarchar(80), Nombre nvarchar(120), Descripcion nvarchar(500), PrecioVenta decimal(18,2), Costo decimal(18,2), Stock int, StockMinimo int, Activo bit, FechaCreacion datetime2(3));
+    INSERT @Productos VALUES
+    (N'PROD-DP-000001', N'Alimentos y bebidas', N'Bebidas', N'IVA 13%', N'Frescoleche Chocolate 250 ml', N'Bebida láctea sabor chocolate.', 617.50, 475.00, 0, 5, 1, CONVERT(datetime2(3), N'2026-08-14T12:27:41.842', 126)),
+    (N'PROD-DP-000002', N'Alimentos y bebidas', N'Lácteos y huevos', N'IVA 1%', N'Leche Entera 1 L', N'Leche entera de un litro.', 1105.00, 850.00, 0, 5, 1, CONVERT(datetime2(3), N'2026-08-14T12:31:02.860', 126));
+    INSERT dbo.Productos (CategoriaId,ImpuestoId,Codigo,Nombre,Descripcion,PrecioVenta,Costo,Stock,StockMinimo,Activo,FechaCreacion)
+    SELECT c.CategoriaId,i.ImpuestoId,s.Codigo,s.Nombre,s.Descripcion,s.PrecioVenta,s.Costo,s.Stock,s.StockMinimo,s.Activo,s.FechaCreacion FROM @Productos s
+    JOIN dbo.FamiliasProducto f ON f.Nombre=s.Familia JOIN dbo.Categorias c ON c.FamiliaId=f.FamiliaId AND c.Nombre=s.Categoria
+    JOIN dbo.Impuestos i ON i.Nombre=s.Impuesto
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Productos d WHERE d.Codigo=s.Codigo);
+
+    DECLARE @Catalogo TABLE (Proveedor nvarchar(150), Familia nvarchar(80), Categoria nvarchar(80), Nombre nvarchar(120), PrecioCompra decimal(18,2), Impuesto nvarchar(80), Activo bit, FechaActualizacion datetime2(3), CodigoProducto nvarchar(50));
+    INSERT @Catalogo VALUES
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado de la piel', N'Crema Nivea 200 ml', 2800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado de la piel', N'Gel de aloe vera 250 ml', 3100.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado de la piel', N'Limpiador facial Neutrogena', 5200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado de la piel', N'Manteca de cacao en barra', 950.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado de la piel', N'Protector solar FPS 50', 6200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado del cabello', N'Acondicionador Pantene 400 ml', 2950.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado del cabello', N'Gel fijador Ego 250 ml', 1850.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado del cabello', N'Peine de dientes anchos', 850.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado del cabello', N'Shampoo Sedal 340 ml', 2100.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado del cabello', N'Tratamiento capilar Novex 400 g', 4200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado dental', N'Cepillo dental Oral-B', 1250.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado dental', N'Enjuague Listerine 500 ml', 3100.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado dental', N'Hilo dental 50 metros', 1450.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado dental', N'Pasta dental Colgate 100 ml', 1450.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Cuidado dental', N'Pasta dental infantil 75 ml', 1350.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene femenina', N'Jabón íntimo 200 ml', 2850.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene femenina', N'Protectores diarios 20 unidades', 1250.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene femenina', N'Tampones 8 unidades', 2400.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene femenina', N'Toallas Always día 10 unidades', 1700.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene femenina', N'Toallas Kotex nocturnas 8 unidades', 1850.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene personal', N'Desodorante Rexona roll-on', 1650.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene personal', N'Gel de baño Dove 400 ml', 2850.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene personal', N'Jabón Protex 3 unidades', 1350.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene personal', N'Pañuelos faciales 100 unidades', 950.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Bienestar Costarricense', N'Cuidado personal', N'Higiene personal', N'Talco para pies 100 g', 1550.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Bebidas', N'Frescoleche Chocolate 250 ml', 475.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), N'PROD-DP-000001'),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Bebidas', N'Frescoleche Fresa 250 ml', 475.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Bebidas', N'Frescoleche Vainilla 250 ml', 475.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Bebidas', N'Jugo de Naranja 1 L', 1150.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Bebidas', N'Té Frío Limón 500 ml', 650.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Embutidos', N'Chorizo Parrillero 500 g', 2350.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Embutidos', N'Jamón de Cerdo 250 g', 1850.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Embutidos', N'Mortadela 250 g', 1100.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Embutidos', N'Salchichas 500 g', 1450.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Embutidos', N'Salchichón 500 g', 1750.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Lácteos y huevos', N'Leche Deslactosada 1 L', 980.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Lácteos y huevos', N'Leche Entera 1 L', 850.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), N'PROD-DP-000002'),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Lácteos y huevos', N'Natilla 350 g', 1350.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Lácteos y huevos', N'Queso Turrialba 500 g', 3100.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Dos Pinos', N'Alimentos y bebidas', N'Lácteos y huevos', N'Yogurt Fresa 200 ml', 520.00, N'IVA 1%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Baño', N'Alfombra de baño', 10000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Baño', N'Basurero de baño', 5500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Baño', N'Cortina de baño', 5500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Baño', N'jabonera', 3000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Baño', N'Organizador de ducha', 3200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Cocina', N'Bolsas resellables 20 unidades', 1200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Cocina', N'Papel aluminio 7.5 metros', 950.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Cocina', N'Película adherente 30 metros', 1150.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Cocina', N'Servilletas cuadradas 100 unidades', 850.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Cocina', N'Toallas de cocina Scott 2 rollos', 1450.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Lavandería', N'Detergente Irex 1.5 kg', 2600.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Lavandería', N'Jabón Azul en barra', 550.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Lavandería', N'Pinzas para ropa 24 unidades', 1100.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Lavandería', N'Quitamanchas Vanish 450 ml', 2800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Lavandería', N'Suavizante Suavitel 850 ml', 1850.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Organización del hogar', N'Caja organizadora 20 litros', 4800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Organización del hogar', N'Canasta multiuso mediana', 2600.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Organización del hogar', N'Perchas plásticas 10 unidades', 2100.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Organización del hogar', N'Repisa plástica modular', 12500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Organización del hogar', N'Zapatera de cuatro niveles', 8500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Productos de limpieza', N'Bolsas para basura jardín 10 unidades', 1550.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Productos de limpieza', N'Cloro Clorox 1 litro', 850.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Productos de limpieza', N'Desinfectante Poett lavanda 900 ml', 1350.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Productos de limpieza', N'Esponjas Scotch-Brite 3 unidades', 900.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Productos de limpieza', N'Limpiador multiuso Ajax 500 ml', 1250.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Utensilios', N'Cucharón de acero inoxidable', 1900.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Utensilios', N'Cuchillo de cocina 8 pulgadas', 4300.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Utensilios', N'Olla de acero 3 litros', 8900.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Utensilios', N'Sartén antiadherente 24 cm', 7200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Suministros Casa Tica', N'Hogar y limpieza', N'Utensilios', N'Tabla para picar mediana', 2800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Accesorios electrónicos', N'Audífonos', 20000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Accesorios electrónicos', N'Cable USB', 8000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Accesorios electrónicos', N'Mouse inhalambrico', 11000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Accesorios electrónicos', N'Parlante Bluetooth', 26000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Accesorios electrónicos', N'Teclado Inhalambrico', 12000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Audio', N'Audifonos Deportivos', 24000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Audio', N'Barra de sonido', 40000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Audio', N'Headset gamer', 26000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Audio', N'Radio portátil', 10000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Audio', N'Sistema de parlantes', 59000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Celulares', N'Honor X8c 256 GB', 127000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Celulares', N'Motorola Moto G55 256 GB', 118000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Celulares', N'Nokia C32 128 GB', 69000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Celulares', N'Samsung Galaxy A16 128 GB', 82000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Celulares', N'Xiaomi Redmi Note 14 256 GB', 112000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Computadoras', N'Chromebook 14 pulgadas', 175000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Computadoras', N'Computadora de escritorio familiar', 265000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Computadoras', N'Laptop Acer Aspire 3', 229000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Computadoras', N'Laptop HP 15 pulgadas', 248000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Computadoras', N'Laptop Lenovo IdeaPad 15 pulgadas', 235000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Electrodomésticos pequeños', N'Coffeemaker Oster 12 tazas', 22500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Electrodomésticos pequeños', N'Licuadora Oster clásica', 34500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Electrodomésticos pequeños', N'Olla arrocera Black+Decker', 19800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Electrodomésticos pequeños', N'Plancha de vapor', 16800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Tecnología Pura Vida', N'Electrónica', N'Electrodomésticos pequeños', N'Ventilador de mesa 12 pulgadas', 21500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Accesorios', N'Billetera', 7000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Accesorios', N'Fajas', 5500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Accesorios', N'Gorra', 4500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Accesorios', N'Pulseras', 12900.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Accesorios', N'Relojes', 15000.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Calzado', N'Botas de hule', 9800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Calzado', N'Pantuflas acolchadas', 6500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Calzado', N'Sandalias playeras', 5800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Calzado', N'Tenis casual unisex', 16500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Calzado', N'Zapato escolar negro', 14500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa infantil', N'Camiseta infantil estampada', 3200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa infantil', N'Conjunto infantil deportivo', 7900.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa infantil', N'Pijama infantil', 6500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa infantil', N'Short infantil de algodón', 3800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa infantil', N'Sudadera infantil', 7200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa interior', N'Bóxer de algodón 2 unidades', 6200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa interior', N'Brasier básico', 7600.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa interior', N'Camiseta interior', 4200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa interior', N'Medias deportivas 3 pares', 3800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa interior', N'Panty de algodón 3 unidades', 5900.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para hombre', N'Camisa tipo polo', 8500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para hombre', N'Camiseta básica para hombre', 4300.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para hombre', N'Jeans clásico para hombre', 13200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para hombre', N'Pantalón casual', 11800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para hombre', N'Suéter liviano para hombre', 9900.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para mujer', N'Blusa casual estampada', 7500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para mujer', N'Camiseta básica para mujer', 4200.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para mujer', N'Jeans corte recto para mujer', 12800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para mujer', N'Suéter liviano para mujer', 9800.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL),
+    (N'Textiles y Calzado del Istmo', N'Ropa y accesorios', N'Ropa para mujer', N'Vestido casual de algodón', 13500.00, N'IVA 13%', 1, CONVERT(datetime2(3), N'2026-08-14T12:40:59.695', 126), NULL);
+    INSERT dbo.ProductosProveedorCatalogo (ProveedorCategoriaId,Nombre,PrecioCompra,ProductoId,Activo,FechaActualizacion,ImpuestoId)
+    SELECT pc.ProveedorCategoriaId,s.Nombre,s.PrecioCompra,p.ProductoId,s.Activo,s.FechaActualizacion,i.ImpuestoId FROM @Catalogo s
+    JOIN dbo.Proveedores pr ON pr.Nombre=s.Proveedor JOIN dbo.FamiliasProducto f ON f.Nombre=s.Familia
+    JOIN dbo.Categorias c ON c.FamiliaId=f.FamiliaId AND c.Nombre=s.Categoria
+    JOIN dbo.ProveedorCategorias pc ON pc.ProveedorId=pr.ProveedorId AND pc.CategoriaId=c.CategoriaId
+    JOIN dbo.Impuestos i ON i.Nombre=s.Impuesto LEFT JOIN dbo.Productos p ON p.Codigo=s.CodigoProducto
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.ProductosProveedorCatalogo d WHERE d.ProveedorCategoriaId=pc.ProveedorCategoriaId AND d.Nombre=s.Nombre);
+
+    DECLARE @ProductoProveedor TABLE (Codigo nvarchar(50), Proveedor nvarchar(150), PrecioCompra decimal(18,2), Activo bit);
+    INSERT @ProductoProveedor VALUES
+    (N'PROD-DP-000001', N'Dos Pinos', 475.00, 1),
+    (N'PROD-DP-000002', N'Dos Pinos', 850.00, 1);
+    INSERT dbo.ProductoProveedor (ProductoId,ProveedorId,PrecioCompra,Activo)
+    SELECT p.ProductoId,pr.ProveedorId,s.PrecioCompra,s.Activo FROM @ProductoProveedor s
+    JOIN dbo.Productos p ON p.Codigo=s.Codigo JOIN dbo.Proveedores pr ON pr.Nombre=s.Proveedor
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.ProductoProveedor d WHERE d.ProductoId=p.ProductoId AND d.ProveedorId=pr.ProveedorId);
+
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
+GO
+
+PRINT N'ProyectoEcommerceDB fue creada y cargada correctamente.';
+GO
